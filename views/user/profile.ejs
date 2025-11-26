@@ -129,9 +129,11 @@
                   <td>₹<%= order.totalAmount %></td>
                   <td><%= order.createdAt.toDateString() %></td>
                   <td>
-                    <a href="/orders/<%= order._id %>" class="btn btn-sm btn-outline-primary">View</a>
+                    <a href="/orders?id=<%= order.orderId %>" class="btn btn-sm btn-outline-primary">View</a>
                     <% if (order.status === "Pending" || order.status === "Processing") { %>
-                      <button   class="btn btn-sm btn-outline-danger"  onclick="cancelOrder('<%= order.orderId %>')">  Cancel</button>
+                      <button   class="btn btn-sm btn-outline-danger"  onclick="cancelOrder('<%= order.orderId %>')">Cancel</button>
+                    <% }else if(order.status === "Delivered" || order.status === "Shipped"){ %>
+                    <button   class="btn btn-sm btn-outline-danger"  onclick="cancelOrder('<%= order.orderId %>')">Return</button>
                     <% } %>
                   </td>
                 </tr>

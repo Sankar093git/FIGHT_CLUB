@@ -1,0 +1,98 @@
+<%- include("../../views/user/partials/header.ejs") %>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            margin-top: 70px;
+        }
+        .card {
+            border-radius: 8px;
+        }
+        .card-body {
+            padding: 1.25rem;
+        }
+        .order-item {
+            padding: 0.75rem 0;
+        }
+        .order-item:not(:last-child) {
+            border-bottom: 1px solid #e9ecef;
+        }
+        .summary-row {
+            padding: 0.4rem 0;
+        }
+    </style>
+  <div class="container mt-4 mb-4 pt-3">
+    <div class="row">
+      <!-- Address Section -->
+      <div class="col-12 mb-3">
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <h5 class="fw-bold mb-2">Delivery Address</h5>
+
+            <div class="border rounded p-2 bg-light">
+              <strong id="addressLabel"><%= addr.label %></strong><br>
+              <span id="addressStreet"><%= addr.street %></span>, 
+              <span id="addressCity"><%= addr.city %></span>, 
+              <span id="addressState"><%= addr.state %></span> - 
+              <span id="addressPostal"><%= addr.postalCode %></span><br>
+              Phone: <span id="addressPhone"><%= addr.phone %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Summary Section -->
+      <div class="col-12">
+        <div class="card shadow-sm border-0 mb-3">
+          <div class="card-body">
+            <h5 class="fw-bold mb-2">Order Summary</h5>
+
+            <div id="orderItems" class="mb-2">
+                <% Product.forEach((prod)=>{ %>
+              <div class="d-flex align-items-center order-item">
+                <img src="/uploads/re-image/<%= prod.product.productImage[0] %>" class="img-fluid rounded me-2" width="60" height="60" alt="product">
+                <div class="flex-grow-1">
+                  <p class="mb-0 fw-semibold small">Product Name</p>
+                  <p class="mb-0 small text-muted">
+                    Qty: <%= prod.quantity %> × <%= prod.product.salesPrice %>
+                  </p>
+                </div>
+                <div>
+                  <p class="fw-semibold mb-0 small"><%= prod.quantity * prod.product.salesPrice %></p>
+                </div>
+              </div>
+            </div>
+            <% }) %>
+            <div class="d-flex justify-content-between px-3 summary-row small">
+              <span>Status:</span>
+              <span id="subtotal"><%= status %></span>
+            </div>
+
+            <div class="d-flex justify-content-between px-3 summary-row small">
+              <span>Subtotal:</span>
+              <span id="subtotal">₹<%= subtotal %></span>
+            </div>
+            <div class="d-flex justify-content-between px-3 summary-row small">
+              <span>Discount:</span>
+              <span class="text-success" id="discount">-₹<%= discount %></span>
+            </div>
+            <div class="d-flex justify-content-between px-3 summary-row small">
+              <span>Taxes:</span>
+              <span id="taxes">₹<%= taxes %></span>
+            </div>
+            <div class="d-flex justify-content-between px-3 summary-row small">
+              <span>Shipping:</span>
+              <span id="shipping">₹<%= shipping %></span>
+            </div>
+
+            <hr class="my-2">
+
+            <div class="d-flex justify-content-between px-2 pb-2 fw-bold">
+              <span>Total:</span>
+              <span id="totalAmount">₹<%= total %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<%- include("../../views/user/partials/footer.ejs") %>

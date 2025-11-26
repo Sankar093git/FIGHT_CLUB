@@ -171,6 +171,36 @@ const cancelOrder= async(req,res)=>{
         return res.json({success:false,});
     }
 }
+
+const displayOrder= async (req,res)=>{
+    try {
+        const orderId=req.query.id;
+        const userData= await User.findOne({_id:req.session.user}).populate("orders.products.product");
+        const orderDetails=userData.orders.find((order)=>order.orderId==orderId);
+        const subArr=[];
+        orderDetails.products.forEach((prod)=>{
+            subArr.push(prod.product.salesPrice);
+        })
+        const subTotal=subArr.reduce((acc,num)=>acc+num,0);
+        const total=subTotal+100+50-200;
+        res.render("orderDetails",{
+            Product:orderDetails.products,
+            addr:orderDetails.address,
+            subtotal:subTotal,
+            discount:200,
+            shipping:100,
+            taxes:50,
+            total:total,
+            status:orderDetails.status,
+        });
+
+        console.log(orderDetails.products);
+
+    } catch (error) {
+        console.error("Error while diplaying order,",error);    
+        res.redirect("/error");
+    }
+}
 module.exports={
     loadProfile,
     addAddress,
@@ -181,6 +211,7 @@ module.exports={
     loadVerifyOtp,
     verifyOtp,
     editAddress,
-    cancelOrder
+    cancelOrder,
+    displayOrder
 
 }
