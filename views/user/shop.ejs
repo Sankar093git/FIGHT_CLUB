@@ -1,0 +1,192 @@
+<%- include("../../views/user/partials/header.ejs") %>
+<style>
+  .product-card img { max-height: 200px; object-fit: contain; }
+  .filter-section { position: sticky; top: 1rem; }
+  .search-button { border-radius: 0px 0px 3px 0px; }
+  .searchInput { border: 1px solid darkgrey; }
+</style>
+
+<div class="container" style="margin-top: 64px; padding-top: 40px;">
+  <div class="row">
+    <!-- Sidebar: search + filters -->
+    <div class="col-md-3">
+      <!-- Search form: includes hidden inputs so search submits keep current filters -->
+      <form id="searchForm" action="/shop" method="get" class="">
+        <div class="search-bar col-sm-6 col-md-3 col-lg-6 pb-3 d-flex">
+          <input type="text" name="search"
+                 value="<%= typeof search !== 'undefined' ? search : '' %>"
+                 class="rounded-start-3 px-2 searchInput" placeholder="search..." />
+          <% if (typeof search !== 'undefined' && search !== '') { %>
+            <a href="/shop" class="btn search-button rounded-end-3" style="background-color:darkgrey; color:white">
+              CLEAR
+            </a>
+          <% } else { %>
+            <button type="submit" class="btn search-button rounded-end-3" style="background-color:darkgrey; color:white">
+              SEARCH
+            </button>
+          <% } %>
+        </div>
+
+        <!-- Hidden inputs so the search submit keeps current filters -->
+        <input type="hidden" name="cate" value="<%= cate || '' %>">
+        <input type="hidden" name="bran" value="<%= bran || '' %>">
+        <input type="hidden" name="sort" value="<%= sort || '' %>">
+        <input type="hidden" name="minPrice" value="<%= minPrice || '' %>">
+        <input type="hidden" name="maxPrice" value="<%= maxPrice || '' %>">
+      </form>
+
+      <!-- Filters (JS-driven so each change preserves ALL existing params) -->
+      <div class="filter-section">
+        <h5>Filters</h5>
+        <hr>
+
+        <!-- Category -->
+        <div class="mb-3">
+          <label class="form-label">Category</label>
+          <select class="form-select" onchange="updateQueryParam('cate', this.value)">
+            <option value="">All</option>
+            <% for (let i = 0; i < category.length; i++) { %>
+              <option value="<%= category[i].name %>" <%= (cate === category[i].name) ? "selected" : '' %>>
+                <%= category[i].name %>
+              </option>
+            <% } %>
+          </select>
+        </div>
+
+        <!-- Sort -->
+        <div class="mb-3">
+          <label class="form-label">Sort by</label>
+          <select class="form-select" onchange="updateQueryParam('sort', this.value)">
+            <option value="" <%= !sort ? 'selected' : '' %>>Aa-Zz</option>
+            <option value="desc" <%= sort === 'desc' ? 'selected' : '' %>>Zz-Aa</option>
+            <option value="price-asc" <%= sort === 'price-asc' ? 'selected' : '' %>>Price (low-high)</option>
+            <option value="price-desc" <%= sort === 'price-desc' ? 'selected' : '' %>>Price (high-low)</option>
+          </select>
+        </div>
+
+        <!-- Brand -->
+        <div class="mb-3">
+          <label class="form-label">Brand</label>
+          <select class="form-select" onchange="updateQueryParam('bran', this.value)">
+            <option value="">All</option>
+            <% for (let i = 0; i < brand.length; i++) { %>
+              <option value="<%= brand[i].brandName %>" <%= (bran === brand[i].brandName) ? 'selected' : '' %>>
+                <%= brand[i].brandName %>
+              </option>
+            <% } %>
+          </select>
+        </div>
+
+        <!-- Price Range -->
+        <div style="width: 300px;" class="mx-auto my-4">
+          <label class="form-label">Price Range:</label>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Min: ₹<span id="minValue"><%= minPrice || 100 %></span></span>
+            <span>Max: ₹<span id="maxValue"><%= maxPrice || 900 %></span></span>
+          </div>
+
+          <input type="range" class="form-range" id="minRange" min="0" max="10000"
+                 value="<%= minPrice || 100 %>" step="10" oninput="document.getElementById('minValue').innerText=this.value">
+          <input type="range" class="form-range" id="maxRange" min="0" max="10000"
+                 value="<%= maxPrice || 900 %>" step="10" oninput="document.getElementById('maxValue').innerText=this.value">
+
+          <div class="mt-2">
+            <button type="button" class="btn btn-sm btn-outline-primary w-100" onclick="applyPriceFilter()">
+              Apply Price
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product grid -->
+    <div class="col-md-9">
+      <div class="row" id="product-list">
+        <!-- client-side rendering below -->
+      </div>
+
+      <!-- Pagination (EJS builds links that include all active params) -->
+      <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+          <% for (let i = 1; i <= totalPages; i++) {
+               let parts = [];
+               parts.push('page=' + i);
+               if (typeof search !== 'undefined' && search) parts.push('search=' + encodeURIComponent(search));
+               if (typeof cate !== 'undefined' && cate) parts.push('cate=' + encodeURIComponent(cate));
+               if (typeof bran !== 'undefined' && bran) parts.push('bran=' + encodeURIComponent(bran));
+               if (typeof sort !== 'undefined' && sort) parts.push('sort=' + encodeURIComponent(sort));
+               if (typeof minPrice !== 'undefined' && minPrice) parts.push('minPrice=' + encodeURIComponent(minPrice));
+               if (typeof maxPrice !== 'undefined' && maxPrice) parts.push('maxPrice=' + encodeURIComponent(maxPrice));
+               const href = '/shop?' + parts.join('&');
+          %>
+            <li class="page-item <%= (i === currentPage) ? 'active' : '' %>">
+              <a class="page-link" href="<%= href %>"><%= i %></a>
+            </li>
+          <% } %>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Render products (same as you had)
+  const products = <%- JSON.stringify(product || []) %>;
+  const productList = document.getElementById('product-list');
+
+  function renderProducts(container, data) {
+    container.innerHTML = '';
+    data.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'col-md-4 mb-4';
+      card.innerHTML = `
+        <div class="card product-card h-100">
+          <img src="/uploads/re-image/${p.productImage && p.productImage[0] ? p.productImage[0] : 'placeholder.jpg'}" class="card-img-top" alt="${p.productName}">
+          <div class="card-body d-flex flex-column justify-content-center align-items-center">
+            <h6 class="card-title">${p.productName}</h6>
+            <p class="card-text d-flex flex-column justify-content-center align-items-center">
+              <del>₹${p.regularPrice}</del>
+              ₹${p.salesPrice}
+            </p>
+            <a href="/product-details?id=${p._id}" class="btn btn-sm btn-outline-primary">View</a>
+          </div>
+        </div>`;
+      container.appendChild(card);
+    });
+  }
+  renderProducts(productList, products);
+
+  // Helper: update a single query param then reload (preserves existing others)
+  function updateQueryParam(key, value) {
+    const url = new URL(window.location.href);
+    if (value === '' || value === null) {
+      url.searchParams.delete(key);
+    } else {
+      url.searchParams.set(key, value);
+    }
+    // when filters change, reset to page 1
+    url.searchParams.delete('page');
+    // navigate
+    window.location.href = url.pathname + (url.search ? '?' + url.searchParams.toString() : '');
+  }
+
+  // Apply price values and reload (preserving other params)
+  function applyPriceFilter() {
+    const min = document.getElementById('minRange').value;
+    const max = document.getElementById('maxRange').value;
+    const url = new URL(window.location.href);
+
+    if (min !== '') url.searchParams.set('minPrice', min);
+    else url.searchParams.delete('minPrice');
+
+    if (max !== '') url.searchParams.set('maxPrice', max);
+    else url.searchParams.delete('maxPrice');
+
+    url.searchParams.delete('page');
+    window.location.href = url.pathname + (url.search ? '?' + url.searchParams.toString() : '');
+  }
+</script>
+
+<%- include("../../views/user/partials/footer.ejs") %>
+
+

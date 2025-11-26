@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verify OTP</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .verify-box {
+      max-width: 400px;
+      margin: 80px auto;
+      text-align: center;
+    }
+    .verify-box input {
+      height: 45px;
+      font-size: 16px;
+    }
+    .verify-box button {
+      width: 100%;
+      height: 45px;
+      background-color: black;
+      color: white;
+      border: none;
+      margin-top: 15px;
+      letter-spacing: 1px;
+    }
+    .timer {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    .resend-btn {
+      margin-top: 10px;
+      background-color: black;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="verify-box">
+      <h4>Verify OTP</h4>
+      <input type="text" class="form-control mt-4" placeholder="enter your OTP" id="otpInput" name="otp">
+      <button onclick="confirmOTP()">CONFIRM</button>
+
+      <div class="timer" id="timer">01:00</div>
+      <button class="resend-btn" onclick="resendOTP()" disabled id="resendBtn">RESEND OTP</button>
+    </div>
+  </div>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+
+
+  <script>
+    let timerDuration = 60; 
+    let currentTime = timerDuration;
+    let timerElement = document.getElementById("timer");
+    let resendBtn = document.getElementById("resendBtn");
+    let timerInterval;
+
+    function startTimer() {
+      currentTime = timerDuration;
+      updateTimerDisplay();
+      resendBtn.disabled = true;
+
+      timerInterval = setInterval(() => {
+        currentTime--;
+        updateTimerDisplay();
+
+        if (currentTime <= 0) {
+          clearInterval(timerInterval);
+          timerElement.textContent = "00:00";
+          resendBtn.disabled = false;
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      let minutes = String(Math.floor(currentTime / 60)).padStart(2, '0');
+      let seconds = String(currentTime % 60).padStart(2, '0');
+      timerElement.textContent = `${minutes}:${seconds}`;
+    }
+
+    function resendOTP() {
+  startTimer();
+
+  $.ajax({
+    method: "GET",
+    url: "/resend-otp",
+    success: (response) => {
+      if (response.success) {
+        Swal.fire({
+          title: 'OTP Resent!',
+          text: 'Please check your email.',
+          icon: 'success',
+          confirmButtonText: 'OK'
+        });
+      } else {
+        Swal.fire("Error!", response.message || "Failed to resend OTP", "error");
+      }
+    },
+    error: () => {
+      Swal.fire("Error!", "Something went wrong.", "error");
+    }
+  });
+}
+
+    function confirmOTP() {
+  let OTP = document.getElementById("otpInput").value;
+  if (OTP === "") {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Missing OTP',
+      text: 'Please enter the OTP.',
+      confirmButtonColor: '#3085d6'
+    });
+    return;
+  }
+
+  $.ajax({
+    method: "POST",
+    url: "/verify-otp",
+    data: { otp: OTP },
+    success: (response) => {
+      if (response.success) {
+        Swal.fire({
+          title: 'OTP Verified!',
+          text: response.message,
+          icon: 'success',
+          confirmButtonText: 'OK'
+        }).then(() => {
+          window.location.href = "/"; 
+        });
+      } else {
+        Swal.fire("Invalid OTP", response.message || "Verification failed", "error");
+      }
+    },
+    error: (err) => {
+      Swal.fire("Error", "Server error or invalid request", "error");
+      console.error("AJAX Error:", err);
+    }
+  });
+}
+
+
+    window.onload = startTimer;
+  </script>
+
+</body>
+</html>

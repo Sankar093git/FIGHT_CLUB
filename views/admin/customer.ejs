@@ -1,0 +1,158 @@
+<%- include("../../views/admin/partials/header") %>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<style>
+    .content-header .content-title {
+    margin-bottom: 0;
+    padding-left: 10px;
+    padding-top:10px;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+  }
+
+  .pagination a {
+    padding: 8px 12px;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    color: #333;
+    text-decoration: none;
+  }
+
+  .pagination .active {
+    background-color: #007bff;
+    color: #fff;
+  }
+
+</style>
+<div class="content-header row">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="content-title card-title">Customers</h2>
+       
+    </div>
+</div>         
+        </div>
+        
+            <header class="card-header text-center mb-20">
+                <form action="/admin/users/" method="get" class="d-inline">
+                    <div class="input-group input-group-sm border border-1 border-grey rounded-pill" style="width: 500px; margin-left: 230px;">
+                        <input type="text" class="form-control border-0 rounded-pill" placeholder="Search customers..." name="search">
+                        <button class="btn  border-0" type="submit">Search</button>
+                    </div>
+                </form>
+            </header>
+            <div class="right mt-5">
+                <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th scope="col"><b>Name</b></th>
+                        <th scope="col"><b>Email</b></th>
+                        <th scope="col"><b>Phone No</b></th>
+                        <th scope="col"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                        <% for(let i=0;i<data.length;i++){ %>
+                            <tr>
+                                <td><%= data[i].name %></td>
+                                <td><%= data[i].email %></td>
+                                <td><%= data[i].phone %></td>
+                                <td> 
+                                    <% if(data[i].isBlocked===false){ %>
+                                        <button class="btn btn-danger" onclick="blockOrUnblockUser('<%=data[i]._id%>','<%=data[i].name%>')" style="width: 80px;">
+                                            <a href="#" class="text-white" style="text-decoration: none;">Block</a>
+                                        </button>
+                                    <% }else{ %>
+                                        <button class="btn btn-success" onclick="blockOrUnblockUser('<%=data[i]._id%>','<%=data[i].name%>')" style="width: 80px;">
+                                            <a href="#" class="text-white" style="text-decoration: none;">Unblock</a>
+                                        </button> 
+                                        <% } %>
+                                </td>
+                            </tr>
+                            <% } %>
+                    </tbody>
+                  </table>
+        </div>
+            <!-- Pagination -->
+    <div class="pagination">
+      <% if (currentPage > 1) { %>
+        <a class="btn" href="/admin/users?page=<%= currentPage - 1 %>">Prev</a>
+      <% } %>
+      <% for (let i = 1; i <= totalPages; i++) { %>
+        <a class="btn <%= currentPage === i ? 'active' : '' %>" href="/admin/users?page=<%= i %>"><%= i %></a>
+      <% } %>
+      <% if (currentPage < totalPages) { %>
+        <a class="btn" href="/admin/users?page=<%= currentPage + 1 %>">Next</a>
+      <% } %>
+    </div>
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+ <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+ <script>
+            function blockOrUnblockUser(userId,userName){
+                try {
+                    Swal.fire({
+                    title: 'Are you sure?',
+                    text: `Do want to perform this action for ${userName}`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes',
+                    cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                    if (result.isConfirmed) {
+                       $.ajax({
+                        method:"GET",
+                        url:`/admin/block-or-unblock-user?id=${userId}`,
+                        data:{},
+                        success:(response)=>{
+                            if(response.success){
+                                if(response.status==="unblocked"){
+                                    Swal.fire({
+                                        title:"Unblocked!",
+                                        text:response.message,
+                                        icon:"success",
+                                        timer:1500,
+                                        showConfirmButton: false
+                                    }).then(()=>{window.location.href="/admin/users"});
+                                    
+                                }else if(response.status==="blocked"){
+                                    Swal.fire({
+                                        title:"Blocked!",
+                                        text:response.message,
+                                        icon:"success",
+                                        timer:1500,
+                                        showConfirmButton: false
+                                    }).then(()=>{window.location.href="/admin/users"});
+                                }
+                            }
+                        },
+                        error:()=>{
+                            Swal.fire({
+                                icon:"error",
+                                title:"Error!",
+                                text:"Something went wrong, please try again.",
+                                confirmButtonText: 'OK'
+                            })
+                        }
+
+                    })
+     
+                   }
+          });
+
+                } catch (error) {
+                     Swal.fire({
+                                icon:"error",
+                                title:"Error!",
+                                text:`${error.message}`,
+                                confirmButtonText: 'OK'
+                            })
+                }
+            }
+
+</script>
+ <%- include("../../views/admin/partials/footer") %>

@@ -1,0 +1,180 @@
+<%- include("../../views/user/partials/header.ejs") %>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<style>
+  body{
+    margin-top:30px;
+  }
+</style>
+<main class="main container py-5">
+  <!-- Breadcrumbs -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/">Home</a></li>
+      <li class="breadcrumb-item"><a href="/shop">Shop</a></li>
+      <li class="breadcrumb-item active" aria-current="page"><%= product.productName %></li>
+    </ol>
+  </nav>
+
+  <div class="row g-5">
+    <!-- Left: Product Image -->
+    <div class="col-md-6">
+      <img src="/uploads/re-image/<%= product.productImage[0] %>" alt="<%= product.productName %>" class="img-fluid rounded shadow-sm">
+    </div>
+
+    <!-- Right: Product Details -->
+    <div class="col-md-6">
+      <h2 class="fw-bold"><%= product.productName %></h2>
+
+      <!-- Ratings -->
+      <div class="d-flex align-items-center mb-2">
+        <div class="text-warning me-2">
+          <% for (let i = 1; i <= 5; i++) { %>
+            <i class="bi <%= i <= product.rating ? 'bi-star-fill' : 'bi-star' %>"></i>
+          <% } %>
+        </div>
+        <span>(<%= product.reviewCount %> Reviews)</span>
+      </div>
+
+      <!-- Price & Discount -->
+      <div class="mb-3">
+        <% if (product.salesPrice) { %>
+          <h4 class="fw-bold text-danger">₹<%= product.salesPrice %></h4>
+          <small class="text-muted text-decoration-line-through">₹<%= product.regularPrice %></small>
+          <span class="badge bg-success ms-2">-<%= 100*(product.regularPrice-product.salesPrice)/product.regularPrice %>%</span>
+        <% } else { %>
+          <h4 class="fw-bold">₹<%= product.regularPrice %></h4>
+        <% } %>
+      </div>
+
+      <!-- Stock Status -->
+      <% if (product.available!=true) { %>
+        <div class="alert alert-danger">❌ This product is unavailable or blocked.</div>
+        <!--<script>window.location.href = "/shop";</script>-->
+      <% } else if (product.quantity <= 0) { %>
+        <div class="alert alert-warning">⚠️ Out of Stock</div>
+      <% } else { %>
+        <div class="alert alert-success">✅ In Stock: <%= product.quantity %> items</div>
+      <% } %>
+
+      <!-- Add to Cart -->
+      <% if (product.available==true && product.quantity > 0) { %>
+        <button onclick="handleAddToCart('<%= product._id %>')" class="btn btn-primary mt-4 px-4">
+          <i class="bi bi-cart-plus"></i> Add to Cart
+        </button>
+        <!-- Product Highlights / Specifications -->
+  <section class="mt-5">
+    <h4 class="fw-bold">Highlights</h4>
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item">✔️ Lightweight running shoe</li>
+      <li class="list-group-item">✔️ Breathable mesh upper</li>
+      <li class="list-group-item">✔️ Cushioned sole for extra comfort</li>
+      <li class="list-group-item">✔️ 1-year warranty</li>
+    </ul>
+  </section>
+      <% } else { %>
+        <button class="btn btn-secondary mt-4 px-4" disabled>
+          <i class="bi bi-cart-x"></i> Unavailable
+        </button>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Reviews -->
+<section class="mt-5">
+  <h4 class="fw-bold">Customer Reviews</h4>
+
+  <!-- Existing Reviews -->
+  <% if (product.reviews.length > 0) { %>
+    <% product.reviews.forEach(r => { %>
+      <div class="border p-3 rounded mb-2">
+        <strong><%= r.user.name || "Anonymous" %></strong> 
+        <span class="text-warning ms-2">
+          <% for (let i = 1; i <= 5; i++) { %>
+            <i class="bi <%= i <= r.rating ? 'bi-star-fill' : 'bi-star' %>"></i>
+          <% } %>
+        </span>
+        <p class="mt-2"><%= r.comment %></p>
+      </div>
+    <% }) %>
+  <% } else { %>
+    <p class="text-muted">No reviews yet.</p>
+  <% } %>
+
+  <!-- Add a Review Form -->
+  <% if (locals.user) { %> <!-- ✅ Only logged-in users can review -->
+    <div class="mt-4">
+      <h5>Add Your Review</h5>
+      <form id="reviewForm" method="POST" action="/product/<%= product._id %>/review">
+        <!-- Rating -->
+        <div class="mb-3">
+          <label for="rating" class="form-label">Rating</label>
+          <select class="form-select" id="rating" name="rating" required>
+            <option value="">Choose...</option>
+            <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+            <option value="4">⭐⭐⭐⭐ (4)</option>
+            <option value="3">⭐⭐⭐ (3)</option>
+            <option value="2">⭐⭐ (2)</option>
+            <option value="1">⭐ (1)</option>
+          </select>
+        </div>
+
+        <!-- Comment -->
+        <div class="mb-3">
+          <label for="comment" class="form-label">Your Review</label>
+          <textarea class="form-control" id="comment" name="comment" rows="3" required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-success">
+          <i class="bi bi-send"></i> Submit Review
+        </button>
+      </form>
+    </div>
+  <% } else { %>
+    <p class="text-muted mt-3">Please <a href="/login">login</a> to add a review.</p>
+  <% } %>
+</section>
+
+
+  <!-- Related Products -->
+  <section class="mt-5">
+    <h4 class="fw-bold">Related Products</h4>
+    <div class="row row-cols-2 row-cols-md-4 g-4">
+      <% relatedProducts.forEach(p => { %>
+        <div class="col">
+          <div class="card h-100 border-0 shadow-sm">
+            <img src="/uploads/re-image/<%= p.productImage[0] %>" class="card-img-top" alt="<%= p.productName %>">
+            <div class="card-body">
+              <h6 class="card-title"><%= p.productName %></h6>
+              <p class="text-danger fw-bold">₹<%= p.salesPrice || p.regularPrice %></p>
+              <a href="/product-details?id=<%= p._id %>" class="stretched-link"></a>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<script>
+  function handleAddToCart(productId) {
+    fetch(`/add-to-cart/${productId}`, { method: "POST" })
+      .then(res => {
+        if (res.status === 403) {
+          alert("This product is blocked/unavailable.");
+          window.location.href = "/shop";
+        }else{
+          Swal.fire({
+             title: 'Success!',
+             text: 'Item added to cart',
+             icon: 'success',
+             confirmButtonText: 'OK'
+          }).then(()=>{
+            location.reload();
+          });
+        }
+      })
+      .catch(() => alert("Error adding to cart."));
+  }
+</script>
+
+<%- include("../../views/user/partials/footer.ejs") %>

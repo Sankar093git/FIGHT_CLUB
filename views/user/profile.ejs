@@ -1,0 +1,386 @@
+<%- include("../../views/user/partials/header.ejs") %>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<style>
+  body { margin-top: 120px; }
+  .dashboard-card { border-radius: 10px; box-shadow: 0px 3px 8px rgba(0,0,0,0.05); }
+  .profile-img { width: 100px; height: 100px; object-fit: cover; border-radius: 50%; }
+
+ .profile-pic-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.profile-img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.edit-icon-overlay {
+  position: absolute;
+  top: 50%;       /* center vertically */
+  left: 50%;      /* center horizontally */
+  transform: translate(-50%, -50%); /* move back to true center */
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  padding: 8px;
+  border-radius: 50%;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+}
+
+.profile-pic-wrapper:hover .edit-icon-overlay {
+  opacity: 1;
+}
+
+
+</style>
+
+<main class="container py-5">
+  <div class="row justify-content-center">
+
+    <!-- Content -->
+    <div class="col-lg-9">
+
+      <!-- User Details -->
+      <div class="card dashboard-card p-4 mb-4">
+        <h4>User Profile</h4>
+        <div class="d-flex align-items-center">
+          <div class="profile-pic-wrapper position-relative d-inline-block">
+  <% if (userData.userImage) { %>
+    <img src="/uploads/others/<%= userData.userImage %>" class="profile-img">
+  <% } else { %>
+    <img src="/images/default-avatar.png" class="profile-img">
+  <% } %>
+
+  <!-- Edit Icon Overlay -->
+  <label for="profileImageInput" class="edit-icon-overlay">
+    <i class="bi bi-pencil-fill"></i>
+  </label>
+  <input type="file" id="profileImageInput" onchange="changeProfilePic('<%=userData._id%>')" class="d-none" accept="image/*">
+</div>
+
+          <div>
+            <p><strong>Name:</strong> <%= userData.name %></p>
+            <p><strong>Email:</strong> <%= userData.email %></p>
+            <p><strong>Phone:</strong> <%= userData.phone %></p>
+          </div>
+        </div>
+        <div>
+          <button class="btn btn-primary w-100" href="/edit-profile"><a class="btn btn-primary w-100" href="/edit-profile">Edit profile</a></button>
+          </div>
+      </div>
+
+      <!-- Addresses -->
+      <div class="card dashboard-card p-4 mb-4">
+        <h4>Saved Addresses</h4>
+        <div class="row">
+          <% if (userData.address && userData.address.length > 0) { %>
+            <% userData.address.forEach(addr => { %>
+              <div class="col-lg-6 mb-3">
+                <div class="card">
+                  <div class="card-body">
+                    <h6><%= addr.label %></h6>
+                    <p><%= addr.street %>, <%= addr.city %>, <%= addr.state %> - <%= addr.postalCode %></p>
+                    <div class="d-flex justify-content-between">
+                      <button type="button" class="btn btn-sm btn-link float-end text-decoration-none"data-bs-toggle="modal"
+                        data-bs-target="#addAddressModal-1"onclick="populateAddressForm('<%= addr._id %>','<%= addr.label %>', '<%= addr.street %>', '<%= addr.city %>', '<%= addr.state %>', '<%= addr.country %>', '<%= addr.postalCode %>', '<%= addr.phone %>', <%= addr.isDefault %>)">
+                        <i class="bi bi-pencil"></i> Edit
+                 </button>
+                      <a href="/delete-address/<%= addr._id %>" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <p>No addresses saved.</p>
+          <% } %>
+        </div>
+        <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#addAddressModal"> + Add New Address</button>
+      </div>
+
+      <!-- Orders -->
+      <div class="card dashboard-card p-4 mb-4">
+        <h4>My Orders</h4>
+        <table class="table table-bordered align-middle">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Status</th>
+              <th>Total</th>
+              <th>Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (userData.orders && userData.orders.length > 0) { %>
+              <% userData.orders.forEach(order => { %>
+                <tr>
+                  <td>#<%= order._id %></td>
+                  <td><%= order.status %></td>
+                  <td>₹<%= order.totalAmount %></td>
+                  <td><%= order.createdAt.toDateString() %></td>
+                  <td>
+                    <a href="/orders/<%= order._id %>" class="btn btn-sm btn-outline-primary">View</a>
+                    <% if (order.status === "Pending" || order.status === "Processing") { %>
+                      <button   class="btn btn-sm btn-outline-danger"  onclick="cancelOrder('<%= order.orderId %>')">  Cancel</button>
+                    <% }else if(order.status === "Cancelled" || order.status === "Returned") %>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr><td colspan="5" class="text-center">No orders found.</td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form action="/add-address" id="addressForm" method="post">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addAddressModalLabel">Add New Address</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Address Label (Home / Office)</label>
+            <input type="text" id="label" name="label" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Street</label>
+            <input type="text" id="street" name="street" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">City</label>
+            <input type="text" id="city" name="city" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">State</label>
+            <input type="text" id="state" name="state" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Country</label>
+            <input type="text" id="country" name="country" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Postal Code</label>
+            <input type="text" id="postalCode" name="postalCode" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Phone</label>
+            <input type="text" id="phone" name="phone" class="form-control">
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="isDefault" value="true" id="defaultAddress">
+            <label class="form-check-label" for="defaultAddress">Set as Default</label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Address</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addAddressModal-1" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form action="" id="addressFormedit" method="post">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addAddressModalLabel">Add New Address</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Address Label (Home / Office)</label>
+            <input type="text" id="labeledit" name="label" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Street</label>
+            <input type="text" id="streetedit" name="street" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">City</label>
+            <input type="text" id="cityedit" name="city" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">State</label>
+            <input type="text" id="stateedit" name="state" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Country</label>
+            <input type="text" id="countryedit" name="country" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Postal Code</label>
+            <input type="text" id="postalCodeedit" name="postalCode" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Phone</label>
+            <input type="text" id="phoneedit" name="phone" class="form-control">
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="isDefault" value="true" id="defaultAddressedit">
+            <label class="form-check-label" for="defaultAddress">Set as Default</label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Address</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById("addressForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const label = document.getElementById("label").value.trim();
+    const street = document.getElementById("street").value.trim();
+    const city = document.getElementById("city").value.trim();
+    const state = document.getElementById("state").value.trim();
+    const country = document.getElementById("country").value.trim();
+    const postalCode = document.getElementById("postalCode").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+
+    // Validation rules
+    const postalRegex = /^[0-9]{5,6}$/; // adjust if needed
+    const phoneRegex = /^[0-9]{10}$/;   // 10 digit phone
+
+    if (!label || !street || !city || !state || !country || !postalCode || !phone) {
+      alert("All fields are required!");
+      return;
+    }
+
+    if (!postalRegex.test(postalCode)) {
+      alert("Enter a valid postal code (5–6 digits).");
+      return;
+    }
+
+    if (!phoneRegex.test(phone)) {
+      alert("Enter a valid 10-digit phone number.");
+      return;
+    }
+
+    // If everything is valid
+    alert("Address saved successfully!");
+    this.submit(); // or use AJAX to send to server
+  });
+
+  function changeProfilePic(id) {
+  let input = document.getElementById("profileImageInput");
+  let file = input.files[0];
+
+  if (!file) return;
+
+  let formData = new FormData();
+  formData.append("profileImageInput", file);
+
+  fetch(`/change-profile-pic/${id}`, {
+    method: "POST",
+    body: formData,
+  })
+    .then(res => {
+      if (!res.ok) throw new Error("Network response was not ok");
+      window.location.reload();
+    })
+    .then(data => {
+      console.log("Profile picture changed successfully:", data);
+      
+      document.querySelector(".profile-img").src = `/uploads/others/${data.fileName}`;
+    })
+    .catch(error => {
+      console.error("Something went wrong in the frontend:", error);
+    });
+}
+
+function populateAddressForm(id,label, street, city, state, country, postalCode, phone, isDefault){
+  
+    document.getElementById("addressFormedit").action="/edit-address/"+id;
+
+    document.getElementById("labeledit").value=label;
+    document.getElementById("streetedit").value=street;
+    document.getElementById("cityedit").value=city;
+    document.getElementById("stateedit").value=state;
+    document.getElementById("countryedit").value=country;
+    document.getElementById("postalCodeedit").value=postalCode;
+    document.getElementById("phoneedit").value=phone;
+    document.getElementById("isDefaultedit").checked=isDefault?true:false;   
+}
+
+function cancelOrder(orderId) {
+  Swal.fire({
+    title: "Are you sure?",
+    text: "Do you really want to cancel this order?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, cancel it",
+    cancelButtonText: "No, keep it",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      fetch(`/cancel-order/${orderId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            Swal.fire({
+              title: "Cancelled!",
+              text: "Your order has been successfully cancelled.",
+              icon: "success",
+              confirmButtonText: "OK",
+            }).then(() => {
+              window.location.reload();
+            });
+          } else {
+            Swal.fire({
+              title: "Cancellation Failed",
+              text: "Something went wrong. Please try again later.",
+              icon: "error",
+              confirmButtonText: "OK",
+            });
+          }
+        })
+        .catch(() => {
+          Swal.fire({
+            title: "Cancellation Failed",
+            text: "Network error. Please check your connection.",
+            icon: "error",
+            confirmButtonText: "OK",
+          });
+        });
+    }
+  });
+}
+
+
+</script>
+
+
+<%- include("../../views/user/partials/footer.ejs") %>
+

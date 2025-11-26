@@ -1,0 +1,56 @@
+# Node modules
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build / Production files
+dist/
+build/
+
+# Dependency directories
+bower_components/
+
+# Temporary files
+.tmp/
+temp/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Coverage reports
+coverage/
+
+# Cache folders
+.cache/
+.next/
+.nuxt/
+
+# Optional npm cache directory
+.npm/
+
+# Debug 
+*.pid
+*.seed
+*.pid.lock
+
+# Local test & debug config
+jest-local.config.js

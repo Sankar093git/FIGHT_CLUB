@@ -1,0 +1,99 @@
+<%- include("../../views/user/partials/header.ejs") %>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<%- include("../../views/user/partials/header.ejs") %>
+<style>
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1;
+}
+  .trash-btn {
+    border: none;
+    background: transparent;
+    color: red;
+    font-size: 1.2rem;
+    margin-left: 10px;
+    cursor: pointer;
+  }
+  .trash-btn:hover {
+    color: darkred;
+  }
+
+</style>
+
+<main class="container py-5 cart">
+  <h2 class="mb-4 mt-5">My Cart</h2>
+
+  <% if (userData.cart && userData.cart.length > 0) { %>
+    <table class="table table-bordered align-middle">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Price</th>
+          <th>Quantity</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% let grandTotal = 0; %>
+        <% userData.cart.forEach(item => { 
+             let itemTotal = item.product.salesPrice * item.quantity;
+             grandTotal += itemTotal;
+        %>
+          <tr>
+            <td>
+              <img src="/uploads/re-image/<%= item.product.productImage[0] %>" width="60">
+              <%= item.product.productName %>
+              <% if (item.product.stock === 0) { %>
+                <span class="badge bg-danger">Out of Stock</span>
+              <% } %>
+            </td>
+            <td>₹<%= item.product.salesPrice %></td>
+            <td>
+              <form method="post" action="/cart/change-quantity" class="d-inline">
+                <input type="hidden" name="productId" value="<%= item.product._id %>">
+                <button type="submit" name="action" value="decrement" class="btn btn-sm btn-outline-secondary">-</button>
+                <span class="mx-2"><%= item.quantity %></span>
+                <button type="submit" name="action" value="increment"
+                        class="btn btn-sm btn-outline-secondary"
+                        <%= item.product.stock === 0 ? "disabled" : "" %>>+</button>
+              </form>
+              
+              <!-- Trashcan button for remove -->
+              <form method="post" action="/cart/remove" class="d-inline">
+                <input type="hidden" name="productId" value="<%= item.product._id %>">
+                <input type="hidden" name="cartItemId" value="<%= item._id %>">
+                <button type="submit" class="trash-btn">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </td>
+            <td>₹<%= itemTotal %></td>
+          </tr>
+        <% }) %>
+        <!-- Grand Total Row -->
+        <tr>
+          <td colspan="3" class="text-end fw-bold">Grand Total</td>
+          <td class="fw-bold">₹<%= grandTotal %></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="text-end">
+      <a href="/checkout" class="btn btn-primary"
+         <%= userData.cart.some(item => item.product.stock === 0) ? "disabled" : "" %>>
+        Proceed to Checkout
+      </a>
+    </div>
+  <% } else { %>
+    <p>Your cart is empty.</p>
+  <% } %>
+</main>
+
+<%- include("../../views/user/partials/footer.ejs") %>
+
+
