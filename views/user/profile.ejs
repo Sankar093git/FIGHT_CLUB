@@ -124,7 +124,7 @@
             <% if (userData.orders && userData.orders.length > 0) { %>
               <% userData.orders.forEach(order => { %>
                 <tr>
-                  <td>#<%= order._id %></td>
+                  <td>#<%= order.orderId %></td>
                   <td><%= order.status %></td>
                   <td>₹<%= order.totalAmount %></td>
                   <td><%= order.createdAt.toDateString() %></td>
@@ -132,7 +132,7 @@
                     <a href="/orders/<%= order._id %>" class="btn btn-sm btn-outline-primary">View</a>
                     <% if (order.status === "Pending" || order.status === "Processing") { %>
                       <button   class="btn btn-sm btn-outline-danger"  onclick="cancelOrder('<%= order.orderId %>')">  Cancel</button>
-                    <% }else if(order.status === "Cancelled" || order.status === "Returned") %>
+                    <% } %>
                   </td>
                 </tr>
               <% }) %>

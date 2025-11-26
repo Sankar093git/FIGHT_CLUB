@@ -161,7 +161,10 @@ const cancelOrder= async(req,res)=>{
         const orderId= req.params.id;
         await User.updateOne({_id:req.session.user,"orders.orderId":orderId},{$set:{"orders.$.status":"Cancelled"}});
         const orderDetails=userData.orders.find((order)=>order.orderId==orderId);
-        console.log(orderDetails);
+        const productDetails=orderDetails.products;
+        for(let prod of productDetails){
+             await Product.updateOne({_id:prod.product},{$inc:{quantity:prod.quantity}});
+        }
         return res.json({success:true});       
     } catch (error) {
         console.error("Error while cancelling order,",error);
