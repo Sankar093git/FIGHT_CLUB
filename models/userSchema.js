@@ -143,8 +143,13 @@ const userSchema = new mongoose.Schema(
          },
         status: {
           type: String,
-          enum: ["Pending", "Processing", "Shipped", "Delivered", "Cancelled", "Returned"],
+          enum: ["Pending", "Processing", "Shipped", "Delivered", "Cancelled","Return Processing", "Returned"],
           default: "Pending",
+        },
+        reasonForReturn:{
+          type:String,
+          required:true,
+          default:"N/A"
         },
         totalAmount: {
           type: Number,

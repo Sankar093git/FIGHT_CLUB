@@ -165,10 +165,32 @@ const cancelOrder= async(req,res)=>{
         for(let prod of productDetails){
              await Product.updateOne({_id:prod.product},{$inc:{quantity:prod.quantity}});
         }
-        return res.json({success:true});       
+         res.json({success:true});       
     } catch (error) {
         console.error("Error while cancelling order,",error);
-        return res.json({success:false,});
+         res.json({success:false,});
+    }
+}
+
+const returnOrder= async(req,res)=>{
+    try {
+        const userData= await User.findOne({_id:req.session.user});
+        const orderId= req.params.id;
+        const returnMessage=req.body.message;
+        await User.updateOne({_id:req.session.user,"orders.orderId":orderId},{$set:{"orders.$.status":"Return processing","orders.$.reasonForReturn":returnMessage}});
+        const orderDetails=userData.orders.find((order)=>order.orderId==orderId);
+        const productDetails=orderDetails.products;
+        for(let prod of productDetails){
+             await Product.updateOne({_id:prod.product},{$inc:{quantity:prod.quantity}});
+        }
+         res.json({  
+            success: true,
+            message: "Return request submitted",
+            reason: returnMessage
+        });       
+    } catch (error) {
+        console.error("Error while cancelling order,",error);
+        res.json({success:false,});
     }
 }
 
@@ -212,6 +234,7 @@ module.exports={
     verifyOtp,
     editAddress,
     cancelOrder,
-    displayOrder
+    displayOrder,
+    returnOrder
 
 }

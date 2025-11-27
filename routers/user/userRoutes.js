@@ -63,6 +63,7 @@ router.get("/checkout",userAuth,checkoutController.loadCheckout);
 router.get("/order",userAuth,profileController.displayOrder);
 router.post("/place-order",userAuth,checkoutController.placeOrder);
 router.post("/cancel-order/:id",userAuth,profileController.cancelOrder);
+router.post("/return-order/:id",userAuth,profileController.returnOrder);
 router.get("/order-success",userAuth,checkoutController.orderSuccess);
 router.post("/add-new-address",userAuth,checkoutController.addAddress);
 router.post("/edit-current-address/:id",userAuth,checkoutController.editAddress);
