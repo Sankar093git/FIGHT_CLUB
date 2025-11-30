@@ -32,6 +32,8 @@ const placeOrder= async (req,res)=>{
         const selectedAddress=userData.address.find((addr)=>addr._id.toString()==address);
         const orderId = "ORD-" + crypto.randomBytes(4).toString("hex");
         const newOrder={
+        name:userData.name,
+        email:userData.email,    
         orderId:orderId ,
         products: userData.cart,
         totalAmount:parseFloat(req.body.totalAmount),

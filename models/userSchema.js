@@ -92,6 +92,14 @@ const userSchema = new mongoose.Schema(
 
     orders: [
       {
+        name:{
+          type:String,
+          required:true
+        },
+        email:{
+          type:String,
+          required:true
+        },
         orderId: {
            type: String,
            required: true,
@@ -143,7 +151,7 @@ const userSchema = new mongoose.Schema(
          },
         status: {
           type: String,
-          enum: ["Pending", "Processing", "Shipped", "Delivered", "Cancelled","Return Processing", "Returned"],
+          enum: ["Pending", "Processing", "Shipped","Out for delivery", "Delivered", "Cancelled","Return Processing", "Returned"],
           default: "Pending",
         },
         reasonForReturn:{

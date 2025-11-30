@@ -16,6 +16,7 @@ const loadCustomer= async(req,res)=>{
                 {email:{$regex:".*"+search+".*",$options:"i"}}
             ]}).countDocuments();
         const totalPages=Math.ceil(count/limit);
+        console.log("xxx")
         res.render("customer",{data:userData||null,
             totalPages:totalPages,
             totalCount:count,

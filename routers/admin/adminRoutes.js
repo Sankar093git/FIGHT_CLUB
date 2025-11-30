@@ -5,6 +5,7 @@ const customerController=require("../../controllers/admin/customerController");
 const categoryController=require("../../controllers/admin/categoryController");
 const productController=require("../../controllers/admin/productController");
 const brandController=require("../../controllers/admin/brandController");
+const orderController=require("../../controllers/admin/orderController");
 const {adminAuth,adminAuth1}=require("../../middlewares/auth");
 const multer=require("multer");
 const storage=require("../../helpers/multer");
@@ -42,6 +43,10 @@ router.post("/delete-image",adminAuth,productController.deleteImages);
 //Brand management
 router.get("/brands",adminAuth,brandController.getBrandList);
 router.post("/add-brand",adminAuth,uploads.single("image"),brandController.addBrand);
+
+//Order management
+router.get("/orderList",adminAuth,orderController.getOrderList);
+router.post("/change-order-status/:id",adminAuth,orderController.changeOrderStatus)
 
 
 

@@ -267,9 +267,9 @@
     const postalCode = document.getElementById("postalCode").value.trim();
     const phone = document.getElementById("phone").value.trim();
 
-    // Validation rules
-    const postalRegex = /^[0-9]{5,6}$/; // adjust if needed
-    const phoneRegex = /^[0-9]{10}$/;   // 10 digit phone
+    
+    const postalRegex = /^[0-9]{5,6}$/; 
+    const phoneRegex = /^[0-9]{10}$/;   
 
     if (!label || !street || !city || !state || !country || !postalCode || !phone) {
       alert("All fields are required!");
