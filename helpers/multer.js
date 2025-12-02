@@ -7,9 +7,9 @@ const storage = multer.diskStorage({
     let uploadPath = path.join(__dirname, "../public/uploads/others");
 
     // You can decide based on route
-    if (req.baseUrl.includes("product")) {
+    if (req.originalUrl.includes("product")) {
       uploadPath = path.join(__dirname, "../public/uploads/re-image");
-    } else if (req.baseUrl.includes("profile")) {
+    } else if (req.originalUrl.includes("profile")) {
       uploadPath = path.join(__dirname, "../public/uploads/profiles");
     }
 

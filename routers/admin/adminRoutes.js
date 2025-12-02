@@ -8,8 +8,8 @@ const brandController=require("../../controllers/admin/brandController");
 const orderController=require("../../controllers/admin/orderController");
 const {adminAuth,adminAuth1}=require("../../middlewares/auth");
 const multer=require("multer");
-const storage=require("../../helpers/multer");
-const uploads=multer({storage:storage});
+const uploads=require("../../helpers/multer");
+//const uploads=multer({storage:storage});
 
 
 //Login management
