@@ -1,10 +1,58 @@
 <%- include("../../views/user/partials/header.ejs") %>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
 <style>
   body{
     margin-top:30px;
   }
+  
+  /* Image Zoom Container */
+  .zoom-container {
+    position: relative;
+    overflow: hidden;
+    cursor: zoom-in;
+    border-radius: 8px;
+  }
+  
+  .zoom-container img {
+    transition: transform 0.3s ease;
+    width: 100%;
+    height: auto;
+  }
+  
+  .zoom-container:hover img {
+    transform: scale(2);
+  }
+  
+  /* Thumbnail Gallery */
+  .thumbnail-gallery {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+  }
+  
+  .thumbnail {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  .thumbnail:hover {
+    border-color: #007bff;
+    transform: scale(1.05);
+  }
+  
+  .thumbnail.active {
+    border-color: #007bff;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+  }
 </style>
+
 <main class="main container py-5">
   <!-- Breadcrumbs -->
   <nav aria-label="breadcrumb" class="mb-4">
@@ -16,9 +64,23 @@
   </nav>
 
   <div class="row g-5">
-    <!-- Left: Product Image -->
+    <!-- Left: Product Image with Zoom -->
     <div class="col-md-6">
-      <img src="/uploads/re-image/<%= product.productImage[0] %>" alt="<%= product.productName %>" class="img-fluid rounded shadow-sm">
+      <div class="zoom-container" id="zoomContainer">
+        <img id="mainImage" src="/uploads/re-image/<%= product.productImage[0] %>" alt="<%= product.productName %>" class="img-fluid shadow-sm">
+      </div>
+      
+      <!-- Thumbnail Gallery -->
+      <div class="thumbnail-gallery">
+        <% product.productImage.forEach((img, index) => { %>
+          <img 
+            src="/uploads/re-image/<%= img %>" 
+            alt="Thumbnail <%= index + 1 %>" 
+            class="thumbnail <%= index === 0 ? 'active' : '' %>"
+            onclick="changeImage('/uploads/re-image/<%= img %>', this)"
+          >
+        <% }) %>
+      </div>
     </div>
 
     <!-- Right: Product Details -->
@@ -40,7 +102,7 @@
         <% if (product.salesPrice) { %>
           <h4 class="fw-bold text-danger">₹<%= product.salesPrice %></h4>
           <small class="text-muted text-decoration-line-through">₹<%= product.regularPrice %></small>
-          <span class="badge bg-success ms-2">-<%= 100*(product.regularPrice-product.salesPrice)/product.regularPrice %>%</span>
+          <span class="badge bg-success ms-2">-<%= Math.round(100*(product.regularPrice-product.salesPrice)/product.regularPrice) %>%</span>
         <% } else { %>
           <h4 class="fw-bold">₹<%= product.regularPrice %></h4>
         <% } %>
@@ -49,7 +111,6 @@
       <!-- Stock Status -->
       <% if (product.available!=true) { %>
         <div class="alert alert-danger">❌ This product is unavailable or blocked.</div>
-        <!--<script>window.location.href = "/shop";</script>-->
       <% } else if (product.quantity <= 0) { %>
         <div class="alert alert-warning">⚠️ Out of Stock</div>
       <% } else { %>
@@ -62,15 +123,15 @@
           <i class="bi bi-cart-plus"></i> Add to Cart
         </button>
         <!-- Product Highlights / Specifications -->
-  <section class="mt-5">
-    <h4 class="fw-bold">Highlights</h4>
-    <ul class="list-group list-group-flush">
-      <li class="list-group-item">✔️ Lightweight running shoe</li>
-      <li class="list-group-item">✔️ Breathable mesh upper</li>
-      <li class="list-group-item">✔️ Cushioned sole for extra comfort</li>
-      <li class="list-group-item">✔️ 1-year warranty</li>
-    </ul>
-  </section>
+        <section class="mt-5">
+          <h4 class="fw-bold">Highlights</h4>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">✔️ Lightweight running shoe</li>
+            <li class="list-group-item">✔️ Breathable mesh upper</li>
+            <li class="list-group-item">✔️ Cushioned sole for extra comfort</li>
+            <li class="list-group-item">✔️ 1-year warranty</li>
+          </ul>
+        </section>
       <% } else { %>
         <button class="btn btn-secondary mt-4 px-4" disabled>
           <i class="bi bi-cart-x"></i> Unavailable
@@ -80,60 +141,59 @@
   </div>
 
   <!-- Reviews -->
-<section class="mt-5">
-  <h4 class="fw-bold">Customer Reviews</h4>
+  <section class="mt-5">
+    <h4 class="fw-bold">Customer Reviews</h4>
 
-  <!-- Existing Reviews -->
-  <% if (product.reviews.length > 0) { %>
-    <% product.reviews.forEach(r => { %>
-      <div class="border p-3 rounded mb-2">
-        <strong><%= r.user.name || "Anonymous" %></strong> 
-        <span class="text-warning ms-2">
-          <% for (let i = 1; i <= 5; i++) { %>
-            <i class="bi <%= i <= r.rating ? 'bi-star-fill' : 'bi-star' %>"></i>
-          <% } %>
-        </span>
-        <p class="mt-2"><%= r.comment %></p>
+    <!-- Existing Reviews -->
+    <% if (product.reviews.length > 0) { %>
+      <% product.reviews.forEach(r => { %>
+        <div class="border p-3 rounded mb-2">
+          <strong><%= r.user.name || "Anonymous" %></strong> 
+          <span class="text-warning ms-2">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <i class="bi <%= i <= r.rating ? 'bi-star-fill' : 'bi-star' %>"></i>
+            <% } %>
+          </span>
+          <p class="mt-2"><%= r.comment %></p>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <p class="text-muted">No reviews yet.</p>
+    <% } %>
+
+    <!-- Add a Review Form -->
+    <% if (locals.user) { %>
+      <div class="mt-4">
+        <h5>Add Your Review</h5>
+        <form id="reviewForm" method="POST" action="/product/<%= product._id %>/review">
+          <!-- Rating -->
+          <div class="mb-3">
+            <label for="rating" class="form-label">Rating</label>
+            <select class="form-select" id="rating" name="rating" required>
+              <option value="">Choose...</option>
+              <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+              <option value="4">⭐⭐⭐⭐ (4)</option>
+              <option value="3">⭐⭐⭐ (3)</option>
+              <option value="2">⭐⭐ (2)</option>
+              <option value="1">⭐ (1)</option>
+            </select>
+          </div>
+
+          <!-- Comment -->
+          <div class="mb-3">
+            <label for="comment" class="form-label">Your Review</label>
+            <textarea class="form-control" id="comment" name="comment" rows="3" required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-send"></i> Submit Review
+          </button>
+        </form>
       </div>
-    <% }) %>
-  <% } else { %>
-    <p class="text-muted">No reviews yet.</p>
-  <% } %>
-
-  <!-- Add a Review Form -->
-  <% if (locals.user) { %> <!-- ✅ Only logged-in users can review -->
-    <div class="mt-4">
-      <h5>Add Your Review</h5>
-      <form id="reviewForm" method="POST" action="/product/<%= product._id %>/review">
-        <!-- Rating -->
-        <div class="mb-3">
-          <label for="rating" class="form-label">Rating</label>
-          <select class="form-select" id="rating" name="rating" required>
-            <option value="">Choose...</option>
-            <option value="5">⭐⭐⭐⭐⭐ (5)</option>
-            <option value="4">⭐⭐⭐⭐ (4)</option>
-            <option value="3">⭐⭐⭐ (3)</option>
-            <option value="2">⭐⭐ (2)</option>
-            <option value="1">⭐ (1)</option>
-          </select>
-        </div>
-
-        <!-- Comment -->
-        <div class="mb-3">
-          <label for="comment" class="form-label">Your Review</label>
-          <textarea class="form-control" id="comment" name="comment" rows="3" required></textarea>
-        </div>
-
-        <button type="submit" class="btn btn-success">
-          <i class="bi bi-send"></i> Submit Review
-        </button>
-      </form>
-    </div>
-  <% } else { %>
-    <p class="text-muted mt-3">Please <a href="/login">login</a> to add a review.</p>
-  <% } %>
-</section>
-
+    <% } else { %>
+      <p class="text-muted mt-3">Please <a href="/login">login</a> to add a review.</p>
+    <% } %>
+  </section>
 
   <!-- Related Products -->
   <section class="mt-5">
@@ -154,6 +214,7 @@
     </div>
   </section>
 </main>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 <script>
   function handleAddToCart(productId) {
@@ -162,19 +223,44 @@
         if (res.status === 403) {
           alert("This product is blocked/unavailable.");
           window.location.href = "/shop";
-        }else{
+        } else {
           Swal.fire({
-             title: 'Success!',
-             text: 'Item added to cart',
-             icon: 'success',
-             confirmButtonText: 'OK'
-          }).then(()=>{
+            title: 'Success!',
+            text: 'Item added to cart',
+            icon: 'success',
+            confirmButtonText: 'OK'
+          }).then(() => {
             location.reload();
           });
         }
       })
       .catch(() => alert("Error adding to cart."));
   }
+
+  // Image switching function
+  function changeImage(imageSrc, thumbnail) {
+    // Update main image
+    document.getElementById('mainImage').src = imageSrc;
+    
+    // Update active thumbnail
+    document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
+    thumbnail.classList.add('active');
+  }
+
+  // Enhanced zoom with mouse tracking
+  const zoomContainer = document.getElementById('zoomContainer');
+  const mainImage = document.getElementById('mainImage');
+
+  zoomContainer.addEventListener('mousemove', (e) => {
+    const rect = zoomContainer.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    mainImage.style.transformOrigin = `${x}% ${y}%`;
+  });
+
+  zoomContainer.addEventListener('mouseleave', () => {
+    mainImage.style.transformOrigin = 'center center';
+  });
 </script>
 
 <%- include("../../views/user/partials/footer.ejs") %>

@@ -1,9 +1,65 @@
 <%- include("../../views/user/partials/header.ejs") %>
 <style>
-  .product-card img { max-height: 200px; object-fit: contain; }
-  .filter-section { position: sticky; top: 1rem; }
-  .search-button { border-radius: 0px 0px 3px 0px; }
-  .searchInput { border: 1px solid darkgrey; }
+  .product-card img {
+    margin-top:5px;
+     max-height: 200px; 
+     object-fit: contain; 
+    }
+  .filter-section { 
+    position: sticky; 
+    top: 1rem; 
+  }
+  .search-button { 
+    border-radius: 0px 0px 3px 0px; 
+  }
+  .searchInput { 
+    border: 1px solid darkgrey; 
+  }
+  .product-card {
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.product-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+}
+
+.product-card .card-img-top {
+  height: 220px;
+  object-fit: contain;
+  padding: 12px;
+  background: #f8f9fa;
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .card-img-top {
+  transform: scale(1.05);
+}
+
+.product-card .card-body {
+  padding: 12px 16px 16px;
+}
+
+.btn-add-cart {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-add-cart:hover {
+  background: linear-gradient(135deg, #218838, #1aa179);
+  transform: scale(1.05);
+  color: white;
+}
 </style>
 
 <div class="container" style="margin-top: 64px; padding-top: 40px;">
@@ -91,8 +147,11 @@
                  value="<%= maxPrice || 900 %>" step="10" oninput="document.getElementById('maxValue').innerText=this.value">
 
           <div class="mt-2">
-            <button type="button" class="btn btn-sm btn-outline-primary w-100" onclick="applyPriceFilter()">
+            <button type="button" class="btn btn-sm btn-outline-primary mb-4 w-100" onclick="applyPriceFilter()">
               Apply Price
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger mb-4 w-100" onclick="clearFilters()">
+              Clear-filters
             </button>
           </div>
         </div>
@@ -130,62 +189,134 @@
 </div>
 
 <script>
-  // Render products (same as you had)
+  /* ---------------------------------------------------------
+     1. Inject backend data safely into JS
+  --------------------------------------------------------- */
   const products = <%- JSON.stringify(product || []) %>;
-  const productList = document.getElementById('product-list');
+  const productList = document.getElementById("product-list");
 
+  /* ---------------------------------------------------------
+     2. Generic URL helper (avoids repeating logic)
+  --------------------------------------------------------- */
+  function updateURLParams(updates = {}) {
+    const url = new URL(window.location.href);
+
+    Object.keys(updates).forEach(key => {
+      const value = updates[key];
+      if (value === "" || value === null || value === undefined) {
+        url.searchParams.delete(key);
+      } else {
+        url.searchParams.set(key, value);
+      }
+    });
+
+    // always reset pagination when filters change
+    url.searchParams.delete("page");
+
+    window.location.href = url.pathname + "?" + url.searchParams.toString();
+  }
+
+  /* ---------------------------------------------------------
+     3. Handlers for Filters
+  --------------------------------------------------------- */
+  function updateQueryParam(key, value) {
+    updateURLParams({ [key]: value });
+  }
+
+  function applyPriceFilter() {
+    const min = document.getElementById("minRange").value;
+    const max = document.getElementById("maxRange").value;
+    updateURLParams({ minPrice: min, maxPrice: max });
+  }
+
+  /* ---------------------------------------------------------
+     4. Render Product Cards
+  --------------------------------------------------------- */
   function renderProducts(container, data) {
-    container.innerHTML = '';
+    container.innerHTML = "";
+
     data.forEach(p => {
-      const card = document.createElement('div');
-      card.className = 'col-md-4 mb-4';
+      const discount =
+        p.regularPrice > p.salesPrice? Math.round(((p.regularPrice - p.salesPrice) / p.regularPrice) * 100): 0;
+
+      const mainImage =
+        p.productImage && p.productImage[0]? `/uploads/re-image/${p.productImage[0]}`: "/uploads/re-image/placeholder.jpg";
+
+      const card = document.createElement("div");
+      card.className = "col-md-4 mb-4";
+
       card.innerHTML = `
         <div class="card product-card h-100">
-          <img src="/uploads/re-image/${p.productImage && p.productImage[0] ? p.productImage[0] : 'placeholder.jpg'}" class="card-img-top" alt="${p.productName}">
-          <div class="card-body d-flex flex-column justify-content-center align-items-center">
-            <h6 class="card-title">${p.productName}</h6>
-            <p class="card-text d-flex flex-column justify-content-center align-items-center">
-              <del>₹${p.regularPrice}</del>
-              ₹${p.salesPrice}
-            </p>
-            <a href="/product-details?id=${p._id}" class="btn btn-sm btn-outline-primary">View</a>
+          
+          <a href="/product-details?id=${p._id}">
+            <img src="${mainImage}" class="card-img-top" alt="${p.productName}">
+          </a>
+
+          <div class="card-body d-flex flex-column align-items-center">
+            <h6 class="card-title text-center mb-2">${p.productName}</h6>
+
+            <div class="price-section mb-3">
+              <span class="original-price text-muted text-decoration-line-through me-2">
+                ₹${p.regularPrice}
+              </span>
+              <span class="sale-price fw-bold text-danger">₹${p.salesPrice}</span>
+            </div>
+
+            <button onclick="handleAddToCart('${p._id}')" class="btn btn-add-cart">
+              <i class="bi bi-cart-plus me-1"></i> Add to Cart
+            </button>
           </div>
-        </div>`;
+        </div>
+      `;
+
       container.appendChild(card);
     });
   }
+
+  /* ---------------------------------------------------------
+     5. Execute Render
+  --------------------------------------------------------- */
   renderProducts(productList, products);
 
-  // Helper: update a single query param then reload (preserves existing others)
-  function updateQueryParam(key, value) {
-    const url = new URL(window.location.href);
-    if (value === '' || value === null) {
-      url.searchParams.delete(key);
-    } else {
-      url.searchParams.set(key, value);
+function handleAddToCart(productId){
+  fetch(`/add-to-cart/${productId}`,{
+    method:"POST",
+    headers:{
+      "content-type":"application/json"
     }
-    // when filters change, reset to page 1
-    url.searchParams.delete('page');
-    // navigate
-    window.location.href = url.pathname + (url.search ? '?' + url.searchParams.toString() : '');
+  }).then(res => {
+        if (res.status === 403) {
+          Swal.fire({
+          icon: "error",
+          title: "Oops!",
+          text: "This product is blocked or unavailable at the moment.",
+          confirmButtonColor: "#d33",
+        }).then(()=>{
+          window.location.href = "/shop";
+        })
+        } else {
+          Swal.fire({
+            title: 'Success!',
+            text: 'Item added to cart',
+            icon: 'success',
+            confirmButtonText: 'OK'
+          })
+        }
+      })
+      .catch(() => Swal.fire({
+                     icon: 'error',
+                     title: 'Add to Cart Failed',
+                     text: 'Something went wrong. Please try again.',
+                     confirmButtonColor: '#d33'
+                    }));
   }
 
-  // Apply price values and reload (preserving other params)
-  function applyPriceFilter() {
-    const min = document.getElementById('minRange').value;
-    const max = document.getElementById('maxRange').value;
-    const url = new URL(window.location.href);
-
-    if (min !== '') url.searchParams.set('minPrice', min);
-    else url.searchParams.delete('minPrice');
-
-    if (max !== '') url.searchParams.set('maxPrice', max);
-    else url.searchParams.delete('maxPrice');
-
-    url.searchParams.delete('page');
-    window.location.href = url.pathname + (url.search ? '?' + url.searchParams.toString() : '');
+  function clearFilters(){
+    window.location.href="/shop"
   }
+
 </script>
+
 
 <%- include("../../views/user/partials/footer.ejs") %>
 

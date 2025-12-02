@@ -60,7 +60,7 @@ router.post("/otp-verification",userAuth,profileController.verifyOtp);
 
 //checkout management
 router.get("/checkout",userAuth,checkoutController.loadCheckout);
-router.get("/order",userAuth,profileController.displayOrder);
+router.get("/orders",userAuth,profileController.displayOrder);
 router.post("/place-order",userAuth,checkoutController.placeOrder);
 router.post("/cancel-order/:id",userAuth,profileController.cancelOrder);
 router.post("/return-order/:id",userAuth,profileController.returnOrder);

@@ -17,13 +17,13 @@ const loadShopPage = async (req, res) => {
 
     // Sorting
     let sortOption = { createdOn: -1 };
-    if (sort === "priceAsc") {
+    if (sort === "price-asc") {
       sortOption = { salesPrice: 1 };
-    } else if (sort === "priceDesc") {
+    } else if (sort === "price-desc") {
       sortOption = { salesPrice: -1 };
-    } else if (sort === "nameAsc") {
+    } else if (sort === "asc") {
       sortOption = { productName: 1 };
-    } else if (sort === "nameDesc") {
+    } else if (sort === "desc") {
       sortOption = { productName: -1 };
     }
 

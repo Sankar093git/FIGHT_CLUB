@@ -77,11 +77,14 @@
         <div class="col-md-2">
           <select class="form-select" id="statusFilter">
             <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="shipped">Shipped</option>
-            <option value="out-for-delivery">Out for Delivery</option>
-            <option value="delivered">Delivered</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="Pending">Pending</option>
+            <option value="Shipped">Shipped</option>
+            <option value="Out for delivery">Out for Delivery</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Cancelled">Cancelled</option>
+            <option value="Processing return">Processing return</option>
+            <option value="Returned">Returned</option>
+            <option value="Return rejected">Return rejected</option>
           </select>
         </div>
         <div class="col-md-2">
@@ -99,7 +102,7 @@
           <button class="btn btn-sm btn-outline-secondary" id="clearFilters">
             <i class="bi bi-x-circle"></i> Clear Filters
           </button>
-          <button class="btn btn-sm btn-success" id="applyFilters">
+          <button class="btn btn-sm btn-success"  id="applyFilters">
             <i class="bi bi-search"></i> Search
           </button>
         </div>
@@ -125,50 +128,48 @@
             </thead>
             <tbody id="ordersTableBody">
              <% orderDetails.forEach((order)=>{%>
-              <% order.forEach((ord)=>{ %>
               <tr>
-                <td><span class="order-id"><%= ord.orderId %></span></td>
-                <td><%= ord.createdAt.toDateString() %></td>
+                <td><span class="order-id"><%= order.orderId %></span></td>
+                <td><%= order.createdAt.toDateString() %></td>
                 <td>
-                  <div class="fw-semibold"><%= ord.name %></div>
-                  <small class="text-muted"><%= ord.email %></small>
+                  <div class="fw-semibold"><%= order.name %></div>
+                  <small class="text-muted"><%= order.email %></small>
                 </td>
-                <td><%= ord.products.length%> items</td>
-                <td class="fw-semibold">₹<%= ord.totalAmount%></td>
+                <td><%= order.products.length%> items</td>
+                <td class="fw-semibold">₹<%= order.totalAmount%></td>
                 <td>
-                  <select class="form-select form-select-sm status-dropdown" onchange="handleOrderStatus(this.value,'<%= ord.orderId %>','<%=ord.email%>')">
-                    <option value="Pending" <%= ord.status === "Pnding" ? "selected" : "" %>>Pending</option>
-                    <option value="Shipped"<%= ord.status === "Shipped" ? "selected" : "" %>>Shipped</option>
-                    <option value="Out for delivery" <%= ord.status === "Out for delivery" ? "selected" : "" %>>Out for Delivery</option>
-                    <option value="Delivered" <%= ord.status === "Delivered" ? "selected" : "" %>>Delivered</option>
-                    <option value="Processing return" <%= ord.status === "Processing return" ? "selected" : "" %>>Processing return</option>
-                    <option value="Return rejected" <%= ord.status === "Return rejected" ? "selected" : "" %>>Return rejected</option>
-                    <option value="Cancelled" <%= ord.status === "Cancelled" ? "selected" : "" %>>Cancelled</option>
-                    <option value="Returned" <%= ord.status === "Returned" ? "selected" : "" %>>Returned</option>
+                  <select class="form-select form-select-sm status-dropdown" onchange="handleOrderStatus(this.value,'<%= order.orderId %>','<%=order.email%>')">
+                    <option value="Pending" <%= order.status === "Pnding" ? "selected" : "" %>>Pending</option>
+                    <option value="Shipped"<%= order.status === "Shipped" ? "selected" : "" %>>Shipped</option>
+                    <option value="Out for delivery" <%= order.status === "Out for delivery" ? "selected" : "" %>>Out for Delivery</option>
+                    <option value="Delivered" <%= order.status === "Delivered" ? "selected" : "" %>>Delivered</option>
+                    <option value="Processing return" <%= order.status === "Processing return" ? "selected" : "" %>>Processing return</option>
+                    <option value="Return rejected" <%= order.status === "Return rejected" ? "selected" : "" %>>Return rejected</option>
+                    <option value="Cancelled" <%= order.status === "Cancelled" ? "selected" : "" %>>Cancelled</option>
+                    <option value="Returned" <%= order.status === "Returned" ? "selected" : "" %>>Returned</option>
                   </select>
                 </td>
                 <td>
-                  <% if(ord.status=="Return rejected") {%>
+                  <% if(order.status=="Return rejected") {%>
                        <span class="badge bg-warning text-dark returnRequestStat" >Rejected</span>
-                    <% }else if(ord.status=="Returned"){ %>
+                    <% }else if(order.status=="Returned"){ %>
                       <span class="badge bg-warning text-dark returnRequestStat" >Approved</span>
                       <% }else{%>
-                  <span class="badge bg-warning text-dark returnRequestStat" ><%= ord.status==="Processing return"? "Requested" : "Not requested" %></span>
+                  <span class="badge bg-warning text-dark returnRequestStat" ><%= order.status==="Processing return"? "Requested" : "Not requested" %></span>
                   <% } %>
-                  <button class="btn btn-sm btn-outline-success mt-1 returHandleButton"  onclick="handleReturnVerification('<%=ord.orderId%>','<%=ord.email%>', true)">
+                  <button class="btn btn-sm btn-outline-success mt-1 returHandleButton"  onclick="handleReturnVerification('<%=order.orderId%>','<%=order.email%>', true)">
                     <i class="bi bi-check-circle"></i> Approve
                   </button>
-                  <button class="btn btn-sm btn-outline-danger mt-1 returHandleButton"  onclick="handleReturnVerification('<%=ord.orderId%>','<%=ord.email%>', false)">
+                  <button class="btn btn-sm btn-outline-danger mt-1 returHandleButton"  onclick="handleReturnVerification('<%=order.orderId%>','<%=order.email%>', false)">
                     <i class="bi bi-x-circle"></i> Reject
                   </button>
                 </td>
                 <td>
-                  <button class="btn btn-sm btn-outline-primary" onclick="viewOrderDetails('ORD-2024-001')">
+                  <button class="btn btn-sm btn-outline-primary" onclick="viewOrderDetails('<%=order.orderId%>','<%=order.email%>')">
                     <i class="bi bi-eye"></i> View
                   </button>
                 </td>
               </tr>
-              <% }) %>
               <% }) %>
             </tbody>
           </table>
@@ -177,25 +178,34 @@
     </div>
 
     <!-- Pagination -->
-    <div class="d-flex justify-content-between align-items-center mt-3">
-      <div class="text-muted small">
-        Showing 1 to 4 of 4 orders
-      </div>
-      <nav>
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item disabled">
-            <a class="page-link" href="#" tabindex="-1">Previous</a>
-          </li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item"><a class="page-link" href="#">2</a></li>
-          <li class="page-item"><a class="page-link" href="#">3</a></li>
-          <li class="page-item">
-            <a class="page-link" href="#">Next</a>
-          </li>
-        </ul>
-      </nav>
-    </div>
+ <div class="d-flex justify-content-between align-items-center mt-3">
+  <div class="text-muted small">
+    Showing <%= (currentPage-1)*limit + 1 %> to 
+            <%= Math.min(currentPage*limit, totalOrders) %> of <%= totalOrders %> orders
   </div>
+  <nav>
+    <ul class="pagination pagination-sm mb-0">
+
+      <!-- Previous button -->
+      <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+        <a class="page-link" href="?page=<%= currentPage-1 %>">Previous</a>
+      </li>
+
+      <!-- Page numbers -->
+      <% for(let i=1; i <= totalPages; i++) { %>
+        <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+          <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+        </li>
+      <% } %>
+
+      <!-- Next button -->
+      <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+        <a class="page-link" href="?page=<%= currentPage+1 %>">Next</a>
+      </li>
+
+    </ul>
+  </nav>
+</div>
 
   <!-- Return Verification Modal -->
   <div class="modal fade" id="returnModal" tabindex="-1">
@@ -237,6 +247,7 @@
     }
   });
 }
+
 
 
 
@@ -318,28 +329,25 @@ function handleOrderStatus(status,orderId,email){
     }
 
     // View order details
-    function viewOrderDetails(orderId) {
-      window.location.href = `/order-details.html?orderId=${orderId}`;
+    function viewOrderDetails(orderId,email) {
+      window.location.href = `/admin/orderDetails?orderId=${orderId}&email=${email}`;
     }
 
     // Search and filter functionality
-    document.getElementById('applyFilters').addEventListener('click', function() {
-      const searchTerm = document.getElementById('searchInput').value;
-      const status = document.getElementById('statusFilter').value;
-      const sortBy = document.getElementById('sortBy').value;
-      const date = document.getElementById('dateFilter').value;
-      
-      console.log('Applying filters:', { searchTerm, status, sortBy, date });
-      // Add API call here to fetch filtered results
-      alert('Filters applied! This would fetch filtered orders from the backend.');
+    document.getElementById('applyFilters').addEventListener('click',(e)=>{
+      let searchInput=document.getElementById("searchInput").value;
+      let statusFilter=document.getElementById("statusFilter").value;
+      let sortByDate=document.getElementById("sortBy").value;
+      let dateFilter=document.getElementById("dateFilter").value;
+      console.log(searchInput," ",statusFilter," ",sortByDate," ",dateFilter);
+      window.location.href=`/admin/orderList?search=${searchInput}&status=${statusFilter}&sort=${sortByDate}&date=${dateFilter}`
+
     });
 
-    document.getElementById('clearFilters').addEventListener('click', function() {
-      document.getElementById('searchInput').value = '';
-      document.getElementById('statusFilter').value = '';
-      document.getElementById('sortBy').value = 'date-desc';
-      document.getElementById('dateFilter').value = '';
-      console.log('Filters cleared');
+    document.getElementById('clearFilters').addEventListener('click', ()=> {
+      
+      window.location.href="/admin/orderList"
+
     });
 
     // Enter key for search
