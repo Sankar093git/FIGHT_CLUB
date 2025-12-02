@@ -151,7 +151,7 @@ const userSchema = new mongoose.Schema(
          },
         status: {
           type: String,
-          enum: ["Pending", "Processing", "Shipped","Out for delivery", "Delivered", "Cancelled","Return Processing", "Returned"],
+          enum: ["Pending", "Processing", "Shipped","Out for delivery", "Delivered", "Cancelled","Processing return","Return rejected", "Returned"],
           default: "Pending",
         },
         reasonForReturn:{

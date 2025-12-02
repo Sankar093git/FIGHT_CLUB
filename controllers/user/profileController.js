@@ -177,7 +177,7 @@ const returnOrder= async(req,res)=>{
         const userData= await User.findOne({_id:req.session.user});
         const orderId= req.params.id;
         const returnMessage=req.body.message;
-        await User.updateOne({_id:req.session.user,"orders.orderId":orderId},{$set:{"orders.$.status":"Return processing","orders.$.reasonForReturn":returnMessage}});
+        await User.updateOne({_id:req.session.user,"orders.orderId":orderId},{$set:{"orders.$.status":"Processing return","orders.$.reasonForReturn":returnMessage}});
         const orderDetails=userData.orders.find((order)=>order.orderId==orderId);
         const productDetails=orderDetails.products;
         for(let prod of productDetails){

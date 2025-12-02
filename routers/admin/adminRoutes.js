@@ -46,7 +46,8 @@ router.post("/add-brand",adminAuth,uploads.single("image"),brandController.addBr
 
 //Order management
 router.get("/orderList",adminAuth,orderController.getOrderList);
-router.post("/change-order-status/:id",adminAuth,orderController.changeOrderStatus)
+router.post("/change-order-status/:id",adminAuth,orderController.changeOrderStatus);
+router.post("/handle-refund/:id",adminAuth,orderController.handlingRefund);
 
 
 

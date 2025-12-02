@@ -137,20 +137,28 @@
                 <td class="fw-semibold">₹<%= ord.totalAmount%></td>
                 <td>
                   <select class="form-select form-select-sm status-dropdown" onchange="handleOrderStatus(this.value,'<%= ord.orderId %>','<%=ord.email%>')">
-                    <option value="pending" <%= ord.status === "pending" ? "selected" : "" %>>Pending</option>
-                    <option value="shipped"<%= ord.status === "shipped" ? "selected" : "" %>>Shipped</option>
-                    <option value="out-for-delivery" <%= ord.status === "out-for-delivery" ? "selected" : "" %>>Out for Delivery</option>
-                    <option value="delivered" <%= ord.status === "delivered" ? "selected" : "" %>>Delivered</option>
-                    <option value="processing return" <%= ord.status === "processing return" ? "selected" : "" %>>Processing return</option>
-                    <option value="cancelled" <%= ord.status === "cancelled" ? "selected" : "" %>>Cancelled</option>
+                    <option value="Pending" <%= ord.status === "Pnding" ? "selected" : "" %>>Pending</option>
+                    <option value="Shipped"<%= ord.status === "Shipped" ? "selected" : "" %>>Shipped</option>
+                    <option value="Out for delivery" <%= ord.status === "Out for delivery" ? "selected" : "" %>>Out for Delivery</option>
+                    <option value="Delivered" <%= ord.status === "Delivered" ? "selected" : "" %>>Delivered</option>
+                    <option value="Processing return" <%= ord.status === "Processing return" ? "selected" : "" %>>Processing return</option>
+                    <option value="Return rejected" <%= ord.status === "Return rejected" ? "selected" : "" %>>Return rejected</option>
+                    <option value="Cancelled" <%= ord.status === "Cancelled" ? "selected" : "" %>>Cancelled</option>
+                    <option value="Returned" <%= ord.status === "Returned" ? "selected" : "" %>>Returned</option>
                   </select>
                 </td>
                 <td>
-                  <span class="badge bg-warning text-dark returnRequestStat" ><%= ord.status==="processing return"? "Requested" : "Not requested" %></span>
-                  <button class="btn btn-sm btn-outline-success mt-1 returHandleButton"  onclick="handleReturnVerification('ORD-2024-001', true)">
+                  <% if(ord.status=="Return rejected") {%>
+                       <span class="badge bg-warning text-dark returnRequestStat" >Rejected</span>
+                    <% }else if(ord.status=="Returned"){ %>
+                      <span class="badge bg-warning text-dark returnRequestStat" >Approved</span>
+                      <% }else{%>
+                  <span class="badge bg-warning text-dark returnRequestStat" ><%= ord.status==="Processing return"? "Requested" : "Not requested" %></span>
+                  <% } %>
+                  <button class="btn btn-sm btn-outline-success mt-1 returHandleButton"  onclick="handleReturnVerification('<%=ord.orderId%>','<%=ord.email%>', true)">
                     <i class="bi bi-check-circle"></i> Approve
                   </button>
-                  <button class="btn btn-sm btn-outline-danger mt-1 returHandleButton"  onclick="handleReturnVerification('ORD-2024-001', false)">
+                  <button class="btn btn-sm btn-outline-danger mt-1 returHandleButton"  onclick="handleReturnVerification('<%=ord.orderId%>','<%=ord.email%>', false)">
                     <i class="bi bi-x-circle"></i> Reject
                   </button>
                 </td>
@@ -256,17 +264,11 @@ function handleOrderStatus(status,orderId,email){
 }
 
 
-    function updateOrderStatus(orderId, status) {
-      console.log(`Updating order ${orderId} to status: ${status}`);
-      // Add API call here to update status in backend
-      alert(`Order ${orderId} status updated to: ${status}`);
-    }
-
     // Handle return verification
     let currentReturnOrder = null;
     let currentReturnApproval = false;
 
-    function handleReturnVerification(orderId, approve) {
+    function handleReturnVerification(orderId,email,approve) {
       currentReturnOrder = orderId;
       currentReturnApproval = approve;
       
@@ -276,21 +278,44 @@ function handleOrderStatus(status,orderId,email){
       
       const modal = new bootstrap.Modal(document.getElementById('returnModal'));
       modal.show();
-    }
-
-    document.getElementById('confirmReturn').addEventListener('click', function() {
+          document.getElementById('confirmReturn').addEventListener('click', function() {
       if (currentReturnApproval) {
         // Approve return - refund to wallet
-        console.log(`Approving return for ${currentReturnOrder} and refunding to wallet`);
-        alert(`Return approved for order ${currentReturnOrder}. Amount will be refunded to customer's wallet.`);
+        fetch(`/admin/handle-refund/${orderId}`,{
+          method:"POST",
+          headers:{
+            "content-type":"application/json"
+          },
+          body:JSON.stringify({email,currentReturnApproval})
+        }).then((res)=>res.json())
+          .then((data)=>{
+            if(data.success==true){
+              console.log(`Approving return for ${currentReturnOrder} and refunding to wallet`);
+              document.querySelector(".retrurnRequestStat").innerHTML="Approved"
+              alert(`${data.message}`);
+            }
+          })
       } else {
         // Reject return
-        console.log(`Rejecting return for ${currentReturnOrder}`);
-        alert(`Return rejected for order ${currentReturnOrder}.`);
+        fetch(`/admin/handle-refund/${orderId}`,{
+          method:"POST",
+          headers:{
+            "content-type":"application/json"
+          },
+          body:JSON.stringify({email,currentReturnApproval})
+        }).then((res)=>res.json())
+        .then((data)=>{
+          if(data.success=true){
+              console.log(`Rejecting return for ${currentReturnOrder}`);
+              document.querySelector(".retrurnRequestStat").innerHTML="Rejected"
+              alert(`${data.message}`);
+          }
+        })
       }
       
       bootstrap.Modal.getInstance(document.getElementById('returnModal')).hide();
     });
+    }
 
     // View order details
     function viewOrderDetails(orderId) {

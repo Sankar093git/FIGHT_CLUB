@@ -48,6 +48,10 @@ const productSchema= new mongoose.Schema({
 available:{
     type:Boolean,
     default:true
+},
+isBlocked:{
+    type:Boolean,
+    default:false
 }
 
 

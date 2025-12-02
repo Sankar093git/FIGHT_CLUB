@@ -30,7 +30,7 @@ const loadShopPage = async (req, res) => {
     const regex = new RegExp(search, "i");
 
     // Base filter
-    let filter = { productName: regex };
+    let filter = { productName: regex,available:true,isBlocked:false };
 
     // Category filter
     if (cate) {
@@ -89,7 +89,7 @@ const loadProductDetails=async (req,res)=>{
         const userData=await User.findOne({_id:userId});
         const user=userData.name;
         const id=req.query.id;
-        const data=await Product.findOne({_id:id}).populate("category");
+        const data=await Product.findOne({_id:id,isBlocked:false}).populate("category");
         const catId=data.category._id;
         const relatedProducts= await Product.find({category:catId});
         //console.log(userId);
