@@ -44,7 +44,7 @@ const addProducts = async (req, res) => {
     }
 
     
-    const uploadDir = path.join(__dirname, "public", "uploads", "product-images");
+    const uploadDir = path.join(__dirname, "public", "uploads", "re-image");
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -110,49 +110,71 @@ const loadEditProduct= async(req,res)=>{
     }
 }
 
-const editproduct=async(req,res)=>{
-    try {
-        
-        const images=[];
-        const id=req.params.id;
-        const {productName,brand,description,regularPrice,salesPrice,quantity,category}=req.body;
-        const cat= await Category.findOne({name:category})
-        const productExists=await Product.findOne({_id:{$ne:id},productName:productName});
-        if(productExists){
-            res.redirect("/admin/error");
-            console.log("Product already exists");
-        }else{
-         if(req.files&&req.files.length>0){
-                for(let i=0;i<req.files.length;i++){
-                   const originalImagePath=req.files[i].path;
-                   
-                   const resizedImagePath=path.join("public","uploads","product-images",req.files[i].filename);
-                   await sharp(originalImagePath).resize({width:400,height:440}).toFile(resizedImagePath);
-                   images.push(req.files[i].filename);
-                }
-            }
-        await Product.updateOne({_id:id},{$set:{
-            productName:productName,
-            brand:brand,
-            description:description,
-            regularPrice:regularPrice,
-            salesPrice:salesPrice,
-            category:cat._id,
-            images:images,
-            quantity:quantity
-        }})
+const editproduct = async (req, res) => {
+  try {
+    const images = [];
+    const id = req.params.id;
+    const { productName, brand, description, regularPrice, salesPrice, quantity, category } = req.body;
 
-        res.redirect("/admin/products");
+    const cat = await Category.findOne({ name: category });
+    const productExists = await Product.findOne({ _id: { $ne: id }, productName });
+
+    if (productExists) {
+      console.log("Product already exists");
+      return res.redirect("/admin/error");
     }
-    } catch (error) {
-        console.error("Error while editing product",error);
-        res.redirect("/admin/error");
+
+    // Process new uploaded images
+    if (req.files && req.files.length > 0) {
+      for (let i = 0; i < req.files.length; i++) {
+
+        const originalImagePath = req.files[i].path;
+
+        // Create NEW filename for resized image
+        const newFileName = "re-" + Date.now() + "-" + req.files[i].filename;
+
+        const resizedImagePath = path.join("public", "uploads", "re-image", newFileName);
+
+        await sharp(originalImagePath)
+          .resize({ width: 400, height: 440 })
+          .toFile(resizedImagePath);
+
+
+       images.push(newFileName);
+      }
     }
+    await Product.updateOne(
+      { _id: id },
+      {
+        $set: {
+          productName,
+          brand,
+          description,
+          regularPrice,
+          salesPrice,
+          category: cat._id,  
+          quantity
+        },
+        $push:{
+            productImage:{$each:images}
+        }
+      }
+    );
+
+    res.redirect("/admin/products");
+
+  } catch (error) {
+    console.error("Error while editing product", error);
+    res.redirect("/admin/error");
+  }
 }
+
 
 const deleteImages=async(req,res)=>{
     try {
-        const {productId,imageId}=req.body;
+        const imageId=req.params.id;
+        const {productId}=req.body;
+        console.log(req.body);
         await Product.findByIdAndUpdate(productId,{$pull:{productImage:imageId}});
         const imagePath=path.join(__dirname,"uploads","re-image",`${imageId}`);
         if(fs.existsSync(imagePath)){
@@ -167,7 +189,7 @@ const deleteImages=async(req,res)=>{
             console.log(`${imageId} deletion failed`);
         }
 
-        res.json({status:true});
+        res.json({success:true});
 
         
     } catch (error) {
