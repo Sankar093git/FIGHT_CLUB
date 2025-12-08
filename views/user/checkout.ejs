@@ -1,5 +1,16 @@
 <%- include("../../views/user/partials/header.ejs") %>
 
+<style>
+  .input-error {
+  border-color: #dc3545 !important;
+}
+
+.error-text {
+  color: #dc3545;
+  font-size: 0.8rem;
+}
+</style>
+
 <div class="container mt-5 mb-5 pt-5">
   <div class="row">
     <!-- Address Section -->
@@ -248,6 +259,93 @@ function populateAddressForm(id,label, street, city, state, country, postalCode,
 
     
 }
+
+function validateField(input, validator, message) {
+    let errorSpan = input.nextElementSibling;
+
+    if (!errorSpan || !errorSpan.classList.contains("error-text")) {
+        errorSpan = document.createElement("div");
+        errorSpan.classList.add("error-text");
+        input.parentNode.appendChild(errorSpan);
+    }
+
+    if (!validator(input.value.trim())) {
+        input.classList.add("input-error");
+        errorSpan.textContent = message;
+        return false;
+    } else {
+        input.classList.remove("input-error");
+        errorSpan.textContent = "";
+        return true;
+    }
+}
+
+// Validation rules
+const rules = {
+    label: v => v.length >= 2,
+    street: v => v.length >= 3,
+    city: v => /^[A-Za-z ]{3,}$/.test(v),        
+    state: v => /^[A-Za-z ]{3,}$/.test(v),       
+    country: v => /^[A-Za-z ]{3,}$/.test(v),     
+    postalCode: v => /^[0-9]{6}$/.test(v),
+    phone: v => /^[6-9][0-9]{9}$/.test(v)
+};
+;
+
+const messages = {
+    label: "Label must be at least 2 characters.",
+    street: "Street must be at least 3 characters and at least 3 characters.",
+    city: "City can contain only letters and at least 3 characters.",
+    state: "State can contain only letters and at least 3 characters.",
+    country: "Country is required and at least 3 characters.",
+    postalCode: "Postal Code must be a 6-digit number.",
+    phone: "Phone must be a valid 10-digit number."
+};
+
+function attachValidation(formId) {
+    const form = document.getElementById(formId);
+
+    form.querySelectorAll("input").forEach(input => {
+        const name = input.name;
+
+        if (rules[name]) {
+            input.addEventListener("input", () => {
+                validateField(input, rules[name], messages[name]);
+            });
+
+            input.addEventListener("change", () => {
+                validateField(input, rules[name], messages[name]);
+            });
+        }
+    });
+
+    form.addEventListener("submit", (e) => {
+        let valid = true;
+
+        form.querySelectorAll("input").forEach(input => {
+            const name = input.name;
+
+            if (rules[name]) {
+                const isValid = validateField(input, rules[name], messages[name]);
+                if (!isValid) valid = false;
+            }
+        });
+
+        if (!valid) {
+            e.preventDefault();
+            Swal.fire({
+                icon: "error",
+                title: "Invalid Details",
+                text: "Please fix the highlighted errors.",
+            });
+        }
+    });
+}
+
+attachValidation("addressForm");
+attachValidation("addressFormedit");
+
+
 </script>
 
 <%- include("../../views/user/partials/footer.ejs") %>
