@@ -7,9 +7,10 @@ const loadProfile=async (req,res)=>{
         const id=req.session.user;
         const findUser=await User.findOne({_id:id,isBlocked:false});
         const image=findUser.userImage;
+        const username=findUser.name;
         res.render('profile',{
             userData:findUser,
-            user:req.session.userName,
+            user:req.session.userName||username,
             image:image
         })
 

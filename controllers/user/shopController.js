@@ -5,6 +5,11 @@ const User=require("../../models/userSchema");
 
 const loadShopPage = async (req, res) => {
   try {
+    let userName=null;
+    if(req.session.google==true){
+      const userDetails= await User.findOne({_id:req.session.user});
+      userName=userDetails.name;
+    }
     const minPrice = req.query.minPrice;
     const maxPrice = req.query.maxPrice;
     const sort = req.query.sort;
@@ -63,7 +68,7 @@ const loadShopPage = async (req, res) => {
     const totalPages = Math.ceil(count / limit);
 
     res.render("shop", {
-      user: req.session.userName,
+      user: req.session.userName||userName,
       image:req.session.image,
       product: data,
       brand,

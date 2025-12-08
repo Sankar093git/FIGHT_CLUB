@@ -2,6 +2,11 @@ const User=require("../../models/userSchema");
 const crypto=require("crypto");
 const loadCheckout= async(req,res)=>{
     try {
+        let userName=null;
+      if(req.session.google==true){
+       const userDetails= await User.findOne({_id:req.session.user});
+       userName=userDetails.name;
+     }
         let summary={};
         let priceList=[];
         const userData=await User.findOne({_id:req.session.user}).populate("cart.product").exec();
@@ -15,6 +20,8 @@ const loadCheckout= async(req,res)=>{
         summary.total=(summary.subtotal+summary.taxes+summary.shipping)-summary.discount;
         console.log(summary);
         res.render("checkout",{
+            user:req.session.userName||userName,
+            image:null,
             addresses:userData.address,
             cartItems:userData.cart,
             summary:summary,
