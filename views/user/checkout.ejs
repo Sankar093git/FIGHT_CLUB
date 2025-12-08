@@ -218,7 +218,11 @@
 document.getElementById('placeOrderBtn').addEventListener('click', async () => {
   const selected = document.querySelector('input[name="selectedAddress"]:checked');
   if (!selected) {
-    alert('Please select a delivery address!');
+    Swal.fire({
+    icon: "warning",
+    title: "No Address Selected",
+    text: "Please select a delivery address!",
+   });
     return;
   }
 
@@ -236,11 +240,14 @@ document.getElementById('placeOrderBtn').addEventListener('click', async () => {
     if (data.success) {
       window.location.href = `/order-success?orderId=${data.orderId}`;
     } else {
-      alert(data.message || 'Failed to place order.');
+     Swal.fire({
+       icon: "error",  title: "Error",  text: data.message || "Failed to place order.", });
     }
   } catch (err) {
     console.error(err);
-    alert('Something went wrong.');
+    Swal.fire({
+       icon: "error",  title: "Error",  text: "Something went wrong", });
+    ;
   }
 });
 

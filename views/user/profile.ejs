@@ -438,9 +438,12 @@ h4::after {
       return;
     }
 
-    // If everything is valid
-    alert("Address saved successfully!");
-    this.submit(); // or use AJAX to send to server
+    Swal.fire({
+    icon: "success",
+    title: "Success!",
+    text: "Address saved successfully!",
+    confirmButtonColor: "#3085d6"
+   }).then(()=>this.submit())
   });
 
   function changeProfilePic(userId) {
@@ -453,7 +456,7 @@ h4::after {
   }
 
   const formData = new FormData();
-  formData.append("profileImageInput", file);  // This should match multer field name
+  formData.append("profileImageInput", file); 
 
   fetch(`/change-profile-pic/${userId}`, {
     method: "POST",

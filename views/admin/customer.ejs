@@ -1,158 +1,619 @@
 <%- include("../../views/admin/partials/header") %>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-    .content-header .content-title {
-    margin-bottom: 0;
-    padding-left: 10px;
-    padding-top:10px;
-}
+    :root {
+        --primary: #6366f1;
+        --primary-dark: #4f46e5;
+        --success: #10b981;
+        --danger: #ef4444;
+        --gray-50: #f9fafb;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-300: #d1d5db;
+        --gray-400: #9ca3af;
+        --gray-500: #6b7280;
+        --gray-600: #4b5563;
+        --gray-700: #374151;
+        --gray-800: #1f2937;
+        --gray-900: #111827;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    }
 
-.pagination {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin: 20px 0;
-  }
+    .customers-page {
+        background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
+        min-height: 100vh;
+        padding: 2rem;
+    }
 
-  .pagination a {
-    padding: 8px 12px;
-    background-color: #f0f0f0;
-    border: 1px solid #ddd;
-    color: #333;
-    text-decoration: none;
-  }
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+    }
 
-  .pagination .active {
-    background-color: #007bff;
-    color: #fff;
-  }
+    .page-title {
+        font-size: 1.875rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
 
+    .page-title-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--gray-200);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .stat-icon.primary {
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+    }
+
+    .stat-icon.success {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .stat-icon.danger {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+
+    .stat-info h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin: 0;
+    }
+
+    .stat-info p {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+        margin: 0;
+    }
+
+    .content-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--gray-200);
+        overflow: hidden;
+    }
+
+    .card-header-section {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--gray-100);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .search-wrapper {
+        position: relative;
+        flex: 1;
+        max-width: 400px;
+    }
+
+    .search-wrapper i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray-400);
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.75rem;
+        font-size: 0.9375rem;
+        color: var(--gray-800);
+        background: var(--gray-50);
+        border: 2px solid var(--gray-200);
+        border-radius: 10px;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+
+    .search-input:focus {
+        border-color: var(--primary);
+        background: white;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+
+    .search-btn {
+        position: absolute;
+        right: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .search-btn:hover {
+        transform: translateY(-50%) translateY(-1px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    /* Table Styles */
+    .customers-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .customers-table thead {
+        background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
+    }
+
+    .customers-table th {
+        padding: 1rem 1.5rem;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--gray-600);
+        border-bottom: 2px solid var(--gray-200);
+    }
+
+    .customers-table td {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--gray-100);
+        vertical-align: middle;
+    }
+
+    .customers-table tbody tr {
+        transition: background 0.2s;
+    }
+
+    .customers-table tbody tr:hover {
+        background: rgba(99, 102, 241, 0.02);
+    }
+
+    .customer-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .customer-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .customer-name {
+        font-weight: 600;
+        color: var(--gray-800);
+    }
+
+    .customer-email {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--gray-600);
+    }
+
+    .customer-email i {
+        color: var(--gray-400);
+        font-size: 0.875rem;
+    }
+
+    .customer-phone {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--gray-600);
+    }
+
+    .customer-phone i {
+        color: var(--gray-400);
+        font-size: 0.875rem;
+    }
+
+    /* Action Buttons */
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+
+    .btn-block {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+
+    .btn-block:hover {
+        background: var(--danger);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-unblock {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .btn-unblock:hover {
+        background: var(--success);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    /* Pagination */
+    .pagination-wrapper {
+        padding: 1.5rem 2rem;
+        border-top: 1px solid var(--gray-100);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .page-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 40px;
+        height: 40px;
+        padding: 0 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--gray-600);
+        background: var(--gray-100);
+        border: 2px solid transparent;
+        border-radius: 10px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .page-btn:hover {
+        background: var(--gray-200);
+        color: var(--gray-800);
+    }
+
+    .page-btn.active {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .page-btn.nav-btn {
+        background: white;
+        border: 2px solid var(--gray-200);
+    }
+
+    .page-btn.nav-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: rgba(99, 102, 241, 0.05);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-state-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--gray-100);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2rem;
+        color: var(--gray-400);
+    }
+
+    .empty-state h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--gray-800);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: var(--gray-500);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .customers-page {
+            padding: 1rem;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .card-header-section {
+            padding: 1rem;
+        }
+
+        .search-wrapper {
+            max-width: 100%;
+        }
+
+        .customers-table th,
+        .customers-table td {
+            padding: 0.75rem 1rem;
+        }
+
+        .customer-avatar {
+            display: none;
+        }
+    }
 </style>
-<div class="content-header row">
-    <div class="d-flex justify-content-between align-items-center">
-        <h2 class="content-title card-title">Customers</h2>
-       
-    </div>
-</div>         
+
+<section class="customers-page">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <div class="page-title-icon">
+                    <i class="fa fa-users"></i>
+                </div>
+                Customers
+            </h1>
         </div>
-        
-            <header class="card-header text-center mb-20">
-                <form action="/admin/users/" method="get" class="d-inline">
-                    <div class="input-group input-group-sm border border-1 border-grey rounded-pill" style="width: 500px; margin-left: 230px;">
-                        <input type="text" class="form-control border-0 rounded-pill" placeholder="Search customers..." name="search">
-                        <button class="btn  border-0" type="submit">Search</button>
-                    </div>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon primary">
+                    <i class="fa fa-users"></i>
+                </div>
+                <div class="stat-info">
+                    <h3><%= data.length %></h3>
+                    <p>Total Customers</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon success">
+                    <i class="fa fa-user-check"></i>
+                </div>
+                <div class="stat-info">
+                    <h3><%= data.filter(d => !d.isBlocked).length %></h3>
+                    <p>Active Users</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon danger">
+                    <i class="fa fa-user-slash"></i>
+                </div>
+                <div class="stat-info">
+                    <h3><%= data.filter(d => d.isBlocked).length %></h3>
+                    <p>Blocked Users</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Card -->
+        <div class="content-card">
+            <!-- Search Header -->
+            <div class="card-header-section">
+                <form action="/admin/users/" method="get" class="search-wrapper">
+                    <i class="fa fa-search"></i>
+                    <input type="text" class="search-input" placeholder="Search by name, email or phone..." name="search">
+                    <button class="search-btn" type="submit">Search</button>
                 </form>
-            </header>
-            <div class="right mt-5">
-                <table class="table table-striped">
-                    <thead>
-                      <tr>
-                        <th scope="col"><b>Name</b></th>
-                        <th scope="col"><b>Email</b></th>
-                        <th scope="col"><b>Phone No</b></th>
-                        <th scope="col"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                        <% for(let i=0;i<data.length;i++){ %>
-                            <tr>
-                                <td><%= data[i].name %></td>
-                                <td><%= data[i].email %></td>
-                                <td><%= data[i].phone %></td>
-                                <td> 
-                                    <% if(data[i].isBlocked===false){ %>
-                                        <button class="btn btn-danger" onclick="blockOrUnblockUser('<%=data[i]._id%>','<%=data[i].name%>')" style="width: 80px;">
-                                            <a href="#" class="text-white" style="text-decoration: none;">Block</a>
-                                        </button>
-                                    <% }else{ %>
-                                        <button class="btn btn-success" onclick="blockOrUnblockUser('<%=data[i]._id%>','<%=data[i].name%>')" style="width: 80px;">
-                                            <a href="#" class="text-white" style="text-decoration: none;">Unblock</a>
-                                        </button> 
-                                        <% } %>
-                                </td>
-                            </tr>
+            </div>
+
+            <!-- Customers Table -->
+            <% if (data && data.length > 0) { %>
+            <table class="customers-table">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% for(let i = 0; i < data.length; i++) { %>
+                    <tr>
+                        <td>
+                            <div class="customer-info">
+                                <div class="customer-avatar">
+                                    <%= data[i].name.charAt(0).toUpperCase() %>
+                                </div>
+                                <span class="customer-name"><%= data[i].name %></span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="customer-email">
+                                <i class="fa fa-envelope"></i>
+                                <%= data[i].email %>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="customer-phone">
+                                <i class="fa fa-phone"></i>
+                                <%= data[i].phone %>
+                            </div>
+                        </td>
+                        <td>
+                            <% if(data[i].isBlocked === false) { %>
+                                <button class="btn-action btn-block" onclick="blockOrUnblockUser('<%= data[i]._id %>', '<%= data[i].name %>')">
+                                    <i class="fa fa-ban"></i> Block
+                                </button>
+                            <% } else { %>
+                                <button class="btn-action btn-unblock" onclick="blockOrUnblockUser('<%= data[i]._id %>', '<%= data[i].name %>')">
+                                    <i class="fa fa-check-circle"></i> Unblock
+                                </button>
                             <% } %>
-                    </tbody>
-                  </table>
-        </div>
+                        </td>
+                    </tr>
+                    <% } %>
+                </tbody>
+            </table>
+            <% } else { %>
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fa fa-users"></i>
+                </div>
+                <h3>No customers found</h3>
+                <p>Try adjusting your search criteria</p>
+            </div>
+            <% } %>
+
             <!-- Pagination -->
-    <div class="pagination">
-      <% if (currentPage > 1) { %>
-        <a class="btn" href="/admin/users?page=<%= currentPage - 1 %>">Prev</a>
-      <% } %>
-      <% for (let i = 1; i <= totalPages; i++) { %>
-        <a class="btn <%= currentPage === i ? 'active' : '' %>" href="/admin/users?page=<%= i %>"><%= i %></a>
-      <% } %>
-      <% if (currentPage < totalPages) { %>
-        <a class="btn" href="/admin/users?page=<%= currentPage + 1 %>">Next</a>
-      <% } %>
+            <% if (totalPages > 1) { %>
+            <div class="pagination-wrapper">
+                <% if (currentPage > 1) { %>
+                    <a class="page-btn nav-btn" href="/admin/users?page=<%= currentPage - 1 %>">
+                        <i class="fa fa-chevron-left"></i> Prev
+                    </a>
+                <% } %>
+                
+                <% for (let i = 1; i <= totalPages; i++) { %>
+                    <a class="page-btn <%= currentPage === i ? 'active' : '' %>" href="/admin/users?page=<%= i %>"><%= i %></a>
+                <% } %>
+                
+                <% if (currentPage < totalPages) { %>
+                    <a class="page-btn nav-btn" href="/admin/users?page=<%= currentPage + 1 %>">
+                        Next <i class="fa fa-chevron-right"></i>
+                    </a>
+                <% } %>
+            </div>
+            <% } %>
+        </div>
     </div>
- <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
- <script>
-            function blockOrUnblockUser(userId,userName){
-                try {
-                    Swal.fire({
-                    title: 'Are you sure?',
-                    text: `Do want to perform this action for ${userName}`,
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Yes',
-                    cancelButtonText: 'Cancel'
-                    }).then((result) => {
-                    if (result.isConfirmed) {
-                       $.ajax({
-                        method:"GET",
-                        url:`/admin/block-or-unblock-user?id=${userId}`,
-                        data:{},
-                        success:(response)=>{
-                            if(response.success){
-                                if(response.status==="unblocked"){
-                                    Swal.fire({
-                                        title:"Unblocked!",
-                                        text:response.message,
-                                        icon:"success",
-                                        timer:1500,
-                                        showConfirmButton: false
-                                    }).then(()=>{window.location.href="/admin/users"});
-                                    
-                                }else if(response.status==="blocked"){
-                                    Swal.fire({
-                                        title:"Blocked!",
-                                        text:response.message,
-                                        icon:"success",
-                                        timer:1500,
-                                        showConfirmButton: false
-                                    }).then(()=>{window.location.href="/admin/users"});
-                                }
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+function blockOrUnblockUser(userId, userName) {
+    try {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: `Do you want to perform this action for ${userName}?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#6366f1',
+            cancelButtonColor: '#ef4444',
+            confirmButtonText: 'Yes',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    method: "GET",
+                    url: `/admin/block-or-unblock-user?id=${userId}`,
+                    data: {},
+                    success: (response) => {
+                        if (response.success) {
+                            if (response.status === "unblocked") {
+                                Swal.fire({
+                                    title: "Unblocked!",
+                                    text: response.message,
+                                    icon: "success",
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => { window.location.href = "/admin/users" });
+                            } else if (response.status === "blocked") {
+                                Swal.fire({
+                                    title: "Blocked!",
+                                    text: response.message,
+                                    icon: "success",
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => { window.location.href = "/admin/users" });
                             }
-                        },
-                        error:()=>{
-                            Swal.fire({
-                                icon:"error",
-                                title:"Error!",
-                                text:"Something went wrong, please try again.",
-                                confirmButtonText: 'OK'
-                            })
                         }
-
-                    })
-     
-                   }
-          });
-
-                } catch (error) {
-                     Swal.fire({
-                                icon:"error",
-                                title:"Error!",
-                                text:`${error.message}`,
-                                confirmButtonText: 'OK'
-                            })
-                }
+                    },
+                    error: () => {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Error!",
+                            text: "Something went wrong, please try again.",
+                            confirmButtonText: 'OK'
+                        })
+                    }
+                })
             }
-
+        });
+    } catch (error) {
+        Swal.fire({
+            icon: "error",
+            title: "Error!",
+            text: `${error.message}`,
+            confirmButtonText: 'OK'
+        })
+    }
+}
 </script>
+
  <%- include("../../views/admin/partials/footer") %>
