@@ -24,6 +24,7 @@ router.post("/verify-otp",userAuth,userController.verifyOtp);
 router.get("/auth/google",passport.authenticate('google',{scope:["profile","email"]}));
 
 router.get("/auth/google/callback",passport.authenticate("google",{failureRedirect:"/signup"}),(req,res)=>{
+    req.session.user=req.user._id;
  res.redirect("/")
 })
 //forgot password

@@ -89,7 +89,7 @@ const signUp=async (req,res)=>{
 
         const passHash= await securePassword(password);
 
-        let profileImage = "default-avatar.jpg"; 
+        let profileImage = "default-avatar.jpg";
 
         if (req.file) {
              console.log(req.file);

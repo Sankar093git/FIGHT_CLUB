@@ -16,6 +16,7 @@
 }
 
 body {
+  margin-top: 80px;
   background: var(--bg-page);
   color: var(--text-primary);
   font-family: 'Inter', -apple-system, sans-serif;
@@ -41,6 +42,7 @@ body {
   border:#fff ;
   box-shadow: 0 0 0 4px #463BD0;
   border-radius: 60px;
+  margin-right: 10px;
 }
 .edit-icon-overlay {
   background:#fff;
@@ -166,17 +168,19 @@ h4::after {
         <div class="d-flex align-items-center">
           <div class="profile-pic-wrapper position-relative d-inline-block">
   <% if (userData.userImage) { %>
-    <img src="/uploads/others/<%= userData.userImage %>" class="profile-img">
+    <img src="/uploads/profiles/<%= userData.userImage %>" class="profile-img">
   <% } else { %>
     <img src="/images/default-avatar.png" class="profile-img">
   <% } %>
 
   <!-- Edit Icon Overlay -->
+   <form method="post" action="/change-profile-pic/'<%=userData._id%>'"></form>
   <label for="profileImageInput" class="edit-icon-overlay">
     <i class="bi bi-pencil-fill"></i>
   </label>
   <input type="file" id="profileImageInput" onchange="changeProfilePic('<%=userData._id%>')" class="d-none" accept="image/*">
-</div>
+  </div>
+  </form>
 
           <div>
             <p><strong>Name:</strong> <%= userData.name %></p>
@@ -439,33 +443,37 @@ h4::after {
     this.submit(); // or use AJAX to send to server
   });
 
-  function changeProfilePic(id) {
-  let input = document.getElementById("profileImageInput");
-  let file = input.files[0];
-  console.log(file);
+  function changeProfilePic(userId) {
+  const input = document.getElementById("profileImageInput");
+  const file = input.files[0];
 
-  if (!file) return;
+  if (!file) {
+    console.warn("No file selected");
+    return;
+  }
 
-  let formData = new FormData();
-  formData.append("profileImageInput", file);
+  const formData = new FormData();
+  formData.append("profileImageInput", file);  // This should match multer field name
 
-  fetch(`/change-profile-pic/${id}`, {
+  fetch(`/change-profile-pic/${userId}`, {
     method: "POST",
-    body: formData,
+    body: formData
   })
-    .then(res => {
-      if (!res.ok) throw new Error("Network response was not ok");
-      window.location.reload();
-    })
+    .then(res => res.json())
     .then(data => {
-      console.log("Profile picture changed successfully:", data);
-      
-      document.querySelector(".profile-img").src = `/uploads/others/${data.fileName}`;
+      console.log(data);
+      if (data.success) {
+        window.location.reload();
+       // if (data.image) {
+          //document.getElementById("profilePic").src = data.image + "?t=" + new Date().getTime();
+       // }
+      } else {
+        console.error(data.message || "Error updating profile picture");
+      }
     })
-    .catch(error => {
-      console.error("Something went wrong in the frontend:", error);
-    });
+    .catch(err => console.error("Upload error:", err));
 }
+
 
 function populateAddressForm(id,label, street, city, state, country, postalCode, phone, isDefault){
   

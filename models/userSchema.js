@@ -13,16 +13,20 @@ const userSchema = new mongoose.Schema(
     },
     userImage: {
       type: String,
-      required: true,
+      default:null,
     },
     phone: {
-      type: String,
-      required: true,
-    },
+    type: String,
+    required: function () {
+    return !this.googleId;
+  },
+},
     password: {
-      type: String,
-      required: true,
-    },
+    type: String,
+    required: function () {
+    return !this.googleId;
+  },
+},
     isBlocked: {
       type: Boolean,
       default: false,
@@ -38,6 +42,9 @@ const userSchema = new mongoose.Schema(
     isAdmin: {
       type: Boolean,
       default: false,
+    },
+    googleId: { 
+      type: String 
     },
     address: [
       {

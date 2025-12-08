@@ -83,8 +83,8 @@ const changeProfilePicture=async(req,res)=>{
         const id=req.params.id;
         const image=req.file.filename;
         await User.updateOne({_id:id},{$set:{userImage:image}});
-        res.json({redirectURL:"/profile",
-            image:image
+        res.json({success:true,
+            image:"/uploads/profiles/"+image
         });
     } catch (error) {
         console.error("Error while changing the profile picture", error);
