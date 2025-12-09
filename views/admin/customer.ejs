@@ -435,7 +435,7 @@
                     <i class="fa fa-users"></i>
                 </div>
                 <div class="stat-info">
-                    <h3><%= data.length %></h3>
+                    <h3><%= totalData.length %></h3>
                     <p>Total Customers</p>
                 </div>
             </div>
@@ -444,7 +444,7 @@
                     <i class="fa fa-user-check"></i>
                 </div>
                 <div class="stat-info">
-                    <h3><%= data.filter(d => !d.isBlocked).length %></h3>
+                    <h3><%= totalData.filter(d => !d.isBlocked).length %></h3>
                     <p>Active Users</p>
                 </div>
             </div>
@@ -453,7 +453,7 @@
                     <i class="fa fa-user-slash"></i>
                 </div>
                 <div class="stat-info">
-                    <h3><%= data.filter(d => d.isBlocked).length %></h3>
+                    <h3><%= totalData.filter(d => d.isBlocked).length %></h3>
                     <p>Blocked Users</p>
                 </div>
             </div>

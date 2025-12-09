@@ -489,7 +489,7 @@
                             </span>
                         </td>
                         <td>
-                            <% if(!data[i].isBlocked) { %>
+                            <% if(data[i].isBlocked==false) { %>
                                 <button class="btn-action btn-block" onclick="blockProducts('<%= data[i]._id %>')">
                                     <i class="fa fa-ban"></i> Block
                                 </button>
@@ -587,12 +587,16 @@
     function blockProducts(productId) {
         try {
             $.ajax({
-                method: "get",
-                url: `/admin/blockOrUnblockProducts?id=${productId}`,
+                method: "POST",
+                url: `/admin/block-or-unblock-products/${productId}`,
                 data: {},
                 success: (response) => {
-                    if (response.status === true) {
-                        location.reload();
+                    if (response.success === true) {
+                        Swal.fire({
+                        icon: "success",
+                        title: "Success",
+                        text: `${response.message}`,
+                       }).then(()=>location.reload())
                     } else if (response.status === false) {
                         Swal.fire("Failed", "Please try again", "error");
                     }
@@ -600,6 +604,7 @@
             })
         } catch (error) {
             console.log("Error while blocking the product");
+            Swal.fire("Failed", "Something went wrong", "error");
         }
     }
 </script>

@@ -7,6 +7,7 @@ const loadCustomer= async(req,res)=>{
         const page=req.query.page||1;
         const limit=4;
         const skip=(page-1)*limit;
+        const totalData=await User.find();
         const userData= await User.find({isDeleted:0,isAdmin:0,$or:[
                 {name:{$regex:".*"+search+".*",$options:"i"}},
                 {email:{$regex:".*"+search+".*",$options:"i"}}
@@ -16,8 +17,9 @@ const loadCustomer= async(req,res)=>{
                 {email:{$regex:".*"+search+".*",$options:"i"}}
             ]}).countDocuments();
         const totalPages=Math.ceil(count/limit);
-        console.log("xxx")
-        res.render("customer",{data:userData||null,
+        res.render("customer",{
+            totalData:totalData,
+            data:userData||null,
             totalPages:totalPages,
             totalCount:count,
             currentPage:page

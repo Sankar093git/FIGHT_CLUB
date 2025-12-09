@@ -197,11 +197,29 @@ const deleteImages=async(req,res)=>{
         res.redirect("/admin/error");
     }
 }
+
+const blockOrUnblockproduct=async (req,res)=>{
+  try {
+    const productId=req.params.id;
+    const prodDetails=await Product.findOne({_id:productId});
+    if(prodDetails.isBlocked==true){
+      await Product.updateOne({_id:productId},{$set:{isBlocked:false}})
+      return res.status(200).json({success:true,message:"Product has been unblocked!"})
+    }else{
+      await Product.updateOne({_id:productId},{$set:{isBlocked:true}})
+      return res.status(200).json({success:true,message:"Product has been blocked!"})
+    }
+  } catch (error) {
+    console.error("Error while blocking product");
+    res.status(500).json({success:false})
+  }
+}
 module.exports={
     loadProducts,
     getAddProduct,
     addProducts,
     loadEditProduct,
     editproduct,
-    deleteImages
+    deleteImages,
+    blockOrUnblockproduct
 }
