@@ -317,9 +317,16 @@
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
-    -webkit-line-clamp: 3;  
+    display: box;              /* Standard fallback */
+  
+    -webkit-line-clamp: 3;
+    line-clamp: 3;             /* Standard property */
+
     -webkit-box-orient: vertical;
+    box-orient: vertical;       /* Standard property */
+
     overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .offer-badge {
