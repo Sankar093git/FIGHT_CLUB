@@ -175,6 +175,11 @@ const userSchema = new mongoose.Schema(
           required:true,
           default:"N/A"
         },
+        reasonForCancellation:{
+          type:String,
+          required:true,
+          default:"N/A"
+        },
         totalAmount: {
           type: Number,
           required: true,

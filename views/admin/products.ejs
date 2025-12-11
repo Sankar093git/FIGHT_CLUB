@@ -109,6 +109,21 @@
         background: white;
         box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
     }
+    .clear-btn {
+        position: absolute;
+        right: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 0.5rem 1rem;
+        background: #fff;
+        color: black;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
 
     .search-btn {
         position: absolute;
@@ -428,8 +443,12 @@
             <div class="card-header-section">
                 <form action="" method="get" class="search-wrapper">
                     <i class="fa fa-search"></i>
-                    <input type="text" class="search-input" placeholder="Search products or brands..." name="search">
+                    <input type="text" value="<%=queryVal.search%>" class="search-input" placeholder="Search products or brands..." name="search">
+                    <% if(queryVal.search) {%>
+                        <button class="clear-btn" onclick="clearFilters()">Clear</button>
+                        <% }else{ %>
                     <button class="search-btn" type="submit">Search</button>
+                    <% } %>
                 </form>
             </div>
 
@@ -605,6 +624,15 @@
         } catch (error) {
             console.log("Error while blocking the product");
             Swal.fire("Failed", "Something went wrong", "error");
+        }
+    }
+
+    function clearFilters(){
+        try {
+            event.preventDefault();
+            window.location.href="/admin/products"
+        } catch (error) {
+            console.error("error while clearing filter",error);
         }
     }
 </script>

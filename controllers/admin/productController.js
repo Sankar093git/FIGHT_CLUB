@@ -15,7 +15,7 @@ const loadProducts=async(req,res)=>{
         const data= await Product.find({productName:{$regex:new RegExp(search,'i')}}).limit(limit).skip(skip).populate("category");
         const count= await Product.find({}).countDocuments();
         const totalPages=Math.ceil(count/limit);
-        res.render("products",{data:data,totalPages:totalPages,currentPage:page});
+        res.render("products",{queryVal:req.query,data:data,totalPages:totalPages,currentPage:page});
     } catch (error) {
         console.error("Error while loading the product list",error);
         res.redirect("/admin/error");

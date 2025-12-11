@@ -77,11 +77,13 @@ const getOrderList = async (req, res) => {
 const changeOrderStatus= async (req,res)=>{
     try {
         const orderId=req.params.id;
-        const {status,email}=req.body;
+        const {status,email,cancelMessage}=req.body;
+        if(cancelMessage){
+           await User.updateOne({email:email,"orders.orderId":orderId},{$set:{"orders.$.status":status,"orders.$.reasonForCancellation":cancelMessage}})
+        }else{
         await User.updateOne({email:email,"orders.orderId":orderId},{$set:{"orders.$.status":status}});
+        }
         res.json({success:true})
-        const userData= await User.findOne({email:email});
-        console.log(userData.orders);
     } catch (error) {
         console.error("Error while changing order status,",error);
         res.json({success:false,message:error.message});

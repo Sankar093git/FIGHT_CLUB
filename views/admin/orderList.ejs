@@ -252,18 +252,45 @@
 
 
 function handleOrderStatus(status,orderId,email){
-     console.log("Status handler works");
-     fetch(`/admin/change-order-status/${orderId}`,{
+    let cancelMessage="";
+         if(status=="Cancelled"){
+          Swal.fire({
+           title: "Warning!",
+           text: "Are you sure you want to cancel?",
+           icon: "warning",
+           showCancelButton: true,
+           confirmButtonText: "Yes",
+           cancelButtonText: "No"
+         }).then((result)=>{
+          if(result.isConfirmed){
+            Swal.fire({
+             title: "Reason for cancellation",
+             input: "textarea",
+             inputPlaceholder: "Type your reason here...",
+             inputAttributes: {
+              rows: 5
+             },
+            showCancelButton: true,
+            confirmButtonText: "Submit"
+           }).then((result) => {
+          if (result.isConfirmed) {
+            cancelMessage= result.value;
+          }
+         }).then(()=>{
+          fetch(`/admin/change-order-status/${orderId}`,{
       method:"POST",
      headers:{
       "content-type":"application/json"
      },
-      body:JSON.stringify({status,email}),
+      body:JSON.stringify({status,email,cancelMessage}),
      }).then((res)=>res.json())
      .then((data)=>{
       if(data.success){
-        alert("Order status changed successfully!")
-        window.location.reload();
+        Swal.fire({
+          title:"Success",
+          text:"Status updated successfully",
+          icon:"success"
+        }).then(()=>window.location.reload())
       }else{
         alert(`${data.message}`);
       }
@@ -272,6 +299,33 @@ function handleOrderStatus(status,orderId,email){
       console.log(err);
       alert(`${err}`);
      })
+         });
+          }
+         })
+         }else{
+     fetch(`/admin/change-order-status/${orderId}`,{
+      method:"POST",
+     headers:{
+      "content-type":"application/json"
+     },
+      body:JSON.stringify({status,email,cancelMessage}),
+     }).then((res)=>res.json())
+     .then((data)=>{
+      if(data.success){
+       Swal.fire({
+          title:"Success",
+          text:"Status updated successfully",
+          icon:"success"
+        }).then(()=>window.location.reload())
+      }else{
+        alert(`${data.message}`);
+      }
+     })
+     .catch((err)=>{
+      console.log(err);
+      alert(`${err}`);
+     })
+    }
 }
 
 
