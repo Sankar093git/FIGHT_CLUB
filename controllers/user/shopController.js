@@ -136,10 +136,42 @@ const addToCart = async (req, res) => {
   }
 };
 
+const addTowishlist=async(req,res)=>{
+  try {
+    const userId=req.session.user;
+    const prodId=req.params.id;
+    const userData=await User.findOne({_id:userId});
+    const wishlist=userData.wishlist;
+    const prodExists=wishlist.find((prod)=>prod.product==prodId);
+    if(prodExists){
+      return res.status(200).json({success:true,message:"Product already in wishlist"})
+    }else{
+      await User.updateOne({_id:userId},{$push:{wishlist:{product:prodId}}});
+      return res.status(200).json({success:true,message:"Product added to wishlist"})
+    }
+  } catch (error) {
+    console.error(error);
+    res.json({success:false,message:"Something went wrong!"});
+  }
+}
+
+const removeFromWishlist=async(req,res)=>{
+  try {
+    const productId=req.params.id;
+    await User.updateOne({_id:req.session.user},{ $pull: { wishlist: { product: productId } } });
+    res.status(200).json({success:true});
+  } catch (error) {
+    console.error("Error while removing item from wishlist",error);
+    res.status(500).json({success:false,message:"Something went wrong, please try again!"});
+  }
+}
+
 
 module.exports={
     loadShopPage,
     loadProductDetails,
-    addToCart
+    addToCart,
+    addTowishlist,
+    removeFromWishlist
     
 }

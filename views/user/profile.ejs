@@ -297,6 +297,45 @@ h4::after {
     </tbody>
   </table>
 </div>
+
+<!-- Wishlist Section - Add this right after the wallet section -->
+<div class="card dashboard-card p-4 mb-4">
+  <h4>My Wishlist</h4>
+  <div class="row" id="wishlist-container">
+    <% if (userData.wishlist && userData.wishlist.length > 0) { %>
+      <% userData.wishlist.forEach(item => { %>
+        <div class="col-lg-4 col-md-6 mb-3 wishlist-item"id="wishlist-<%=item.product._id%>">
+          <div class="card h-100 p-2">
+            <img src="/uploads/re-image/<%= item.product.productImage[0] %>" 
+                 class="card-img-top" 
+                 alt="<%= item.product.productName %>"
+                 style="height: 180px; object-fit: cover;">
+            <div class="card-body d-flex flex-column">
+              <h6 class="card-title mb-2"><%= item.product.productName %></h6>
+              <p class="text-danger fw-bold mb-3">
+                ₹<%= item.product.salesPrice || item.product.regularPrice %>
+              </p>
+              <div class="mt-auto d-flex gap-2">
+                <a href="/product-details?id=<%= item.product._id %>" class="btn btn-sm btn-outline-primary flex-grow-1">
+                  <i class="bi bi-eye"></i> View
+                </a>
+                <button onclick="removeFromWishlist('<%= item.product._id %>')" class="btn btn-sm btn-outline-danger">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <div class="col-12 text-center py-4">
+        <i class="bi bi-heart" style="font-size: 48px; color: var(--text-muted);"></i>
+        <p class="text-muted mt-2">Your wishlist is empty.</p>
+        <a href="/shop" class="btn btn-primary mt-2">Browse Products</a>
+      </div>
+    <% } %>
+  </div>
+</div>
     </div>  
   </div>
 </main>
@@ -576,6 +615,50 @@ function returnOrder(orderId){
   }
 });
 }
+
+function removeFromWishlist(productId) {
+  Swal.fire({
+    title: "Remove from Wishlist?",
+    text: "This item will be removed from your wishlist.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, remove it",
+    cancelButtonText: "Cancel",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      fetch(`/remove-from-wishlist/${productId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+
+            Swal.fire("Removed!", "Item removed from wishlist.", "success");
+
+            // Remove card from DOM
+            document.getElementById(`wishlist-${productId}`).remove();
+
+            // Check if wishlist is now empty → show empty message
+            if (document.querySelectorAll(".wishlist-item").length === 0) {
+              document.getElementById("wishlist-container").innerHTML = `
+                <div class="col-12 text-center py-4">
+                  <i class="bi bi-heart" style="font-size: 48px; color: var(--text-muted);"></i>
+                  <p class="text-muted mt-2">Your wishlist is empty.</p>
+                  <a href="/shop" class="btn btn-primary mt-2">Browse Products</a>
+                </div>`;
+            }
+
+          } else {
+            Swal.fire("Error", data.message || "Failed to remove item.", "error");
+          }
+        })
+        .catch((error) =>Swal.fire("Error", `${error.message}`, "error"));
+    }
+  });
+}
+
+
 
 
 </script>

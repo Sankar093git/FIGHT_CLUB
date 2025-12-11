@@ -42,6 +42,8 @@ router.post("/reset-password",userController.resetPassword);
 router.get("/shop",userAuth,shopController.loadShopPage);
 router.get("/product-details",userAuth,shopController.loadProductDetails);
 router.post("/add-to-cart/:id",userAuth,shopController.addToCart);
+router.post("/add-to-wishlist/:id",userAuth,shopController.addTowishlist);
+router.post("/remove-from-wishlist/:id",userAuth,shopController.removeFromWishlist)
 
 //cart management
 

@@ -97,6 +97,15 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
+    wishlist: [
+  {
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+      required: true
+    }
+  }
+],
     orders: [
       {
         name:{

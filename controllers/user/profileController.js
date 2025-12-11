@@ -5,7 +5,7 @@ const Product=require("../../models/productSchema");
 const loadProfile=async (req,res)=>{
     try {
         const id=req.session.user;
-        const findUser=await User.findOne({_id:id,isBlocked:false});
+        const findUser=await User.findOne({_id:id,isBlocked:false}).populate("wishlist.product");
         const image=findUser.userImage;
         const username=findUser.name;
         res.render('profile',{
@@ -13,9 +13,6 @@ const loadProfile=async (req,res)=>{
             user:req.session.userName||username,
             image:image
         })
-
-
-
     } catch (error) {
         console.log("Error while loading profilepage",error);
         res.redirect("/error");

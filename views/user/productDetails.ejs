@@ -118,12 +118,18 @@
       <% } %>
 
       <!-- Add to Cart -->
-      <% if (product.available==true && product.quantity > 0) { %>
-        <button onclick="handleAddToCart('<%= product._id %>')" class="btn btn-primary mt-4 px-4">
-          <i class="bi bi-cart-plus"></i> Add to Cart
-        </button>
-        <!-- Product Highlights / Specifications -->
-        <section class="mt-5">
+<!-- Add to Cart & Wishlist -->
+<% if (product.available==true && product.quantity > 0) { %>
+  <div class="d-flex gap-2 mt-4">
+    <button onclick="handleAddToCart('<%= product._id %>')" class="btn btn-primary px-4">
+      <i class="bi bi-cart-plus"></i> Add to Cart
+    </button>
+    <button onclick="handleAddToWishlist('<%= product._id %>')" class="btn btn-outline-danger px-4">
+      <i class="bi bi-heart"></i> Add to Wishlist
+    </button>
+  </div>
+  <!-- Product Highlights / Specifications -->
+  <section class="mt-5">
           <h4 class="fw-bold">Highlights</h4>
           <ul class="list-group list-group-flush">
             <li class="list-group-item">✔️ Lightweight running shoe</li>
@@ -131,14 +137,18 @@
             <li class="list-group-item">✔️ Cushioned sole for extra comfort</li>
             <li class="list-group-item">✔️ 1-year warranty</li>
           </ul>
-        </section>
-      <% } else { %>
-        <button class="btn btn-secondary mt-4 px-4" disabled>
-          <i class="bi bi-cart-x"></i> Unavailable
-        </button>
-      <% } %>
-    </div>
+  </section>
+<% } else { %>
+  <div class="d-flex gap-2 mt-4">
+    <button class="btn btn-secondary px-4" disabled>
+      <i class="bi bi-cart-x"></i> Unavailable
+    </button>
+    <button class="btn btn-outline-secondary px-4" disabled>
+      <i class="bi bi-heart"></i> Wishlist
+    </button>
   </div>
+<% } %>
+
 
   <!-- Reviews -->
   <section class="mt-5">
@@ -235,6 +245,36 @@
         }
       })
       .catch(() => alert("Error adding to cart."));
+  }
+
+  function handleAddToWishlist(productId){
+    try {
+      fetch(`/add-to-wishlist/${productId}`,{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+      }).then((res)=>res.json())
+      .then((data)=>{
+        if(data.success){
+          Swal.fire({
+            title:"Success",
+            text:`${data.message}`,
+            icon:"success",
+            confirmButtonText: 'OK'
+          })
+        }
+      })
+      
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        title:"Error!",
+        text:"Something went wrong!",
+        icon:"error",
+        confirmButtonTex: "OK"
+      })
+    }
   }
 
   // Image switching function
