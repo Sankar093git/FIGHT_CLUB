@@ -3,83 +3,75 @@ const Product=require("../../models/productSchema");
 
 const getOrderList = async (req, res) => {
   try {
-    const page=parseInt(req.query.page)||1;
-    const limit=4;
-    const skip=(page-1)*limit;
+    const page = parseInt(req.query.page) || 1;
+    const limit = 4;
+    const skip = (page - 1) * limit;
     const { search, status, sort, date } = req.query;
-    let query = { };
-    if (search) {
-      if (/^ORD-[A-Fa-f0-9]{8}$/.test(search)) {
-        query["orders.orderId"] = search;
-      } else if (/^[A-Za-z][A-Za-z ]{1,50}$/.test(search)) {
-        query.name = new RegExp(search, "i");
-      } else if (/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(search)) {
-        query.email = search;
-      }
-    }
-    if (status && status !== "") {
-      query["orders.status"] = status;
-    }
-    if (date) {
-      const selectedDate = new Date(date);
-      const nextDate = new Date(selectedDate);
-      nextDate.setDate(selectedDate.getDate() + 1);
 
-      query["orders.createdAt"] = {
-        $gte: selectedDate,
-        $lt: nextDate
-      };
-    }
-    const users = await User.find(query);
-    let orderDetails = users.flatMap(u => u.orders);
+    // Get all users with orders
+    const users = await User.find({ "orders.0": { $exists: true } });
+    
+    // Flatten all orders with user info
+    let orderDetails = users.flatMap(u => 
+      u.orders.map(order => ({ ...order.toObject(), userId: u._id }))
+    );
+
+    // Filter by search
     if (search) {
       if (/^ORD-[A-Fa-f0-9]{8}$/.test(search)) {
         orderDetails = orderDetails.filter(o => o.orderId === search);
-
       } else if (/^[A-Za-z][A-Za-z ]{1,50}$/.test(search)) {
-        orderDetails = orderDetails.filter(o =>
+        orderDetails = orderDetails.filter(o => 
           o.name.toLowerCase().includes(search.toLowerCase())
         );
       } else if (/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(search)) {
         orderDetails = orderDetails.filter(o => o.email === search);
       }
     }
+
+    // Filter by status 
+    if (status && status !== "") {
+      orderDetails = orderDetails.filter(o => o.status === status);
+    }
+
+    // Filter by date
     if (date) {
       const selectedDate = new Date(date);
       const nextDate = new Date(selectedDate);
       nextDate.setDate(selectedDate.getDate() + 1);
-
-      orderDetails = orderDetails.filter(o =>
-        o.createdAt >= selectedDate && o.createdAt < nextDate
+      orderDetails = orderDetails.filter(o => 
+        new Date(o.createdAt) >= selectedDate && new Date(o.createdAt) < nextDate
       );
     }
+
+    // Sort
     if (sort === "date-desc") {
-      orderDetails.sort((a, b) => b.createdAt - a.createdAt);
-    }
-    else if (sort === "date-asc") {
-      orderDetails.sort((a, b) => a.createdAt - b.createdAt);
-    }else if (sort === "amount-desc") {
+      orderDetails.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } else if (sort === "date-asc") {
+      orderDetails.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    } else if (sort === "amount-desc") {
       orderDetails.sort((a, b) => b.totalAmount - a.totalAmount);
-    }else if (sort === "amount-asc") {
+    } else if (sort === "amount-asc") {
       orderDetails.sort((a, b) => a.totalAmount - b.totalAmount);
     }
-    const totalOrders=orderDetails.length;
-    const totalPages=Math.ceil(totalOrders/limit);
-    const paginatedOrders= orderDetails.slice(skip,skip+limit);
-    console.log(orderDetails.slice(0,4));
-   return res.render("orderList", { 
-    orderDetails:paginatedOrders,
-    currentPage:page,
-    totalPages:totalPages,
-    limit:limit,
-    totalOrders:totalOrders
- });
 
+    const totalOrders = orderDetails.length;
+    const totalPages = Math.ceil(totalOrders / limit);
+    const paginatedOrders = orderDetails.slice(skip, skip + limit);
+    return res.render("orderList", {
+      queryValues:req.query,
+      orderDetails: paginatedOrders,
+      currentPage: page,
+      totalPages,
+      limit,
+      totalOrders
+    });
   } catch (error) {
     console.error("Error while getting orders list", error);
     res.redirect("/pageerror");
   }
 };
+
 
 
 const changeOrderStatus= async (req,res)=>{

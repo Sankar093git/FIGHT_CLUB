@@ -72,31 +72,31 @@
     <div class="search-filters">
       <div class="row g-2">
         <div class="col-md-3">
-          <input type="text" class="form-control" id="searchInput" placeholder="Search Order ID, User...">
+          <input type="text" value="<%=queryValues.search%>" class="form-control" id="searchInput" placeholder="Search Order ID, User...">
         </div>
         <div class="col-md-2">
           <select class="form-select" id="statusFilter">
             <option value="">All Status</option>
-            <option value="Pending">Pending</option>
-            <option value="Shipped">Shipped</option>
-            <option value="Out for delivery">Out for Delivery</option>
-            <option value="Delivered">Delivered</option>
-            <option value="Cancelled">Cancelled</option>
-            <option value="Processing return">Processing return</option>
-            <option value="Returned">Returned</option>
-            <option value="Return rejected">Return rejected</option>
+            <option value="Pending"<%=queryValues.status=="Pending"?"selected":""%>>Pending</option>
+            <option value="Shipped"<%=queryValues.status=="Shipped"?"selected":""%>>Shipped</option>
+            <option value="Out for delivery"<%=queryValues.status=="Out for delivery"?"selected":""%>>Out for Delivery</option>
+            <option value="Delivered"<%=queryValues.status=="Delivered"?"selected":""%>>Delivered</option>
+            <option value="Cancelled"<%=queryValues.status=="Cancelled"?"selected":""%>>Cancelled</option>
+            <option value="Processing return"<%=queryValues.status=="Processing return"?"selected":""%>>Processing return</option>
+            <option value="Returned"<%=queryValues.status=="Returned"?"selected":""%>>Returned</option>
+            <option value="Return rejected"<%=queryValues.status=="Return rejected"?"selected":""%>>Return rejected</option>
           </select>
         </div>
         <div class="col-md-2">
           <select class="form-select" id="sortBy">
-            <option value="date-desc">Date (Newest)</option>
-            <option value="date-asc">Date (Oldest)</option>
-            <option value="amount-desc">Amount (High-Low)</option>
-            <option value="amount-asc">Amount (Low-High)</option>
+            <option value="date-desc"<%=queryValues.sort=="date-desc"?"selected":""%>>Date (Newest)</option>
+            <option value="date-asc"<%=queryValues.sort=="date-asc"?"selected":""%>>Date (Oldest)</option>
+            <option value="amount-desc"<%=queryValues.sort=="amount-desc"?"selected":""%>>Amount (High-Low)</option>
+            <option value="amount-asc"<%=queryValues.sort=="amount-asc"?"selected":""%>>Amount (Low-High)</option>
           </select>
         </div>
         <div class="col-md-2">
-          <input type="date" class="form-control" id="dateFilter">
+          <input type="date" value="<%=queryValues.date%>" class="form-control" id="dateFilter">
         </div>
         <div class="col-md-3 text-end">
           <button class="btn btn-sm btn-outline-secondary" id="clearFilters">
@@ -139,7 +139,7 @@
                 <td class="fw-semibold">₹<%= order.totalAmount%></td>
                 <td>
                   <select class="form-select form-select-sm status-dropdown" onchange="handleOrderStatus(this.value,'<%= order.orderId %>','<%=order.email%>')">
-                    <option value="Pending" <%= order.status === "Pnding" ? "selected" : "" %>>Pending</option>
+                    <option value="Pending" <%= order.status === "Pending" ? "selected" : "" %>>Pending</option>
                     <option value="Shipped"<%= order.status === "Shipped" ? "selected" : "" %>>Shipped</option>
                     <option value="Out for delivery" <%= order.status === "Out for delivery" ? "selected" : "" %>>Out for Delivery</option>
                     <option value="Delivered" <%= order.status === "Delivered" ? "selected" : "" %>>Delivered</option>
@@ -234,7 +234,7 @@
    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> 
   <script>
   
-  document.querySelector(".status-dropdown").addEventListener("DOMContentLoaded",returnStatHandling());
+  document.addEventListener("DOMContentLoaded",returnStatHandling());
   function returnStatHandling() {
   document.querySelectorAll("tr").forEach(row => {
     const requestStatus = row.querySelector(".returnRequestStat")?.innerText.trim();

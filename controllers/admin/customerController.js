@@ -18,6 +18,7 @@ const loadCustomer= async(req,res)=>{
             ]}).countDocuments();
         const totalPages=Math.ceil(count/limit);
         res.render("customer",{
+            queryVal:req.query,
             totalData:totalData,
             data:userData||null,
             totalPages:totalPages,

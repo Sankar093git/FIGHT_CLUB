@@ -161,7 +161,21 @@
         background: white;
         box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
     }
-
+         .clear-btn {
+        position: absolute;
+        right: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 0.5rem 1rem;
+        background: #fff;
+        color: rgb(11, 1, 1);
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
     .search-btn {
         position: absolute;
         right: 6px;
@@ -465,8 +479,12 @@
             <div class="card-header-section">
                 <form action="/admin/users/" method="get" class="search-wrapper">
                     <i class="fa fa-search"></i>
-                    <input type="text" class="search-input" placeholder="Search by name, email or phone..." name="search">
-                    <button class="search-btn" type="submit">Search</button>
+                    <input type="text" value="<%=queryVal.search%>" class="search-input" placeholder="Search by name, email or phone..." name="search">
+                    <% if(queryVal.search) {%>
+                         <button class="clear-btn" type="submit" onclick="clearFilter()">Clear</button>
+                         <% }else{ %>
+                        <button class="search-btn" type="submit">Search</button>
+                    <% } %>
                 </form>
             </div>
 
@@ -612,6 +630,15 @@ function blockOrUnblockUser(userId, userName) {
             text: `${error.message}`,
             confirmButtonText: 'OK'
         })
+    }
+}
+
+function clearFilter(){
+    try {
+        event.preventDefault();
+        window.location.href="/admin/users"
+    } catch (error) {
+        console.error("Something went wrong while clearing filter!",error);
     }
 }
 </script>
