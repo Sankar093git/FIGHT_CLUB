@@ -2,8 +2,17 @@ const Brand=require("../../models/brandSchema");
 
 const getBrandList=async(req,res)=>{
     try {
-        const data= await Brand.find();
-        res.render("brand",{data:data});
+        const page=parseInt(req.query.page)||1;
+        const limit=4;
+        const skip=(page-1)*limit;
+        const data= await Brand.find().skip(skip).limit(limit);
+        const totalDocuments=data.length;
+        const totalpages=totalDocuments/limit;
+        res.render("brand",{
+            data:data,
+            totalPages:totalpages,
+            currentPage:page
+        });
         console.log(data);
     } catch (error) {
         console.error("Error while loading brands",error);
