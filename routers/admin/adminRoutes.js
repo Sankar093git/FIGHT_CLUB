@@ -40,6 +40,8 @@ router.get("/edit-product",adminAuth,productController.loadEditProduct);
 router.post("/edit-product/:id",adminAuth,uploads.array("images",4),productController.editproduct);
 router.post("/delete-image/:id",adminAuth,productController.deleteImages);
 router.post("/block-or-unblock-products/:id",adminAuth,productController.blockOrUnblockproduct);
+router.delete("/delete-brand/:id",adminAuth,brandController.deleteBrand)
+router.patch("/block-or-unblock/:id",adminAuth,brandController.blockORunblockBrand)
 
 //Brand management
 router.get("/brands",adminAuth,brandController.getBrandList);
