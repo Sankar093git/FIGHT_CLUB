@@ -65,7 +65,7 @@ const deleteBrand=async (req,res)=>{
 
 const blockORunblockBrand= async (req,res)=>{
     try {
-        const id=req.prams.id;
+        const id=req.params.id;
         const findBrand= await Brand.findOne({_id:id});
         if(findBrand.isBlocked){
             await Brand.updateOne({_id:id},{$set:{isBlocked:false}});

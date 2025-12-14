@@ -608,11 +608,11 @@
                             </td>
                             <td>
                                 <% if(brand.isBlocked) { %>
-                                    <span class="status-badge blocked">
+                                    <span class="status-badge blocked" id="badge<%=brand._id%>">
                                         <i class="fa fa-circle"></i> Blocked
                                     </span>
                                 <% } else { %>
-                                    <span class="status-badge active">
+                                    <span class="status-badge active" id="badge<%=brand._id%>">
                                         <i class="fa fa-circle"></i> Active
                                     </span>
                                 <% } %>
@@ -620,14 +620,12 @@
                             <td>
                                 <div class="action-buttons">
                                     <% if(!brand.isBlocked) { %>
-                                        <button class="btn-action btn-block">
-                                            <a href="/admin/blockBrand/id=<%= brand._id %>">
+                                        <button class="btn-action btn-block" data-brand-id="<%= brand._id %>">
                                                 <i class="fa fa-ban"></i> Block
                                             </a>
                                         </button>
                                     <% } else { %>
-                                        <button class="btn-action btn-unblock">
-                                            <a href="/admin/unblockBrand/id=<%= brand._id %>">
+                                        <button class="btn-action btn-unblock" data-brand-id="<%= brand._id %>">
                                                 <i class="fa fa-check-circle"></i> Unblock
                                             </a>
                                         </button>
@@ -707,7 +705,7 @@ function addBrandRow(brand){
         </td>
 
         <td>
-            <span class="status-badge active">
+            <span class="status-badge active" id="badge${brand._id}">
                 <i class="fa fa-circle"></i> Active
             </span>
         </td>
@@ -859,6 +857,55 @@ function confirmDelete(id){
 
 }
 
+document.querySelectorAll(".btn-action").forEach((btn)=>{
+    btn.addEventListener("click",()=>{
+        let id= btn.getAttribute("data-brand-id");
+        let badge=document.getElementById(`badge${id}`);
+        fetch(`/admin/block-or-unblock-brand/${id}`,{
+            method:"PATCH",
+        }).then((res)=>res.json())
+        .then((data)=>{
+            if(data.success){
+            if(btn.classList.contains("btn-block")){
+                Swal.fire({
+                    title:"Done",
+                    text:data.message,
+                    icon:"success",
+                    showConfirmButton:true
+                }).then(()=>{
+                    badge.classList.remove("active");
+                    badge.classList.add("blocked");
+                    badge.innerHTML=`<i class="fa fa-circle"></i> Blocked`;
+                    btn.classList.remove("btn-block");
+                    btn.classList.add("btn-unblock");
+                    btn.innerHTML=`<i class="fa fa-check-circle"></i> Unblock`
+                })
+        }else{
+            Swal.fire({
+                    title:"Done",
+                    text:data.message,
+                    icon:"success",
+                    showConfirmButton:true
+                }).then(()=>{
+                    badge.classList.remove("blocked");
+                    badge.classList.add("active");
+                    badge.innerHTML=`<i class="fa fa-circle"></i> Active`
+                    btn.classList.remove("btn-unblock");
+                    btn.classList.add("btn-block");
+                    btn.innerHTML=`<i class="fa fa-ban"></i> Block`
+                })
+        }
+            }else{
+                Swal.fire({
+                    title:"Error",
+                    text:"Something went wrong!",
+                    icon:"error",
+                    showConfirmButton:true
+                })
+            }
+        })
+    })
+})
 </script>
 
 <%- include("../../views/admin/partials/footer") %>
