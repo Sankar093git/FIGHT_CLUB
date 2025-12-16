@@ -620,12 +620,12 @@
                             <td>
                                 <div class="action-buttons">
                                     <% if(!brand.isBlocked) { %>
-                                        <button class="btn-action btn-block" data-brand-id="<%= brand._id %>">
+                                        <button class="btn-action block-btn btn-block" data-brand-id="<%= brand._id %>">
                                                 <i class="fa fa-ban"></i> Block
                                             </a>
                                         </button>
                                     <% } else { %>
-                                        <button class="btn-action btn-unblock" data-brand-id="<%= brand._id %>">
+                                        <button class="btn-action block-btn btn-unblock" data-brand-id="<%= brand._id %>">
                                                 <i class="fa fa-check-circle"></i> Unblock
                                             </a>
                                         </button>
@@ -712,7 +712,7 @@ function addBrandRow(brand){
 
         <td>
             <div class="action-buttons">
-                <button class="btn-action btn-block">
+                <button class="btn-action block-btn btn-block">
                     <a href="/admin/blockBrand/id=${brand._id}">
                         <i class="fa fa-ban"></i> Block
                     </a>
@@ -857,7 +857,7 @@ function confirmDelete(id){
 
 }
 
-document.querySelectorAll(".btn-action").forEach((btn)=>{
+document.querySelectorAll(".block-btn").forEach((btn)=>{
     btn.addEventListener("click",()=>{
         let id= btn.getAttribute("data-brand-id");
         let badge=document.getElementById(`badge${id}`);

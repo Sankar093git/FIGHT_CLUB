@@ -35,7 +35,7 @@ const loadShopPage = async (req, res) => {
     const regex = new RegExp(search, "i");
 
     // Base filter
-    let filter = { productName: regex,available:true,isBlocked:false };
+    let filter = { productName: regex,available:true,isBlocked:false};
 
     // Category filter
     if (cate) {
