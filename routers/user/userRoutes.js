@@ -48,8 +48,8 @@ router.post("/remove-from-wishlist/:id",userAuth,shopController.removeFromWishli
 //cart management
 
 router.get("/cart",userAuth,cartController.loadCart);
-router.post("/cart/change-quantity",userAuth,cartController.changeQuantity);
-router.post("/cart/remove",userAuth,cartController.removeItem);
+router.patch("/cart/quantity",userAuth,cartController.changeQuantity);
+router.patch("/cart/remove",userAuth,cartController.removeItem);
 
 //profile management
 router.get("/profile",userAuth,profileController.loadProfile);

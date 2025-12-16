@@ -1,6 +1,5 @@
 <%- include("../../views/user/partials/header.ejs") %>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-<%- include("../../views/user/partials/header.ejs") %>
 <style>
 body {
   display: flex;
@@ -24,7 +23,7 @@ main {
   }
 
 </style>
-
+b
 <main class="container py-5 cart">
   <h2 class="mb-4 mt-5">My Cart</h2>
 
@@ -44,7 +43,7 @@ main {
              let itemTotal = item.product.salesPrice * item.quantity;
              grandTotal += itemTotal;
         %>
-          <tr>
+          <tr id="row<%=item.product._id%>">
             <td>
               <img src="/uploads/re-image/<%= item.product.productImage[0] %>" width="60">
               <%= item.product.productName %>
@@ -52,33 +51,25 @@ main {
                 <span class="badge bg-danger">Out of Stock</span>
               <% } %>
             </td>
-            <td>₹<%= item.product.salesPrice %></td>
+            <td class="price" id="priceof<%=item.product._id%>">₹<%= item.product.salesPrice %></td>
             <td>
-              <form method="post" action="/cart/change-quantity" class="d-inline">
-                <input type="hidden" name="productId" value="<%= item.product._id %>">
-                <button type="submit" name="action" value="decrement" class="btn btn-sm btn-outline-secondary">-</button>
-                <span class="mx-2"><%= item.quantity %></span>
-                <button type="submit" name="action" value="increment"
-                        class="btn btn-sm btn-outline-secondary"
+                <button type="submit" name="action" item="<%= item.product._id %>" value="decrement" id="decrement<%= item.product._id %>" class="btn btn-sm dec btn-outline-secondary">-</button>
+                <span class="mx-2 quant" id="itemQuant<%=item.product._id%>"><%= item.quantity %></span>
+                <button type="submit" name="action" item="<%= item.product._id %>" value="increment" id="increment<%= item.product._id %>"
+                        class="btn btn-sm inc btn-outline-secondary"
                         <%= item.product.stock === 0 ? "disabled" : "" %>>+</button>
-              </form>
-              
-              <!-- Trashcan button for remove -->
-              <form method="post" action="/cart/remove" class="d-inline">
-                <input type="hidden" name="productId" value="<%= item.product._id %>">
-                <input type="hidden" name="cartItemId" value="<%= item._id %>">
-                <button type="submit" class="trash-btn">
+                  <!-- Trashcan button for remove -->
+                <button item="<%= item._id %>" product="<%= item.product._id %>" class="trash-btn">
                   <i class="bi bi-trash"></i>
                 </button>
-              </form>
             </td>
-            <td>₹<%= itemTotal %></td>
+            <td class="totalPrice" id="totalPrice<%=item.product._id%>">₹<%= itemTotal %></td>
           </tr>
         <% }) %>
         <!-- Grand Total Row -->
         <tr>
           <td colspan="3" class="text-end fw-bold">Grand Total</td>
-          <td class="fw-bold">₹<%= grandTotal %></td>
+          <td class="fw-bold" id="grandTotal">₹<%= grandTotal %></td>
         </tr>
       </tbody>
     </table>
@@ -93,6 +84,106 @@ main {
     <p>Your cart is empty.</p>
   <% } %>
 </main>
+<script>
+
+//incrementing the quantity number
+
+document.querySelectorAll(".btn-sm").forEach((btn)=>{
+  btn.addEventListener("click",()=>{
+    let id=btn.getAttribute("item");
+    let itemQuant=document.getElementById(`itemQuant${id}`);
+    let action=btn.getAttribute("value");
+    let price=document.getElementById(`priceof${id}`);
+    let totalPrice=document.getElementById(`totalPrice${id}`)
+    let decrement=document.getElementById(`decrement${id}`);
+    let increment=document.getElementById(`increment${id}`);
+    fetch("/cart/quantity",{
+       method:"PATCH",
+       headers:{
+        "Content-Type":"application/json"
+       },
+       body:JSON.stringify({id,action})
+    }).then((res)=>res.json())
+      .then((data)=>{
+        if(action=="increment"){
+          itemQuant.innerText=parseInt(itemQuant.innerText)+1;
+          totalPrice.innerText=`₹${parseInt(itemQuant.innerText.replace("₹",""))*parseInt(price.innerText.replace("₹",""))}`;
+          if(parseInt(itemQuant.innerText)==5){
+            increment.style.display="none"
+          }else{
+            increment.style.display="inline-block"
+            decrement.style.display="inline-block"
+          }
+          findGrandTotal()
+        }else if(action=="decrement"){
+          itemQuant.innerText=parseInt(itemQuant.innerText)-1;
+          totalPrice.innerText=`₹${parseInt(itemQuant.innerText.replace("₹",""))*parseInt(price.innerText.replace("₹",""))}`;
+          if(parseInt(itemQuant.innerText)==1){
+            decrement.style.display="none"
+          }else{
+            decrement.style.display="inline-block"
+            increment.style.display="inline-block"
+          }
+          findGrandTotal()
+        }
+        
+      })
+  })
+}) 
+
+//hiding the increment na ddecrement button based on the cart quantity
+
+function hideButton(){
+ let quant=document.querySelectorAll(".quant");
+ let dec=document.querySelectorAll(".dec");
+ let inc=document.querySelectorAll(".inc");
+ for(let i=0;i<quant.length;i++){
+  if(parseInt(quant[i].innerText.replace("₹",""))==1){
+    dec[i].style.display="none";
+  }else if(parseInt(quant[i].innerText.replace("₹",""))>=5){
+    inc[i].style.display="none";
+  }else{
+    dec[i].style.display="inline-block";
+    inc[i].style.display="inline-block";
+  }
+ }
+}
+
+//finding the total amount
+
+function findGrandTotal(){
+  let priceArr=[]
+  document.querySelectorAll(".totalPrice").forEach((price)=>{
+       priceArr.push(parseInt(price.innerText.replace("₹","")));
+  });
+  document.getElementById("grandTotal").innerText=`₹${priceArr.reduce((acc,num)=> acc+num,0)}`
+}
+
+//removing the items from cart
+
+document.querySelectorAll(".trash-btn").forEach((btn)=>{
+  btn.addEventListener("click",()=>{
+    let item=btn.getAttribute("item");
+    let product=btn.getAttribute("product");
+    let row=document.getElementById(`row${product}`);
+     fetch("/cart/remove",{
+      method:"PATCH",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({item,product})
+     }).then((res)=>res.json())
+       .then((data)=>{
+        if(data.success){
+          row.remove();
+          findGrandTotal();
+        }
+       })
+  })
+})
+findGrandTotal();
+hideButton();
+</script>
 
 <%- include("../../views/user/partials/footer.ejs") %>
 

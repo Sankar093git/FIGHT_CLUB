@@ -20,7 +20,7 @@ const changeQuantity= async (req,res)=>{
     try {
           const userData = await User.findOne({ _id: req.session.user }).populate("cart.product");
           const action = req.body.action;
-          const pId = req.body.productId;
+          const pId = req.body.id;
 
           const cartItem = userData.cart.find(item => item.product._id.toString() === pId);
 
@@ -31,9 +31,9 @@ const changeQuantity= async (req,res)=>{
 
           if (action === 'increment') {
             if (cartItem.quantity >= cartItem.product.quantity) {
-             console.log("No more stocks left");
+               return res.status(400).json({success:false,message:"Out of stock"});
             } else if (cartItem.quantity >= 5) {
-               console.log("Max limit reached");
+               return res.status(400).json({success:false,message:"Limit exceeded"});
             } else {
               await User.updateOne(
               { _id: req.session.user, "cart.product": pId },
@@ -42,10 +42,11 @@ const changeQuantity= async (req,res)=>{
              await Product.updateOne(
               {_id:pId},{$inc:{quantity:-1}}
              )
+             return res.status(200).json({success:true});
           }
         }else if(action==="decrement"){
           if(cartItem.quantity<=1){
-            console.log("Cannot be decremented");
+            return res.status(400).json({success:false,message:"Click trash icon to remove the product"});
           }else{
           await User.updateOne(
               { _id: req.session.user, "cart.product": pId },
@@ -55,8 +56,9 @@ const changeQuantity= async (req,res)=>{
               {_id:pId},{$inc:{quantity:1}}
              )
             }
+            return res.status(200).json({success:true});
         } 
-        res.redirect("/cart")
+        
     } catch (error) {
         console.error("Error while changing quantity",error);
         res.redirect("/error");
@@ -65,8 +67,8 @@ const changeQuantity= async (req,res)=>{
 
 const removeItem = async (req, res) => {
   try {
-    const pId = req.body.productId;  
-    const cId=req.body.cartItemId;
+    const pId = req.body.product;  
+    const cId=req.body.item;
     const userData= await User.findOne({_id:req.session.user});
 
     const itemDetails=userData.cart.find((cart)=>cart._id==cId);
@@ -77,7 +79,7 @@ const removeItem = async (req, res) => {
     );
 
     await Product.updateOne({_id:pId},{$inc:{quantity:count}});
-    res.redirect("/cart");
+   res.status(200).json({success:true});
 
   } catch (error) {
     console.error("Error while removing item", error);
