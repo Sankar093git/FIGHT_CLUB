@@ -35,6 +35,7 @@ const getAddProduct=async (req,res)=>{
 
 const addProducts = async (req, res) => {
   try {
+
     const { productName } = req.body;
 
     
@@ -77,7 +78,7 @@ const addProducts = async (req, res) => {
       regularPrice: req.body.regularPrice,
       salesPrice: req.body.salePrice, 
       createdOn: new Date(),
-      quantity: req.body.quantity,
+      variants:JSON.parse(req.body.variants),
       size: req.body.size,
       color: req.body.color,
       productImage: images,

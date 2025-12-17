@@ -402,6 +402,15 @@
         .remove-icon:hover {
             transform: scale(1.1);
         }
+
+        #variant{
+            font-size: small;
+        }
+        .error{
+            font-size: x-small;
+            color: #ef4444;
+            padding-left: 2px;
+        }
     </style>
 </head>
 
@@ -482,8 +491,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label class="form-label">Quantity <span class="required">*</span></label>
-                                        <input type="text" name="quantity" class="form-input" placeholder="0">
-                                        <div id="quantity-error" class="error-message"></div>
+                                        <button type="button" class="btn btn-primary" id="variant" data-bs-toggle="modal" data-bs-target="#variantsModal">Add variants</button>
                                     </div>
                                 </div>
                             </div>
@@ -585,16 +593,45 @@
     </div>
 </section>
 
+<!-- Variants Modal -->
+<div class="modal fade" id="variantsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Size Variants</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="variantRows">
+                    <div class="variant-row d-flex gap-2 mb-2">
+                        <div>
+                        <input type="text" class="form-control variantSize size-input" placeholder="Size (e.g., S, M, 42, 10ml)">
+                        <span class="error size"  style="display: none;"></span>
+                        </div>
+                        <div>
+                        <input type="text" class="form-control variantQuantity quantity-input" placeholder="Quantity" min="0">
+                        <span class="error quantity"  style="display: none;"></span>
+                        </div>
+                        <button type="button" class="btn btn-danger btn-sm remove-variant">&times;</button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm mt-2" onclick="addVariantRow()">
+                    <i class="fa fa-plus"></i> Add Another Size
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveVariants()">Save Variants</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
 <script>
 const croppers = {};
 const selectedImages = [];
-
-function validateAndSubmit() {
-    if (validateForm()) {
-        document.forms[0].submit();
-    }
-}
 
 function validateForm() {
     clearErrorMessages();
@@ -606,7 +643,6 @@ function validateForm() {
     const color = document.getElementsByName('color')[0].value;
     const category = document.getElementsByName('category')[0].value;
     const images = document.getElementById('input1');
-    const quantity = document.getElementsByName('quantity')[0].value;
     let isValid = true;
 
     if (name.trim() === "") {
@@ -622,11 +658,6 @@ function validateForm() {
         isValid = false;
     } else if (!/^[a-zA-Z\s]+$/.test(description.trim())) {
         displayErrorMessage('description-error', 'Product description should contain only alphabetic characters.');
-        isValid = false;
-    }
-
-    if (parseInt(quantity) < 0 || isNaN(quantity)) {
-        displayErrorMessage('quantity-error', 'Please enter a valid non-negative quantity.');
         isValid = false;
     }
 
@@ -812,6 +843,121 @@ function handleFileSelect(event) {
     }
 }
 document.getElementById("input1").addEventListener("change", handleFileSelect);
+
+let variants = [];
+
+function addVariantRow() {
+    const row = document.createElement('div');
+    row.className = 'variant-row d-flex gap-2 mb-2';
+    row.innerHTML = `
+        <input type="text" class="form-control size-input" placeholder="Size (e.g., S, M, 42, 10ml)">
+        <input type="text" class="form-control quantity-input" placeholder="Quantity" min="0">
+        <button type="button" class="btn btn-danger btn-sm remove-variant">&times;</button>
+    `;
+    document.getElementById('variantRows').appendChild(row);
+}
+
+document.getElementById('variantRows').addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-variant')) {
+        const rows = document.querySelectorAll('.variant-row');
+        if (rows.length > 1) e.target.parentElement.remove();
+    }
+});
+
+function saveVariants() {
+       variants = [];
+
+  document.querySelectorAll('.variant-row').forEach(row => {
+    const sizeInput = row.querySelector('.size-input');
+    const quantityInput = row.querySelector('.quantity-input');
+
+    // Safety check
+    if (!sizeInput || !quantityInput) return;
+
+    const size = sizeInput.value.trim();
+    const stock = quantityInput.value.trim();
+
+    if (size !== "" && stock !== "") {
+      variants.push({
+        size,
+        stock: parseInt(stock, 10)
+      });
+    }
+  });
+
+  console.log(variants); // ✅ correct variable
+}
+document.querySelectorAll(".variantSize").forEach((variant)=>{
+    variant.addEventListener("input",validateModal)
+})
+
+document.querySelectorAll(".variantQuantity").forEach((variant)=>{
+    variant.addEventListener("input",validateModal)
+})
+
+function validateModal(){
+    let sizeError=document.querySelectorAll(".size");
+    let quantityError=document.querySelectorAll(".quantity");
+    let size=document.querySelectorAll(".size-input");
+    let quantity=document.querySelectorAll(".quantity-input");
+    let sizeRegex=/^[a-zA-Z0-9]+$/;
+    let quantityRegex=/^[0-9]+$/;
+    let length=size.length;
+
+    for(let i=0;i<length;i++){
+        if(size[i].value.trim()==""){
+           sizeError[i].style.display="block";
+           sizeError[i].innerText="Size is required"
+        }else if(!sizeRegex.test(size[i].value.trim())){
+            sizeError[i].style.display="block";
+            sizeError[i].innerText="This feild only accepts letters and numbers"
+        }else{
+            sizeError[i].style.display="none";
+            sizeError[i].innerText=""
+        }
+
+        if(quantity[i].value.trim()==""){
+            quantityError[i].style.display="block";
+            quantityError[i].innerText="Quantity is required"
+        }else if(!quantityRegex.test(quantity[i].value.trim())){
+            quantityError[i].style.display="block";
+            quantityError[i].innerText="This field only accepts numbers"
+        }else{
+            quantityError[i].style.display="none";
+            quantityError[i].innerText=""
+        }
+    }
+}
+
+function validateAndSubmit() {
+    if (!validateForm()) return;
+
+    const form = document.querySelector("form");
+    const formData = new FormData(form);
+
+    // Append variants array as JSON
+    formData.append("variants", JSON.stringify(variants));
+
+    fetch("/admin/add-products", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert("Product added successfully!");
+            window.location.href = "/admin/products";
+        } else {
+            alert(data.message || "Something went wrong");
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Server error");
+    });
+}
+
+
 </script>
 
 

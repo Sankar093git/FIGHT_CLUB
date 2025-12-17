@@ -35,6 +35,20 @@ const productSchema= new mongoose.Schema({
         type:Number,
         default:0
     },
+    variants:[
+        {
+    size: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    stock: {
+      type: Number,
+      default: 0,
+      min: 0
+    }
+  }
+    ],
     productOffer:{
         type:Number,
         default:0
