@@ -109,20 +109,20 @@ document.querySelectorAll(".btn-sm").forEach((btn)=>{
           itemQuant.innerText=parseInt(itemQuant.innerText)+1;
           totalPrice.innerText=`₹${parseInt(itemQuant.innerText.replace("₹",""))*parseInt(price.innerText.replace("₹",""))}`;
           if(parseInt(itemQuant.innerText)==5){
-            increment.style.display="none"
+            increment.disabled=true;
           }else{
-            increment.style.display="inline-block"
-            decrement.style.display="inline-block"
+            increment.disabled=false;
+            decrement.disabled=false;
           }
           findGrandTotal()
         }else if(action=="decrement"){
           itemQuant.innerText=parseInt(itemQuant.innerText)-1;
           totalPrice.innerText=`₹${parseInt(itemQuant.innerText.replace("₹",""))*parseInt(price.innerText.replace("₹",""))}`;
           if(parseInt(itemQuant.innerText)==1){
-            decrement.style.display="none"
+            decrement.disabled=true;
           }else{
-            decrement.style.display="inline-block"
-            increment.style.display="inline-block"
+            increment.disabled=false;
+            decrement.disabled=false;
           }
           findGrandTotal()
         }
@@ -139,12 +139,12 @@ function hideButton(){
  let inc=document.querySelectorAll(".inc");
  for(let i=0;i<quant.length;i++){
   if(parseInt(quant[i].innerText.replace("₹",""))==1){
-    dec[i].style.display="none";
+    dec[i].disabled=true;
   }else if(parseInt(quant[i].innerText.replace("₹",""))>=5){
-    inc[i].style.display="none";
+    inc[i].disabled=true;
   }else{
-    dec[i].style.display="inline-block";
-    inc[i].style.display="inline-block";
+    dec[i].disabled=false;
+    inc[i].disabled=false;
   }
  }
 }
