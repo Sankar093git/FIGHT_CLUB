@@ -86,7 +86,7 @@ const addProducts = async (req, res) => {
     });
 
     await newProduct.save();
-    return res.redirect("/admin/add-product");
+    return res.redirect("/admin/product");
 
   } catch (error) {
     console.error("Error while adding product:", error);
@@ -103,9 +103,11 @@ const loadEditProduct= async(req,res)=>{
         const product=await Product.find({_id:id}).populate("category");
         res.render("edit-product",{
             product:product[0],
+            variants:product[0].variants,
             cat:category,
             brand:brand
         })
+        console.log(product);
     } catch (error) {
         console.error("Error while loading edit products",error)
     }
@@ -115,14 +117,18 @@ const editproduct = async (req, res) => {
   try {
     const images = [];
     const id = req.params.id;
-    const { productName, brand, description, regularPrice, salesPrice, quantity, category } = req.body;
+    const { productName, brand, description, regularPrice, salesPrice, category,variants } = req.body;
+
+    let variant=JSON.parse(variants);
+    let quantity=variant.map((n)=>n.stock).reduce((acc,n)=>acc+n,0);
+  
 
     const cat = await Category.findOne({ name: category });
     const productExists = await Product.findOne({ _id: { $ne: id }, productName });
 
     if (productExists) {
       console.log("Product already exists");
-      return res.redirect("/admin/error");
+      return res.status(400).json({success:false,message:"Product already exists"});
     }
 
     // Process new uploaded images
@@ -153,6 +159,7 @@ const editproduct = async (req, res) => {
           description,
           regularPrice,
           salesPrice,
+          variants:JSON.parse(variants),
           category: cat._id,  
           quantity
         },
@@ -162,11 +169,11 @@ const editproduct = async (req, res) => {
       }
     );
 
-    res.redirect("/admin/products");
+    res.status(200).json({success:true,message:"Product edited successfully"})
 
   } catch (error) {
     console.error("Error while editing product", error);
-    res.redirect("/admin/error");
+    res.status(500).json({success:false,message:"Something went wrong!"});
   }
 }
 
