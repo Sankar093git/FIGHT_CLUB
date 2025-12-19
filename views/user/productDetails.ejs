@@ -51,6 +51,53 @@
     border-color: #007bff;
     box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
   }
+  .size-selector-container {
+  margin: 1rem 0;
+}
+
+.size-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.size-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.size-btn {
+  min-width: 42px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.size-btn:hover:not(.out-of-stock) {
+  border-color: #333;
+  background: #f5f5f5;
+}
+
+.size-btn.active {
+  border-color: #333;
+  background: #333;
+  color: #fff;
+}
+
+.size-btn.out-of-stock {
+  opacity: 0.4;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
 </style>
 
 <main class="main container py-5">
@@ -114,10 +161,29 @@
       <% } else if (product.quantity <= 0) { %>
         <div class="alert alert-warning">⚠️ Out of Stock</div>
       <% } else { %>
-        <div class="alert alert-success">✅ In Stock: <%= product.quantity %> items</div>
+        <div class="alert alert-success" id="stock">✅ In Stock: <%= product.variants[0].stock %> items</div>
       <% } %>
 
-      <!-- Add to Cart -->
+ <!-- Size Selector -->
+<% if (product.variants && product.variants.length > 0) { %>
+<div class="size-selector-container">
+  <label class="size-label">Select Size:</label>
+  <div class="size-selector">
+    <% product.variants.forEach((variant, index) => { %>
+      <button type="button" 
+              class="size-btn <%= index === 0 ? 'active' : '' %> <%= variant.stock <= 0 ? 'out-of-stock' : '' %>"
+              data-size="<%= variant.size %>"
+              data-stock="<%= variant.stock %>"
+              <%= variant.stock <= 0 ? 'disabled' : '' %>
+              onclick="selectSize(this)">
+        <%= variant.size %>
+      </button>
+    <% }) %>
+  </div>
+  <input type="hidden" id="selectedSize" name="size" value="<%= product.variants[0].size %>">
+</div>
+<% } %>
+
 <!-- Add to Cart & Wishlist -->
 <% if (product.available==true && product.quantity > 0) { %>
   <div class="d-flex gap-2 mt-4">
@@ -301,6 +367,29 @@
   zoomContainer.addEventListener('mouseleave', () => {
     mainImage.style.transformOrigin = 'center center';
   });
+
+  function selectSize(btn) {
+  if (btn.classList.contains('out-of-stock')) return;
+  
+  document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('selectedSize').value = btn.dataset.size;
+}
+
+function handleStockPerSize(){
+  try {
+    let stock=document.getElementById("stock");
+    let btn=document.querySelectorAll(".size-btn").forEach((btn)=>{
+          btn.addEventListener("click",()=>{
+                stock.innerText=`✅ In Stock: ${btn.getAttribute("data-stock")} items`;
+          });
+    })
+  } catch (error) {
+    console.error("Error while switching variants");
+  }
+}
+handleStockPerSize()
+
 </script>
 
 <%- include("../../views/user/partials/footer.ejs") %>
