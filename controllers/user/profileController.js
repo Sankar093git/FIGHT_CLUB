@@ -161,7 +161,7 @@ const cancelOrder= async(req,res)=>{
         const orderDetails=userData.orders.find((order)=>order.orderId==orderId);
         const productDetails=orderDetails.products;
         for(let prod of productDetails){
-             await Product.updateOne({_id:prod.product},{$inc:{quantity:prod.quantity}});
+             await Product.updateOne({_id:prod.product,"variants.size":prod.size},{$inc:{"variants.$.stock":prod.quantity}});
         }
          res.json({success:true});       
     } catch (error) {
@@ -179,7 +179,7 @@ const returnOrder= async(req,res)=>{
         const orderDetails=userData.orders.find((order)=>order.orderId==orderId);
         const productDetails=orderDetails.products;
         for(let prod of productDetails){
-             await Product.updateOne({_id:prod.product},{$inc:{quantity:prod.quantity}});
+             await Product.updateOne({_id:prod.product,"variants.size":prod.size},{$inc:{"variants.$.stock":prod.quantity}});
         }
          res.json({  
             success: true,
