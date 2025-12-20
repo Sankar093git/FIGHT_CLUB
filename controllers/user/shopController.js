@@ -112,21 +112,22 @@ const loadProductDetails=async (req,res)=>{
 
 const addToCart = async (req, res) => {
   try {
-    const id = req.params.id;        
+    const id = req.params.id;
+    const size=req.body.size;        
     const userId = req.session.user; 
     const result = await User.updateOne(
-      { _id: userId, "cart.product": id },
+      { _id: userId, "cart.product": id,"cart.size":size},
       { $inc: { "cart.$.quantity": 1 } }
     );
 
     if (result.matchedCount === 0) {
       await User.updateOne(
         { _id: userId },
-        { $push: { cart: { product: id, quantity: 1 } } }
+        { $push: { cart: { product: id,size:size, quantity: 1 } } }
       );
     }
 
-    await Product.updateOne({_id:id},{$inc:{quantity:-1}});
+    await Product.updateOne({_id:id,"variants.size":size},{$inc:{"variants.$.stock":-1}});
     
     res.redirect(`/product/${id}`);
 

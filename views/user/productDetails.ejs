@@ -293,8 +293,16 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 <script>
+  let size=document.querySelector(".size-btn").innerText;
   function handleAddToCart(productId) {
-    fetch(`/add-to-cart/${productId}`, { method: "POST" })
+    console.log(size);
+    fetch(`/add-to-cart/${productId}`, { 
+      method: "POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({size})
+    })
       .then(res => {
         if (res.status === 403) {
           alert("This product is blocked/unavailable.");
@@ -382,6 +390,7 @@ function handleStockPerSize(){
     let btn=document.querySelectorAll(".size-btn").forEach((btn)=>{
           btn.addEventListener("click",()=>{
                 stock.innerText=`✅ In Stock: ${btn.getAttribute("data-stock")} items`;
+                size=btn.innerText;
           });
     })
   } catch (error) {

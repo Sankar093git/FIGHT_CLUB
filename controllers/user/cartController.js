@@ -23,6 +23,7 @@ const changeQuantity= async (req,res)=>{
           const pId = req.body.id;
 
           const cartItem = userData.cart.find(item => item.product._id.toString() === pId);
+          const size=cartItem.size;
 
           if (!cartItem) {
           console.log("Product not found in cart");
@@ -40,7 +41,7 @@ const changeQuantity= async (req,res)=>{
               { $inc: { "cart.$.quantity": 1 } }
              );
              await Product.updateOne(
-              {_id:pId},{$inc:{quantity:-1}}
+              {_id:pId,"variants.size":size},{$inc:{"variants.$.stock":-1}}
              )
              return res.status(200).json({success:true});
           }
@@ -53,7 +54,7 @@ const changeQuantity= async (req,res)=>{
               { $inc: { "cart.$.quantity": -1 } }
              );
              await Product.updateOne(
-              {_id:pId},{$inc:{quantity:1}}
+              {_id:pId,"variants.size":size},{$inc:{"variants.$.stock":1}}
              )
             }
             return res.status(200).json({success:true});
@@ -73,12 +74,13 @@ const removeItem = async (req, res) => {
 
     const itemDetails=userData.cart.find((cart)=>cart._id==cId);
     const count=itemDetails.quantity;
+    const size=itemDetails.size;
     await User.updateOne(
       { _id: req.session.user },    
       { $pull: { cart: { product: pId } } } 
     );
 
-    await Product.updateOne({_id:pId},{$inc:{quantity:count}});
+    await Product.updateOne({_id:pId,"variants.size":size},{$inc:{"variants.$.stock":count}});
    res.status(200).json({success:true});
 
   } catch (error) {
