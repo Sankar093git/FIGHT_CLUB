@@ -19,6 +19,20 @@
         .summary-row {
             padding: 0.4rem 0;
         }
+        .return{
+          background-color: #f8f9fa;
+          font-size: x-small;
+          color:red;
+          border:solid red 1px;
+          border-radius: 0px;
+        }
+        .cancel{
+          background-color: #f8f9fa;
+          font-size: x-small;
+          color:red;
+          border:solid red 1px;
+          border-radius: 0px;
+        }
     </style>
   <div class="container mt-4 mb-4 pt-3">
     <div class="row">
@@ -51,13 +65,18 @@
               <div class="d-flex align-items-center order-item">
                 <img src="/uploads/re-image/<%= prod.product.productImage[0] %>" class="img-fluid rounded me-2" width="60" height="60" alt="product">
                 <div class="flex-grow-1">
-                  <p class="mb-0 fw-semibold small">Product Name</p>
+                  <p class="mb-0 fw-semibold small"><%= prod.product.productName %></p>
                   <p class="mb-0 small text-muted">
                     Qty: <%= prod.quantity %> × <%= prod.product.salesPrice %>
                   </p>
                 </div>
                 <div>
-                  <p class="fw-semibold mb-0 small"><%= prod.quantity * prod.product.salesPrice %></p>
+                  <p class="fw-semibold mb-0 small">₹<%= prod.quantity * prod.product.salesPrice %></p>
+                 <% if(status=="Delivered") {%>
+                  <button class="btn btn-primary return" <%= (status === "Cancelled" || status === "Returned")?"disabled":"" %>>Return</button>
+                 <% else{ %> 
+                   <button class="btn btn-primary cancel" <%= (status === "Cancelled" || status === "Returned")?"disabled":"" %>>Cancel</button>
+                  <% } %>
                 </div>
               </div>
             </div>

@@ -8,6 +8,7 @@ const cartController=require("../../controllers/user/cartController");
 const uploads=require("../../helpers/multer");
 const profileController=require("../../controllers/user/profileController");
 const checkoutController=require("../../controllers/user/checkoutController");
+const orderController=require("../../controllers/user/orderController");
 
 //signup and login management
 
@@ -64,11 +65,11 @@ router.post("/otp-verification",userAuth,profileController.verifyOtp);
 
 //checkout management
 router.get("/checkout",userAuth,checkoutController.loadCheckout);
-router.get("/orders",userAuth,profileController.displayOrder);
-router.post("/place-order",userAuth,checkoutController.placeOrder);
-router.post("/cancel-order/:id",userAuth,profileController.cancelOrder);
-router.post("/return-order/:id",userAuth,profileController.returnOrder);
-router.get("/order-success",userAuth,checkoutController.orderSuccess);
+router.get("/orders",userAuth,orderController.displayOrder);
+router.post("/place-order",userAuth,orderController.placeOrder);
+router.post("/cancel-order/:id",userAuth,orderController.cancelOrder);
+router.post("/return-order/:id",userAuth,orderController.returnOrder);
+router.get("/order-success",userAuth,orderController.orderSuccess);
 router.post("/add-new-address",userAuth,checkoutController.addAddress);
 router.post("/edit-current-address/:id",userAuth,checkoutController.editAddress);
 

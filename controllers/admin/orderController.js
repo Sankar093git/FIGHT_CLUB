@@ -1,71 +1,82 @@
 const User=require("../../models/userSchema");
 const Product=require("../../models/productSchema");
+const Order=require("../../models/orderSchema");
 
 const getOrderList = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = 4;
     const skip = (page - 1) * limit;
+
     const { search, status, sort, date } = req.query;
 
-    // Get all users with orders
-    const users = await User.find({ "orders.0": { $exists: true } });
-    
-    // Flatten all orders with user info
-    let orderDetails = users.flatMap(u => 
-      u.orders.map(order => ({ ...order.toObject(), userId: u._id }))
-    );
+    // Build base filter
+    let filter = {};
 
-    // Filter by search
+    // Search filter
     if (search) {
       if (/^ORD-[A-Fa-f0-9]{8}$/.test(search)) {
-        orderDetails = orderDetails.filter(o => o.orderId === search);
+        filter.orderId = search;
       } else if (/^[A-Za-z][A-Za-z ]{1,50}$/.test(search)) {
-        orderDetails = orderDetails.filter(o => 
-          o.name.toLowerCase().includes(search.toLowerCase())
-        );
+        filter.customerName = { $regex: search, $options: "i" };
       } else if (/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(search)) {
-        orderDetails = orderDetails.filter(o => o.email === search);
+        filter.customerEmail = search;
       }
     }
 
-    // Filter by status 
+    // Status filter
     if (status && status !== "") {
-      orderDetails = orderDetails.filter(o => o.status === status);
+      filter.status = status;
     }
 
-    // Filter by date
+    // Date filter
     if (date) {
       const selectedDate = new Date(date);
       const nextDate = new Date(selectedDate);
       nextDate.setDate(selectedDate.getDate() + 1);
-      orderDetails = orderDetails.filter(o => 
-        new Date(o.createdAt) >= selectedDate && new Date(o.createdAt) < nextDate
-      );
+
+      filter.createdAt = {
+        $gte: selectedDate,
+        $lt: nextDate
+      };
     }
 
-    // Sort
-    if (sort === "date-desc") {
-      orderDetails.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    } else if (sort === "date-asc") {
-      orderDetails.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-    } else if (sort === "amount-desc") {
-      orderDetails.sort((a, b) => b.totalAmount - a.totalAmount);
+    // Sorting
+    let sortOption = { createdAt: -1 };
+
+    if (sort === "date-asc") {
+      sortOption = { createdAt: 1 };
+    } else if (sort === "date-desc") {
+      sortOption = { createdAt: -1 };
     } else if (sort === "amount-asc") {
-      orderDetails.sort((a, b) => a.totalAmount - b.totalAmount);
+      sortOption = { totalAmount: 1 };
+    } else if (sort === "amount-desc") {
+      sortOption = { totalAmount: -1 };
     }
 
-    const totalOrders = orderDetails.length;
+    // Query orders
+    const [orders, totalOrders] = await Promise.all([
+      Order.find(filter)
+        .populate("user", "name email")
+        .sort(sortOption)
+        .skip(skip)
+        .limit(limit),
+      Order.countDocuments(filter)
+    ]);
+
+    console.log(orders);
+
     const totalPages = Math.ceil(totalOrders / limit);
-    const paginatedOrders = orderDetails.slice(skip, skip + limit);
-    return res.render("orderList", {
-      queryValues:req.query,
-      orderDetails: paginatedOrders,
+
+    res.render("orderList", {
+      queryValues: req.query,
+      orderDetails: orders,
       currentPage: page,
       totalPages,
       limit,
       totalOrders
     });
+
   } catch (error) {
     console.error("Error while getting orders list", error);
     res.redirect("/pageerror");
@@ -73,79 +84,153 @@ const getOrderList = async (req, res) => {
 };
 
 
+const changeOrderStatus = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const { status, cancelMessage } = req.body;
 
-const changeOrderStatus= async (req,res)=>{
-    try {
-        const orderId=req.params.id;
-        const {status,email,cancelMessage}=req.body;
-        if(cancelMessage){
-           await User.updateOne({email:email,"orders.orderId":orderId},{$set:{"orders.$.status":status,"orders.$.reasonForCancellation":cancelMessage}})
-        }else{
-        await User.updateOne({email:email,"orders.orderId":orderId},{$set:{"orders.$.status":status}});
-        }
-        res.json({success:true})
-    } catch (error) {
-        console.error("Error while changing order status,",error);
-        res.json({success:false,message:error.message});
-    }
-}
- const handlingRefund= async(req,res)=>{
-    try {
-        const{email,currentReturnApproval}=req.body;
-        const orderId=req.params.id;
-        if(currentReturnApproval){
-             await User.updateOne({email:email,"orders.orderId":orderId},{$set:{"orders.$.status":"Returned"}});
-             return res.json({success:true,message:"Api works"});
-        }else{
-             const userData= await User.findOne({email:email});
-             const orderDetails=userData.orders.find((order)=>order.orderId==orderId);
-             const productIds=orderDetails.products;
-             for(let prod of productIds){
-                await Product.updateOne({_id:prod.product},{$inc:{quantity:-prod.quantity}})
-             }
-             await User.updateOne({email:email,"orders.orderId":orderId},{$set:{"orders.$.status":"Return rejected"}})
-             return res.json({success:true,message:"Api works"});
-        }
-    } catch (error) {
-        console.log("Error while handling refund");
-        res.json({success:false,message:`${error.message}`});
-    }
- }
+    const order = await Order.findOne({ orderId });
 
- const displayOrder= async (req,res)=>{
-    try {
-        const orderId=req.query.orderId;
-        const email=req.query.email;
-        const userData= await User.findOne({email:email}).populate("orders.products.product");
-        const orderDetails=userData.orders.find((order)=>order.orderId==orderId);
-        console.log(orderDetails);
-        const subArr=[];
-        orderDetails.products.forEach((prod)=>{
-            subArr.push(prod.product.salesPrice);
-        })
-        const subTotal=subArr.reduce((acc,num)=>acc+num,0);
-        const total=subTotal+100+50-200;
-        res.render("orderDetailsAdmin",{
-            Product:orderDetails.products,
-            addr:orderDetails.address,
-            subtotal:subTotal,
-            discount:200,
-            shipping:100,
-            taxes:50,
-            total:total,
-            status:orderDetails.status,
-        });
-
-    } catch (error) {
-        console.error("Error while diplaying order,",error);    
-        res.redirect("/error");
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found"
+      });
     }
-}
+
+    if(order.status==="Cancelled"||order.status==="Returned"){
+      return res.status(404).json({
+        success: false,
+        message: "Status cannot be updated"
+      });
+    }
+
+    if (status === "Cancelled" && cancelMessage) {
+      order.reasonForCancellation = cancelMessage;
+      for (const prod of order.products) {
+        await Product.updateOne(
+          { _id: prod.product, "variants.size": prod.size },
+          { $inc: { "variants.$.stock": prod.quantity } }
+        );
+      }
+    }
+    order.status = status;
+    await order.save();
+
+    res.json({ success: true });
+
+  } catch (error) {
+    console.error("Error while changing order status:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+ const handlingReturn = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const { currentReturnApproval } = req.body;
+
+    const order = await Order.findOne({ orderId });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found"
+      });
+    }
+
+    if (order.status !== "Processing return") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid return state"
+      });
+    }
+
+    if (currentReturnApproval) {
+
+      for (const prod of order.products) {
+        await Product.updateOne(
+          { _id: prod.product, "variants.size": prod.size },
+          { $inc: { "variants.$.stock": prod.quantity } }
+        );
+      }
+
+      order.status = "Returned";
+      await order.save();
+
+      return res.json({
+        success: true,
+        message: "Return approved successfully"
+      });
+    }else {
+      order.status = "Return rejected";
+      await order.save();
+
+      return res.json({
+        success: true,
+        message: "Return rejected successfully"
+      });
+    }
+
+  } catch (error) {
+    console.error("Error while handling return:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+ const displayOrder = async (req, res) => {
+  try {
+    const orderId = req.query.orderId;
+
+    const order = await Order.findOne({ orderId })
+      .populate("products.product")
+      .populate("user", "name email");
+
+    if (!order) {
+      return res.redirect("/404");
+    }
+
+    const subTotal = order.products.reduce((acc, item) => {
+      return acc + (item.product.salesPrice * item.quantity);
+    }, 0);
+
+    const shipping = 100;
+    const taxes = 50;
+    const discount = 200;
+    const total = subTotal + shipping + taxes - discount;
+
+    res.render("orderDetailsAdmin", {
+      Product: order.products,
+      addr: order.address,
+      subtotal: subTotal,
+      discount,
+      shipping,
+      taxes,
+      total,
+      status: order.status,
+      orderId: order.orderId,
+      customerName: order.user.name,
+      customerEmail: order.user.email,
+      createdAt: order.createdAt
+    });
+
+  } catch (error) {
+    console.error("Error while displaying admin order:", error);
+    res.redirect("/error");
+  }
+};
+
 
 
 module.exports={
     getOrderList,
     changeOrderStatus,
-    handlingRefund,
+    handlingReturn,
     displayOrder
 }

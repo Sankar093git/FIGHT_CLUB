@@ -32,38 +32,6 @@ const loadCheckout= async(req,res)=>{
     }
 }
 
-const placeOrder= async (req,res)=>{
-    try {
-        const userData=await User.findOne({_id:req.session.user});
-        const address=req.body.addressId;
-        const selectedAddress=userData.address.find((addr)=>addr._id.toString()==address);
-        const orderId = "ORD-" + crypto.randomBytes(4).toString("hex");
-        const newOrder={
-        name:userData.name,
-        email:userData.email,    
-        orderId:orderId ,
-        products: userData.cart,
-        totalAmount:parseFloat(req.body.totalAmount),
-        address:selectedAddress,
-        status: "Pending"
-        }
-        await User.updateOne({_id:req.session.user},{$push:{orders:newOrder},$set:{cart:[]}});
-        res.status(201).json({success:true,orderId:orderId});
-    } catch (error) {
-        console.log("Error while placeing order",error);
-        res.status(201).json({success:false,message:"Failed"})
-        res.redirect("/error");
-    }
-}
-
-const orderSuccess= async (req,res)=>{
-    try {
-        res.render("orderPlaced");
-    } catch (error) {
-        console.error("Error while loading success page :",error);
-        res.redirect("/error");
-    }
-}
 
 const addAddress= async (req,res)=>{
     try {
@@ -102,8 +70,6 @@ const editAddress= async(req,res)=>{
 
 module.exports={
     loadCheckout,
-    placeOrder,
-    orderSuccess,
     addAddress,
     editAddress
 }

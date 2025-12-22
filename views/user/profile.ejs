@@ -236,8 +236,8 @@ h4::after {
             </tr>
           </thead>
           <tbody>
-            <% if (userData.orders && userData.orders.length > 0) { %>
-              <% userData.orders.forEach(order => { %>
+            <% if (orders && orders.length > 0) { %>
+              <% orders.forEach(order => { %>
                 <tr>
                   <td>#<%= order.orderId %></td>
                   <td><%= order.status %></td>
