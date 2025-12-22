@@ -29,6 +29,24 @@ const orderSchema = new mongoose.Schema({
         type: Number,
         required: true,
         min: 1
+      },
+      returnQuantity:{
+        type:Number,
+        default:0
+      },
+      status:{
+        type:String,
+        enum:[
+          "Pending",
+          "Cancelled",
+          "Partially cancelled",
+          "Returned",
+          'Return processing',
+          'Return processing(P)',
+          "Partially returned",
+          "Return rejected"
+        ],
+        default:"Pending"
       }
     }
   ],

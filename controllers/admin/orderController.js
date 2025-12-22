@@ -105,6 +105,13 @@ const changeOrderStatus = async (req, res) => {
       });
     }
 
+    if(status==="Processing return"||status==="Returned"||status==="Return rejected"){
+      return res.status(404).json({
+        success: false,
+        message: "Forbiden action"
+      });
+    }
+
     if (status === "Cancelled" && cancelMessage) {
       order.reasonForCancellation = cancelMessage;
       for (const prod of order.products) {
@@ -225,12 +232,50 @@ const changeOrderStatus = async (req, res) => {
     res.redirect("/error");
   }
 };
+ const singleCancel=async(req,res)=>{
+  try {
+    const productId=req.params.productId;
+    const {id,size,value,quantity}=req.body;
+    if(value){
+      await Order.updateOne({orderId:id,"products.product":productId,"products.size": size},{$inc:{"products.$.quantity":-value},$set:{"products.$.status":"Partially cancelled"}});
 
+      await Product.updateOne({_id:productId,"variants.size":size},{$inc:{"variants.$.stock":value}});
+      return res.status(200).json({success:true, message:"Your amount shall be refunded"});
+    }else{
+      await Order.updateOne({orderId:id, "products.product":productId,"products.size": size},{$set:{"products.$.status":"Cancelled"}});
+
+      await Product.updateOne({_id:productId,"variants.size":size},{$inc:{"variants.$.stock":quantity}});
+      return res.status(200).json({success:true, message:"Your amount shall be refunded"});
+    }
+  } catch (error) {
+    console.log("Error while returning single product");
+    res.status(500).json({success:true,message:"Something went wrong!"})
+  }
+ }
+
+ const singleReturn = async(req,res)=>{
+  try {
+    const productId=req.params.productId;
+    const {id,size,value,quantity}=req.body;
+    if(value){
+      await Order.updateOne({orderId:id,"products.product":productId,"products.size": size},{$set:{"products.$.status":"Return processing(P)","products.$.returnQuantity":value}});
+      return res.status(200).json({success:true, message:"Refund request has been sumbitted"});
+    }else{
+      await Order.updateOne({orderId:id, "products.product":productId,"products.size": size},{$set:{"products.$.status":"Return processing"}});
+      return res.status(200).json({success:true, message:"Your refund shall be processed"});
+    }
+  } catch (error) {
+    console.error("Error while returning a single product",error);
+    res.status(500).json({success:true,message:error.message});
+  }
+ }
 
 
 module.exports={
     getOrderList,
     changeOrderStatus,
     handlingReturn,
-    displayOrder
+    displayOrder,
+    singleCancel,
+    singleReturn
 }
