@@ -112,9 +112,29 @@ const loadProductDetails=async (req,res)=>{
 
 const addToCart = async (req, res) => {
   try {
+    console.log(req.body)
     const id = req.params.id;
     const size=req.body.size;        
-    const userId = req.session.user; 
+    const userId = req.session.user;
+    const productDetails=await Product.findOne({_id:id});
+    const userData= await User.findOne({_id:req.session.user}).populate("cart.product");
+    const cartData=userData.cart;
+    let prod=cartData.find(v=>v.product._id==id);
+    console.log(prod);
+    const item=productDetails.variants.find(v=>v.size===size);
+    if(item.stock<1){
+      return res.status(403).json({success:false,message:"Item out of stock!"});
+    }
+
+    if(prod){
+      if(prod.quantity==item.stock){
+        return res.status(403).json({success:false,message:"Item out of stock!"});
+      }
+      if(prod.product.isBlocked){
+        return res.status(403).json({success:false,message:"Item out of stock!"});
+      }
+    }
+    
     const result = await User.updateOne(
       { _id: userId, "cart.product": id,"cart.size":size},
       { $inc: { "cart.$.quantity": 1 } }
@@ -125,12 +145,8 @@ const addToCart = async (req, res) => {
         { _id: userId },
         { $push: { cart: { product: id,size:size, quantity: 1 } } }
       );
-    }
-
-    await Product.updateOne({_id:id,"variants.size":size},{$inc:{"variants.$.stock":-1}});
-    
+    }  
     res.redirect(`/product/${id}`);
-
   } catch (error) {
     console.error("Error while adding to cart:", error);
     res.redirect("/error");

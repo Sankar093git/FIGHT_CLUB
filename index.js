@@ -7,6 +7,7 @@ const userRouter=require("./routers/user/userRoutes");
 const adminRouter=require("./routers/admin/adminRoutes");
 const path=require("path");
 const passport=require("./config/passport");
+const navbarContext=require("./middlewares/navbarContext");
 
 connectDB();
 
@@ -36,7 +37,7 @@ app.use((req,res,next)=>{
     res.set("cache-control","no-store");
     next();
 })
-
+app.use(navbarContext);
 app.use("/",userRouter);
 app.use("/admin",adminRouter);
 

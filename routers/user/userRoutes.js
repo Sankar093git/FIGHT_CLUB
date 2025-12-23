@@ -69,6 +69,8 @@ router.get("/orders",userAuth,orderController.displayOrder);
 router.post("/place-order",userAuth,orderController.placeOrder);
 router.post("/cancel-order/:id",userAuth,orderController.cancelOrder);
 router.post("/return-order/:id",userAuth,orderController.returnOrder);
+router.patch("/cancel/:productId",userAuth,orderController.singleCancel);
+router.patch("/return/:productId",userAuth,orderController.singleReturn);
 router.get("/order-success",userAuth,orderController.orderSuccess);
 router.post("/add-new-address",userAuth,checkoutController.addAddress);
 router.post("/edit-current-address/:id",userAuth,checkoutController.editAddress);

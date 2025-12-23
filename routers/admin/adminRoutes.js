@@ -52,6 +52,7 @@ router.get("/orderList",adminAuth,orderController.getOrderList);
 router.get("/orderDetails",adminAuth,orderController.displayOrder);
 router.post("/change-order-status/:id",adminAuth,orderController.changeOrderStatus);
 router.post("/handle-refund/:id",adminAuth,orderController.handlingReturn);
+router.patch("/handle-single-return/:productId",adminAuth,orderController.handlesingleReturn);
 
 
 

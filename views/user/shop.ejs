@@ -254,6 +254,9 @@
 
           <div class="card-body d-flex flex-column align-items-center">
             <h6 class="card-title text-center mb-2">${p.productName}</h6>
+            <span class="original-price me-2">
+                Size:${p.variants[0].size}
+              </span>
 
             <div class="price-section mb-3">
               <span class="original-price text-muted text-decoration-line-through me-2">
@@ -262,7 +265,7 @@
               <span class="sale-price fw-bold text-danger">₹${p.salesPrice}</span>
             </div>
 
-            <button onclick="handleAddToCart('${p._id}')" class="btn btn-add-cart">
+            <button onclick="handleAddToCart('${p._id}','${p.variants[0].size}',)" class="btn btn-add-cart">
               <i class="bi bi-cart-plus me-1"></i> Add to Cart
             </button>
           </div>
@@ -278,12 +281,13 @@
   --------------------------------------------------------- */
   renderProducts(productList, products);
 
-function handleAddToCart(productId){
+function handleAddToCart(productId,size){
   fetch(`/add-to-cart/${productId}`,{
     method:"POST",
     headers:{
       "content-type":"application/json"
-    }
+    },
+    body:JSON.stringify({size})
   }).then(res => {
         if (res.status === 403) {
           Swal.fire({

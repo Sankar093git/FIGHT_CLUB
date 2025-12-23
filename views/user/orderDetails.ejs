@@ -69,20 +69,23 @@
                   <p class="mb-0 small text-muted">
                     Qty: <%= prod.quantity %> × <%= prod.product.salesPrice %>
                   </p>
+                  <p class="mb-0 small text-muted">
+                    Status: <%= prod.status %>
+                  </p>
                 </div>
                 <div>
                   <p class="fw-semibold mb-0 small">₹<%= prod.quantity * prod.product.salesPrice %></p>
                  <% if(status=="Delivered") {%>
-                  <button class="btn btn-danger return" onclick="returnProduct('<%=prod.product._id%>','<%=prod.size%>','<%=prod.quantity%>')" <%= (status === "Cancelled" || status === "Returned")?"disabled":"" %>>Return</button>
+                  <button class="btn btn-danger return" onclick="returnProduct('<%=prod.product._id%>','<%=prod.size%>','<%=prod.quantity%>')" <%= (prod.status === "Cancelled"||prod.status === "Return processing" || prod.status === "Returned"||status==="Cancelled"||status==="Returned"||status==="Return processing")?"disabled":"" %>>Return</button>
                  <% }else{ %> 
-                   <button class="btn btn-danger cancel" onclick="cancelProduct('<%=prod.product._id%>','<%=prod.size%>','<%=prod.quantity%>')" <%= (status === "Cancelled" || status === "Returned")?"disabled":"" %>>Cancel</button>
+                   <button class="btn btn-danger cancel" onclick="cancelProduct('<%=prod.product._id%>','<%=prod.size%>','<%=prod.quantity%>')" <%= (prod.status === "Cancelled" || prod.status === "Returned"||status==="Cancelled"||status==="Returned"||status==="Return processing")?"disabled":"" %>>Cancel</button>
                   <% } %>
                 </div>
               </div>
             </div>
             <% }) %>
             <div class="d-flex justify-content-between px-3 summary-row small">
-              <span>Status:</span>
+              <span>Order status:</span>
               <span id="subtotal"><%= status %></span>
             </div>
             <div class="d-flex justify-content-between px-3 summary-row small">
@@ -116,7 +119,7 @@
 
   <script>
     function cancelProduct(productId,size,quantity){
-      let id=new URLSearchParams(window.location.search);
+       const id = new URLSearchParams(window.location.search).get("id");
       console.log(id);
      Swal.fire({
       title:"Are you sure?",
@@ -129,6 +132,8 @@
           Swal.fire({
             title:"Sure",
             text:"Do you want to cancel all units?",
+            showCancelButton:true,
+            showConfirmButton:true,
             confirmButtonText: "Yes",
             cancelButtonText: "No",
           }).then((result)=>{
@@ -146,7 +151,7 @@
                       title:"Success!",
                       text:data.message,
                       icon:"success"
-                    })
+                    }).then(()=>window.location.reload());
                   }else{
                     Swal.fire({
                       title:"Error!",
@@ -207,7 +212,7 @@
      })
     }
 function returnProduct(productId,size,quantity){
-  let id=new URLSearchParams(window.location.search);
+  const id = new URLSearchParams(window.location.search).get("id");
       console.log(id);
      Swal.fire({
       title:"Are you sure?",
@@ -239,7 +244,7 @@ function returnProduct(productId,size,quantity){
                       title:"Success!",
                       text:data.message,
                       icon:"success"
-                    })
+                    }).then(()=>window.location.reload())
                   }else{
                     Swal.fire({
                       title:"Error!",

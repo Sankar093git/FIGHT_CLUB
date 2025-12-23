@@ -19,6 +19,10 @@
         .summary-row {
             padding: 0.4rem 0;
         }
+        .btn-sm{
+          font-size: xx-small;
+          margin-left: 3px;
+        }
     </style>
   <div class="container mt-4 mb-4 pt-3">
     <div class="row">
@@ -55,15 +59,22 @@
                   <p class="mb-0 small text-muted">
                     Qty: <%= prod.quantity %> × <%= prod.product.salesPrice %>
                   </p>
+                  <p class="mb-0 small text-muted">
+                    Status: <%= prod.status %>
+                  </p>
                 </div>
+                <% if(prod.status==="Return processing") {%>
+                <button class="btn btn-sm btn-outline-success"onclick="handleReturn('<%=prod.product._id%>','<%=prod.size%>',true)">Approve</button>
+                <button class="btn btn-sm btn-outline-danger me-1" onclick="handleReturn('<%=prod.product._id%>','<%=prod.size%>',false)" >Reject</button>
+                <% } %>
                 <div>
-                  <p class="fw-semibold mb-0 small"><%= prod.quantity * prod.product.salesPrice %></p>
+                  <p class="fw-semibold mb-0 small">₹<%= prod.quantity * prod.product.salesPrice %></p>
                 </div>
               </div>
             </div>
             <% }) %>
             <div class="d-flex justify-content-between px-3 summary-row small">
-              <span>Status:</span>
+              <span>Order status:</span>
               <span id="subtotal"><%= status %></span>
             </div>
 
@@ -95,5 +106,86 @@
       </div>
     </div>
   </div>
+
+  <script>
+    function handleReturn(productId,size,action){
+      try {
+        let orderId=new URLSearchParams(window.location.search).get("orderId");
+        console.log(orderId)
+        if(action){
+          Swal.fire({
+          title:"Do you want to approve?",
+          text:"Refund the user.",
+          icon:"question",
+          showCancelButton:true
+        }).then((result)=>{
+          if(result.isConfirmed){
+            fetch(`/admin/handle-single-return/${productId}`,{
+              method:"PATCH",
+              headers:{
+                "Content-Type":"application/json"
+              },
+              body:JSON.stringify({orderId,size,action})
+            }).then((res)=>res.json())
+            .then((data)=>{
+              if(data.success){
+                Swal.fire({
+                  title:"Success",
+                  text:data.message,
+                  icon:"success"
+                }).then(()=>window.location.reload());
+              }else{
+                Swal.fire({
+                  title:"Failed",
+                  text:data.message,
+                  icon:"error"
+                })
+              }
+            })
+          }
+        })
+        }else{
+          Swal.fire({
+          title:"Do you want to reject?",
+          text:"Reject the request.",
+          icon:"question",
+          showCancelButton:true
+        }).then((result)=>{
+          if(result.isConfirmed){
+            fetch(`/admin/handle-single-return/${productId}`,{
+              method:"PATCH",
+              headers:{
+                "Content-Type":"application/json"
+              },
+              body:JSON.stringify({orderId,size,action})
+            }).then((res)=>res.json())
+            .then((data)=>{
+              if(data.success){
+                Swal.fire({
+                  title:"Success",
+                  text:data.message,
+                  icon:"success"
+                }).then(()=>window.location.reload());
+              }else{
+                Swal.fire({
+                  title:"Failed",
+                  text:data.message,
+                  icon:"error"
+                })
+              }
+            })
+          }
+        })
+        }
+      } catch (error) {
+        console.log("Error while handling return",error.message);
+        Swal.fire({
+          title:"Error",
+          text:error.message,
+          icon:"error"
+        })
+      }
+    }
+  </script>
 
   <%- include("../../views/admin/partials/footer") %>

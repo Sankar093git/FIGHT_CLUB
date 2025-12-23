@@ -10,8 +10,11 @@ const loadCheckout= async(req,res)=>{
         let summary={};
         let priceList=[];
         const userData=await User.findOne({_id:req.session.user}).populate("cart.product").exec();
-        userData.cart.forEach((num)=>{
-            priceList.push(num.product.salesPrice);
+        const validCartItems = userData.cart.filter(item => 
+        item.product && item.product.isBlocked === false
+       );
+        validCartItems.forEach((num)=>{
+            priceList.push(num.product.salesPrice*num.quantity);
         });
         summary.subtotal=priceList.reduce((acc,num)=>acc+num,0);
         summary.discount=200;
@@ -23,7 +26,7 @@ const loadCheckout= async(req,res)=>{
             user:req.session.userName||userName,
             image:null,
             addresses:userData.address,
-            cartItems:userData.cart,
+            cartItems:validCartItems,
             summary:summary,
            })
     } catch (error) {

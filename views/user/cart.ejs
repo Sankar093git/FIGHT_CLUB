@@ -39,15 +39,15 @@ b
       </thead>
       <tbody>
         <% let grandTotal = 0; %>
-        <% userData.cart.forEach(item => { 
+        <% cart.forEach(item => { 
              let itemTotal = item.product.salesPrice * item.quantity;
              grandTotal += itemTotal;
         %>
           <tr id="row<%=item.product._id%>">
             <td>
               <img src="/uploads/re-image/<%= item.product.productImage[0] %>" width="60">
-              <%= item.product.productName %>
-              <% if (item.product.stock === 0) { %>
+              <%= item.product.productName %>(<%= item.size %>)
+              <% if (item.availableStock===0) { %>
                 <span class="badge bg-danger">Out of Stock</span>
               <% } %>
             </td>
@@ -105,6 +105,7 @@ document.querySelectorAll(".btn-sm").forEach((btn)=>{
        body:JSON.stringify({id,action})
     }).then((res)=>res.json())
       .then((data)=>{
+        if(data.success){
         if(action=="increment"){
           itemQuant.innerText=parseInt(itemQuant.innerText)+1;
           totalPrice.innerText=`₹${parseInt(itemQuant.innerText.replace("₹",""))*parseInt(price.innerText.replace("₹",""))}`;
@@ -126,7 +127,13 @@ document.querySelectorAll(".btn-sm").forEach((btn)=>{
           }
           findGrandTotal()
         }
-        
+      }else{
+        Swal.fire({
+          title:"Oops!",
+          text:data.message,
+          icon:"warning"
+        })
+      }       
       })
   })
 }) 
@@ -163,7 +170,6 @@ function findGrandTotal(){
 
 document.querySelectorAll(".trash-btn").forEach((btn)=>{
   btn.addEventListener("click",()=>{
-    let item=btn.getAttribute("item");
     let product=btn.getAttribute("product");
     let row=document.getElementById(`row${product}`);
      fetch("/cart/remove",{
@@ -171,7 +177,7 @@ document.querySelectorAll(".trash-btn").forEach((btn)=>{
       headers:{
         "Content-Type":"application/json"
       },
-      body:JSON.stringify({item,product})
+      body:JSON.stringify({product})
      }).then((res)=>res.json())
        .then((data)=>{
         if(data.success){

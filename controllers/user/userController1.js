@@ -8,8 +8,10 @@ const loadHome= async (req,res)=>{
     try {
         if(req.session.user){
             const findUser= await User.findById(req.session.user);
-            res.render("home",{user:findUser.name,
+            res.render("home",{
+                user:findUser.name,
                 image:req.session.image
+        
             });
         }else{
             res.render("home");

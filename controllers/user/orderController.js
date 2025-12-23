@@ -2,7 +2,7 @@ const User=require("../../models/userSchema");
 const Order=require("../../models/orderSchema");
 const crypto=require("crypto");
 const Product=require("../../models/productSchema");
-
+const mongoose=require("mongoose");
 
 const loadCheckout= async(req,res)=>{
     try {
@@ -39,11 +39,35 @@ const placeOrder = async (req, res) => {
   try {
     const userId = req.session.user;
 
-    const userData = await User.findById(userId);
+    const userData = await User.findById(userId).populate("cart.product");
 
     if (!userData || userData.cart.length === 0) {
       return res.status(400).json({ success: false, message: "Cart is empty" });
     }
+
+    for(let item of userData.cart){
+      const variant=item.product.variants.find(v=>v.size===item.size);
+      if(!variant||variant.stock===0){
+        return res.status(400).json({success:false,message:"Variant not found/Out of stock"})
+      }
+      if(item.quantity>variant.stock){
+        return res.status(400).json({success:false,message:`Only ${variant.stock} units left for${item.product.productName}`})
+      }
+    }
+
+    const result = await Product.updateOne({_id: item.product._id,"variants.size": item.size,"variants.stock": { $gte: item.quantity }},{ $inc: { "variants.$.stock": -item.quantity }});
+
+   if (result.modifiedCount === 0) {
+     return res.status(400).json({
+     success: false,
+     message: "Stock changed. Please try again."
+    });
+  }
+  const validCartItems=userData.cart.filter(item=>item.product.isBlocked===false)
+  if(validCartItems.length===0){{
+    return res.status(403).json({success:false,message:"One or more product is no longer available"});
+  }}
+  const totalAmount= validCartItems.reduce((acc,item)=>acc+item.quantity,0)
 
     const addressId = req.body.addressId;
     const selectedAddress = userData.address.find(
@@ -59,9 +83,9 @@ const placeOrder = async (req, res) => {
     const newOrder = new Order({
       user: userId,
       orderId: orderId,
-      products: userData.cart,
+      products:  validCartItems,
       address: selectedAddress,
-      totalAmount: parseFloat(req.body.totalAmount),
+      totalAmount: totalAmount,
       status: "Pending"
     });
 
@@ -252,6 +276,46 @@ const editAddress= async(req,res)=>{
     }
 }
 
+const singleCancel=async(req,res)=>{
+  try {
+     const productId = new mongoose.Types.ObjectId(req.params.productId);
+    const {id,size,value,quantity}=req.body;
+    console.log(req.body);
+    console.log(id)
+    if(value){
+      await Order.updateOne({orderId:id,"products.product":productId,"products.size": size},{$inc:{"products.$.quantity":-value},$set:{"products.$.status":"Partially cancelled"}});
+
+      await Product.updateOne({_id:productId,"variants.size":size},{$inc:{"variants.$.stock":value}});
+      return res.status(200).json({success:true, message:"Your amount shall be refunded"});
+    }else{
+      await Order.updateOne({orderId:id, "products.product":productId,"products.size": size},{$set:{"products.$.status":"Cancelled"}});
+
+      await Product.updateOne({_id:productId,"variants.size":size},{$inc:{"variants.$.stock":quantity}});
+      return res.status(200).json({success:true, message:"Your amount shall be refunded"});
+    }
+  } catch (error) {
+    console.log("Error while returning single product",error.message);
+    res.status(500).json({success:true,message:"Something went wrong!"})
+  }
+ }
+
+ const singleReturn = async(req,res)=>{
+  try {
+    const productId=req.params.productId;
+    const {id,size,value}=req.body;
+    if(value){
+      await Order.updateOne({orderId:id,"products.product":productId,"products.size": size},{$set:{"products.$.status":"Return processing(P)","products.$.returnQuantity":value}});
+      return res.status(200).json({success:true, message:"Refund request has been sumbitted"});
+    }else{
+      await Order.updateOne({orderId:id, "products.product":productId,"products.size": size},{$set:{"products.$.status":"Return processing"}});
+      return res.status(200).json({success:true, message:"Your refund shall be processed"});
+    }
+  } catch (error) {
+    console.error("Error while returning a single product",error.message);
+    res.status(500).json({success:true,message:error.message});
+  }
+ }
+
 module.exports={
     loadCheckout,
     displayOrder,
@@ -260,5 +324,7 @@ module.exports={
     placeOrder,
     editAddress,
     addAddress,
-    orderSuccess
+    orderSuccess,
+    singleCancel,
+    singleReturn
 }
