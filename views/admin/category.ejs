@@ -619,13 +619,9 @@
                     <% } %>
                     
                     <% if(category.isListed){ %>
-                      <a href="/admin/listorunlist-category?id=<%= category._id %>" class="action-btn action-btn-unlist">
-                        <i class="fa fa-eye-slash"></i> Unlist
-                      </a>
+                      <button class="action-btn action-btn-unlist" onclick="unlistlistCategory('<%=category._id%>')"><i class="fa fa-eye"></i>Unlist</button>
                     <% } else { %>
-                      <a href="/admin/listorunlist-category?id=<%= category._id %>" class="action-btn action-btn-list">
-                        <i class="fa fa-eye"></i> List
-                      </a>
+                       <button class="action-btn action-btn-list" onclick="unlistlistCategory('<%=category._id%>')"><i class="fa fa-eye"></i>List</button>
                     <% } %>
                     
                     <a href="/admin/edit-category?id=<%= category._id %>" class="action-btn action-btn-edit">
@@ -847,7 +843,7 @@
       }).then((result) => {
         if (result.isConfirmed) {
           $.ajax({
-            method: "GET",
+            method: "DELETE",
             url: `/admin/delete-category/${catId}`,
             data: {},
             success: (response) => {
@@ -880,6 +876,41 @@
         text: "Something went wrong",
         showConfirmButton: true
       });
+    }
+  }
+
+  function unlistlistCategory(catId){
+    try {
+      Swal.fire({
+      title:"Are you sure?",
+      text:"Unlist this category",
+      icon:"question",
+      showCancelButton:true,
+      showConfirmButton:true
+    }).then((result)=>{
+      if(result.isConfirmed){
+        fetch(`/admin/listorunlist-category/${catId}`,{
+          method:"PATCH",
+        }).then((res)=>res.json())
+        .then((data)=>{
+          if(data.success){
+            Swal.fire({
+              title:"Success",
+              text:data.message,
+              icon:"success"
+            }).then(()=>window.location.reload());
+          }else{
+            Swal.fire({
+              title:"Error",
+              text:data.message,
+              icon:"error"
+            })
+          }
+        })
+      }
+    })
+    } catch (error) {
+      console.error(error.message);
     }
   }
 </script>

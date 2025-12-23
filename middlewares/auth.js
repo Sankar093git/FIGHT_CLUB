@@ -3,7 +3,12 @@ const User=require("../models/userSchema");
 const userAuth = async (req, res, next) => {
   try {
     if (req.session && req.session.user) {
-      next();
+       const userData= await User.findOne({_id:req.session.user});
+       if(userData.isBlocked===false){
+        next();
+       }else{
+        res.redirect("/");
+       }
     } else {
       res.redirect("/"); 
     }

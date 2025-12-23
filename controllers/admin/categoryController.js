@@ -111,18 +111,18 @@ const removeOffer = async (req, res) => {
 
 const listOrUnlist= async (req,res)=>{
   try {
-    let id=req.query.id;
+    let id=req.params.id;
     const category=await Category.findOne({_id:id});
     if(category.isListed){
        await Category.updateOne({_id:id},{$set:{isListed:false}}); 
+       return res.status(200).json({success:true,message:"Category unlisted"})
     }else{
         await Category.updateOne({_id:id},{$set:{isListed:true}});
+        return res.status(200).json({success:true,message:"Category listed"})
     }
-    
-    res.redirect("/admin/category");
-
   } catch (error) {
-    res.redirect("/admin/error");
+    console.error("Error while handling category listing",error);
+    res.status(500).json({success:false,message:"Something went wrong!"});
   }
 }
 

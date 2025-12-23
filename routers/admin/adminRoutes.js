@@ -27,10 +27,10 @@ router.get("/category",adminAuth,categoryController.loadCategory);
 router.post("/add-category",adminAuth,categoryController.addCategory);
 router.post("/add-categoryOffer",adminAuth,categoryController.addOffer);
 router.patch("/remove-categoryOffer",adminAuth,categoryController.removeOffer);
-router.get("/listorunlist-category",adminAuth,categoryController.listOrUnlist);
+router.patch("/listorunlist-category/:id",adminAuth,categoryController.listOrUnlist);
 router.get("/edit-category",adminAuth,categoryController.loadEditCategory);
 router.post("/edit-category/:id",adminAuth,categoryController.editCategory);
-router.get("/delete-category/:id",adminAuth,categoryController.deleteCategory);
+router.delete("/delete-category/:id",adminAuth,categoryController.deleteCategory);
 
 //Product management
 router.get("/products",adminAuth,productController.loadProducts);
