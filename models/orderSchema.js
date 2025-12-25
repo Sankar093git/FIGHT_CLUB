@@ -2,55 +2,54 @@
 const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true
+  user: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: "User", 
+    required: true 
   },
-
-  orderId: {
-    type: String,
+  orderId: { 
+    type: String, 
     required: true,
-    unique: true
+    unique: true 
   },
-
   products: [
     {
-      product: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Product",
-        required: true
+      product: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: "Product", 
+        required: true 
       },
-      size: {
+      size: { 
+        type: String, 
+        required: true 
+      },
+      quantity: { 
+        type: Number, 
+        required: true, 
+        min: 1 
+      },
+      returnQuantity: { 
+        type: Number, 
+        default: 0 
+      },
+      status: {
         type: String,
-        required: true
-      },
-      quantity: {
-        type: Number,
-        required: true,
-        min: 1
-      },
-      returnQuantity:{
-        type:Number,
-        default:0
-      },
-      status:{
-        type:String,
-        enum:[
+        enum: [
           "Pending",
+          "Shipped", 
+          "Delivered", 
           "Cancelled",
           "Partially cancelled",
           "Returned",
-          'Return processing',
-          'Return processing(P)',
+          "Return processing",
+          "Return processing(P)",
           "Partially returned",
           "Return rejected"
         ],
-        default:"Pending"
+        default: "Pending"
       }
     }
   ],
-
   address: {
     label: String,
     phone: String,
@@ -60,7 +59,6 @@ const orderSchema = new mongoose.Schema({
     postalCode: String,
     country: String
   },
-
   status: {
     type: String,
     enum: [
@@ -76,20 +74,17 @@ const orderSchema = new mongoose.Schema({
     ],
     default: "Pending"
   },
-
-  reasonForReturn: {
-    type: String,
-    default: "N/A"
+  reasonForReturn: { 
+    type: String, 
+    default: "N/A" 
   },
-
-  reasonForCancellation: {
-    type: String,
-    default: "N/A"
+  reasonForCancellation: { 
+    type: String, 
+    default: "N/A" 
   },
-
-  totalAmount: {
-    type: Number,
-    required: true
+  totalAmount: { 
+    type: Number, 
+    required: true 
   }
 }, { timestamps: true });
 

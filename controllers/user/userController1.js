@@ -131,7 +131,9 @@ const signUp=async (req,res)=>{
 
 const loadLogin=async(req,res)=>{
     try {
-       res.render("login");
+       res.render("login",{
+        message:""
+       });
     } catch (error) {
         console.error("Error while loading login page",error);
         res.redirect("/error");
@@ -156,7 +158,9 @@ const login = async (req, res) => {
       req.session.email=email;
       res.redirect("/");
     } else {
-      res.json({ message: "Please enter valid credentials" });
+      res.render("login",{
+        message:"Enter valid credentials"
+      })
     }
   } catch (error) {
     console.error("Error while logging in", error);

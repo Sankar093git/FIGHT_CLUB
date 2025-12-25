@@ -64,6 +64,9 @@
       color: #aaa;
       margin-top: 10px;
     }
+    .passError{
+      color:red;
+    }
   </style>
   <!-- Header -->
   <header class="bg-secondary text-white py-3 px-4">
@@ -86,7 +89,11 @@
   <main class="login-section">
     <div class="login-box">
       <h2 class="text-center">LOGIN</h2>
+      <% if(message) {%>
+      <p class="text-center text-danger"><%= message %></p>
+      <%}else{ %>
       <p class="text-center">Enter your email and password to login:</p>
+      <% } %>
       <form action="/login" method="post">
         <div class="mb-3">
           <input type="email" class="form-control" name="email" placeholder="E-mail" required>
@@ -100,11 +107,6 @@
         <div class="mb-3 d-flex justify-content-end">
           <a href="/forgotpassword" class="text-decoration-none text-secondary" style="font-size: 13px;">Forgot your password?</a>
         </div>
-        <%if(locals.message&&message.length>0){%>
-        <div class="alert alet-danger text-center">
-         <%= message %>
-        </div>
-        <% } %>
         <button type="submit" class="btn btn-dark w-100">LOGIN</button>
         <div class="text-center mt-3" style="font-size: 13px;">
           Don’t have an account? <a href="/signup" class="text-dark text-decoration-none">Sign up</a>

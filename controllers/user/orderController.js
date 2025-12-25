@@ -45,29 +45,38 @@ const placeOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: "Cart is empty" });
     }
 
-    for(let item of userData.cart){
-      const variant=item.product.variants.find(v=>v.size===item.size);
+    for(let x of userData.cart){
+      const variant=x.product.variants.find(v=>v.size===x.size);
       if(!variant||variant.stock===0){
-        return res.status(400).json({success:false,message:"Variant not found/Out of stock"})
+        return res.status(400).json({success:false,message:`Variant not found for ${x.product.productName}/Out of stock`})
       }
-      if(item.quantity>variant.stock){
-        return res.status(400).json({success:false,message:`Only ${variant.stock} units left for${item.product.productName}`})
+      if(x.quantity>variant.stock){
+        return res.status(400).json({success:false,message:`Only ${variant.stock} units left for${x.product.productName}`})
       }
     }
 
-    const result = await Product.updateOne({_id: item.product._id,"variants.size": item.size,"variants.stock": { $gte: item.quantity }},{ $inc: { "variants.$.stock": -item.quantity }});
+    for (let x of userData.cart) {
+    const result=await Product.updateOne(
+        { _id: x.product._id, "variants.size": x.size },
+        { $inc: { "variants.$.stock": -x.quantity } }
+    );
 
-   if (result.modifiedCount === 0) {
+    if (result.modifiedCount === 0) {
      return res.status(400).json({
      success: false,
      message: "Stock changed. Please try again."
     });
   }
+}
+
   const validCartItems=userData.cart.filter(item=>item.product.isBlocked===false)
   if(validCartItems.length===0){{
     return res.status(403).json({success:false,message:"One or more product is no longer available"});
   }}
-  const totalAmount= validCartItems.reduce((acc,item)=>acc+item.quantity,0)
+  const totalAmount = validCartItems.reduce((acc, item) => {
+    const price = item.product.salesPrice || 0;
+    return acc + (price * item.quantity);
+  }, 0);
 
     const addressId = req.body.addressId;
     const selectedAddress = userData.address.find(
@@ -135,11 +144,21 @@ const cancelOrder = async (req, res) => {
       });
     }
 
+    order.products.forEach(prod => {
+      if(!["Returned","Delivered","Cancelled","Return Processing","Shipped","Return rejected"].includes(prod.status)){
+        prod.status = "Cancelled";
+      }
+    });
+    
+
     order.status = "Cancelled";
-    await order.save();
+    await order.save(); 
 
     for (const prod of order.products) {
-      await Product.updateOne({_id: prod.product, "variants.size": prod.size},{$inc: { "variants.$.stock": prod.quantity }});
+      await Product.updateOne(
+        { _id: prod.product, "variants.size": prod.size },
+        { $inc: { "variants.$.stock": prod.quantity } }
+      );
     }
 
     res.json({ success: true });
@@ -156,7 +175,6 @@ const returnOrder = async (req, res) => {
     const orderId = req.params.id;
     const returnMessage = req.body.message;
 
-    // Find the order belonging to the user
     const order = await Order.findOne({
       orderId: orderId,
       user: userId
@@ -169,7 +187,6 @@ const returnOrder = async (req, res) => {
       });
     }
 
-    // Allow return only for delivered orders
     if (order.status !== "Delivered") {
       return res.status(400).json({
         success: false,
@@ -177,9 +194,15 @@ const returnOrder = async (req, res) => {
       });
     }
 
-    // Update order status & reason
+    order.products.forEach(prod => {
+      if(!["Returned","Delivered","Cancelled","Return Processing","Shipped","Return rejected"].includes(prod.status)){
+      prod.status = "Return processing";
+      }
+    });
+
     order.status = "Processing return";
     order.reasonForReturn = returnMessage;
+    
     await order.save();
 
     res.json({
@@ -206,7 +229,7 @@ const displayOrder = async (req, res) => {
     }).populate("products.product");
 
     if (!order) {
-      return res.redirect("/404");
+      return res.redirect("/error");
     }
 
     //  Calculate subtotal

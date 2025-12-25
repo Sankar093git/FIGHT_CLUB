@@ -304,6 +304,12 @@ function handleAddToCart(productId,size){
             text: 'Item added to cart',
             icon: 'success',
             confirmButtonText: 'OK'
+          }).then(()=>{
+            let cText = document.querySelector(".cartCount").innerText; 
+            let match = cText.match(/\d+/); 
+            let count = match ? parseInt(match[0]) : 0; 
+            count++;
+            document.querySelector(".cartCount").innerText = `CART(${count})`;
           })
         }
       })
@@ -318,6 +324,8 @@ function handleAddToCart(productId,size){
   function clearFilters(){
     window.location.href="/shop"
   }
+
+  
 
 </script>
 

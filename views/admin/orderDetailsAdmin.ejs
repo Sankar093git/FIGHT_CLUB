@@ -49,19 +49,35 @@
         <div class="card shadow-sm border-0 mb-3">
           <div class="card-body">
             <h5 class="fw-bold mb-2">Order Summary</h5>
-
+              <% Product.forEach((prod)=>{ %>
             <div id="orderItems" class="mb-2">
-                <% Product.forEach((prod)=>{ %>
               <div class="d-flex align-items-center order-item">
                 <img src="/uploads/re-image/<%= prod.product.productImage[0] %>" class="img-fluid rounded me-2" width="60" height="60" alt="product">
                 <div class="flex-grow-1">
-                  <p class="mb-0 fw-semibold small">Product Name</p>
+                  <p class="mb-0 fw-semibold small"><%= prod.product.productName %></p>
                   <p class="mb-0 small text-muted">
                     Qty: <%= prod.quantity %> × <%= prod.product.salesPrice %>
                   </p>
-                  <p class="mb-0 small text-muted">
-                    Status: <%= prod.status %>
-                  </p>
+                  <div class="d-flex align-items-center gap-1">
+  <span class="small text-muted">Status:</span>
+  <select class="form-select form-select-sm status-dropdown" 
+          data-product-id="<%= prod.product._id %>" 
+          data-size="<%= prod.size %>"
+          style="width: auto; padding: 2px 20px 2px 6px; font-size: 0.7rem; height: auto;">
+    <option value="Pending" <%= prod.status === 'Pending' ? 'selected' : '' %>>Pending</option>
+    <option value="Processing" <%= prod.status === 'Processing' ? 'selected' : '' %>>Processing</option>
+    <option value="Shipped" <%= prod.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+    <option value="Delivered" <%= prod.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+    <option value="Cancelled" <%= prod.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+    <option value="Partially cancelled" <%= prod.status === 'Partially cancelled' ? 'selected' : '' %>>Partially cancelled</option>
+    <option value="Return processing" <%= prod.status === 'Return processing' ? 'selected' : '' %>>Return processing</option>
+    <option value="Return processing(P)" <%= prod.status === 'Return processing(p)' ? 'selected' : '' %>>Return processing(P)</option>
+    <option value="Returned" <%= prod.status === 'Returned' ? 'selected' : '' %>>Returned</option>
+    <option value="Partially returned" <%= prod.status === 'Partially returned' ? 'selected' : '' %>>Partially returned</option>
+    <option value="Return rejected" <%= prod.status === 'Return rejected' ? 'selected' : '' %>>Return rejected</option>
+  </select>
+</div>
+
                 </div>
                 <% if(prod.status==="Return processing") {%>
                 <button class="btn btn-sm btn-outline-success"onclick="handleReturn('<%=prod.product._id%>','<%=prod.size%>',true)">Approve</button>
@@ -186,6 +202,30 @@
         })
       }
     }
+
+  document.querySelectorAll('.status-dropdown').forEach(select => {
+  select.addEventListener('change', function() {
+    const productId = this.dataset.productId;
+    const size = this.dataset.size;
+    const orderId = new URLSearchParams(window.location.search).get("orderId");
+    const newStatus = this.value;
+    
+    fetch(`/admin/update-product-status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId, productId, size, status: newStatus })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        Swal.fire('Updated!', 'Status changed', 'success').then(() => location.reload());
+      } else {
+        Swal.fire('Error', data.message, 'error').then(()=>window.location.reload());
+      }
+    });
+  });
+});
+
   </script>
 
   <%- include("../../views/admin/partials/footer") %>

@@ -5,16 +5,23 @@ const Orders=require("../../models/orderSchema");
 
 const loadProfile=async (req,res)=>{
     try {
+        const orderPage=parseInt(req.query.orderPage)||1;
+        const orderLimit=5;
+        const skip=(orderPage-1)*orderLimit
         const id=req.session.user;
         const findUser=await User.findOne({_id:id,isBlocked:false}).populate("wishlist.product");
-        const orderDetails=await Orders.find({user:id})
+        const orderDetails=(await Orders.find({user:id}).sort({ createdAt: -1 }).skip(skip).limit(orderLimit));
+        const totalOrders=await Orders.countDocuments({ user: id });
+        const totalOrderPages=Math.ceil(totalOrders/orderLimit);
         const image=findUser.userImage;
         const username=findUser.name;
         res.render('profile',{
             userData:findUser,
             user:req.session.userName||username,
             image:image,
-            orders:orderDetails
+            orders:orderDetails,
+            totalOrderPages:totalOrderPages,
+            currentOrderPage:orderPage
         })
     } catch (error) {
         console.log("Error while loading profilepage",error);

@@ -314,7 +314,11 @@
             icon: 'success',
             confirmButtonText: 'OK'
           }).then(() => {
-            location.reload();
+            let cText = document.querySelector(".cartCount").innerText; 
+          let match = cText.match(/\d+/); 
+          let count = match ? parseInt(match[0]) : 0; 
+          count++;
+          document.querySelector(".cartCount").innerText = `CART(${count})`;
           });
         }
       })

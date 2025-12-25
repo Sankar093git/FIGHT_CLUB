@@ -121,6 +121,9 @@ const changeOrderStatus = async (req, res) => {
       }
     }
     order.status = status;
+    for(let item of order.products){
+      item.status=status
+    }
     await order.save();
 
 
@@ -364,7 +367,74 @@ const handlesingleReturn = async (req, res) => {
   }
 };
 
- 
+const handleProductStatus = async (req, res) => {
+  try {
+    const { orderId, productId, size, status } = req.body;
+
+    const order = await Order.findOne({ orderId });
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    const productItem = order.products.find(
+      item => item.product.toString() === productId && item.size === size
+    );
+
+    if (!productItem) {
+      return res.status(404).json({ success: false, message: "Product not found in order" });
+    }
+
+    const lockedStatuses = ["Cancelled", "Returned", "Return processing","Partially returned","Delivered"];
+    if (lockedStatuses.includes(productItem.status)) {
+      return res.status(403).json({ success: false, message: "Cannot update a cancelled or returned item" });
+    }
+
+    if (status === "Cancelled") {
+      productItem.status = "Cancelled"; 
+
+      await Product.updateOne(
+        { _id: productId, "variants.size": size },
+        { $inc: { "variants.$.stock": productItem.quantity } }
+      );
+    } 
+    else if (["Returned", "Return processing", "Return rejected"].includes(status)) {
+      return res.status(403).json({ success: false, message: "Return updates must go through the return portal" });
+    } 
+    else {
+      productItem.status = status;
+    }
+
+    order.status = deriveTotalStatus(order.products);
+
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Product status updated to ${status}, Order is now ${order.status}`,
+      orderStatus: order.status
+    });
+
+  } catch (error) {
+    console.error("Update Error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+function deriveTotalStatus(products) {
+  const statuses = products.map(p => p.status);
+
+  if (statuses.every(s => s === "Cancelled")) return "Cancelled";
+  
+  const activeItems = statuses.filter(s => s !== "Cancelled" && s !== "Returned");
+
+  if (activeItems.some(s => s === "Pending")) return "Processing";
+  if (activeItems.every(s => s === "Shipped")) return "Shipped";
+  if (activeItems.every(s => s === "Out for delivery")) return "Out for delivery";
+  if (activeItems.every(s => s === "Delivered")) return "Delivered";
+
+  return "Processing";
+}
 
 
 module.exports={
@@ -372,5 +442,6 @@ module.exports={
     changeOrderStatus,
     handlingReturn,
     displayOrder,
-    handlesingleReturn
+    handlesingleReturn,
+    handleProductStatus
 }

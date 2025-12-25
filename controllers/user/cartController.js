@@ -25,6 +25,12 @@ const loadCart=async (req,res)=>{
           }
         })
         const validCartItems=userData.cart.filter(item=>item.product.isBlocked===false);
+        const dbCartUpdate = validCartItems.map(item => ({
+                            product: item.product._id, 
+                            size: item.size,
+                            quantity: item.quantity
+                          }));
+        await User.updateOne({ _id: user }, { $set: { cart: dbCartUpdate } })                 
         res.render("cart",{
             userData:userData,
             cart:validCartItems,

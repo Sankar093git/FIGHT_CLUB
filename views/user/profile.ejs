@@ -258,6 +258,24 @@ h4::after {
             <% } %>
           </tbody>
         </table>
+          <!-- Pagination -->
+  <% if (totalOrderPages > 1) { %>
+  <nav aria-label="Orders pagination">
+    <ul class="pagination pagination-sm justify-content-center mb-0">
+      <li class="page-item <%= currentOrderPage === 1 ? 'disabled' : '' %>">
+        <a class="page-link" href="?orderPage=<%= currentOrderPage - 1 %>">Previous</a>
+      </li>
+      <% for (let i = 1; i <= totalOrderPages; i++) { %>
+        <li class="page-item <%= currentOrderPage === i ? 'active' : '' %>">
+          <a class="page-link" href="?orderPage=<%= i %>"><%= i %></a>
+        </li>
+      <% } %>
+      <li class="page-item <%= currentOrderPage === totalOrderPages ? 'disabled' : '' %>">
+        <a class="page-link" href="?orderPage=<%= currentOrderPage + 1 %>">Next</a>
+      </li>
+    </ul>
+  </nav>
+  <% } %>
       </div>
       <!-- Wallet -->
 <div class="card dashboard-card p-4 mb-4 wallet-container">

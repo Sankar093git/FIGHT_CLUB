@@ -120,7 +120,6 @@ const addToCart = async (req, res) => {
     const userData= await User.findOne({_id:req.session.user}).populate("cart.product");
     const cartData=userData.cart;
     let prod=cartData.find(v=>v.product._id==id);
-    console.log(prod);
     const item=productDetails.variants.find(v=>v.size===size);
     if(item.stock<1){
       return res.status(403).json({success:false,message:"Item out of stock!"});

@@ -109,6 +109,11 @@ document.querySelectorAll(".btn-sm").forEach((btn)=>{
         if(action=="increment"){
           itemQuant.innerText=parseInt(itemQuant.innerText)+1;
           totalPrice.innerText=`₹${parseInt(itemQuant.innerText.replace("₹",""))*parseInt(price.innerText.replace("₹",""))}`;
+          let cText = document.querySelector(".cartCount").innerText; 
+          let match = cText.match(/\d+/); 
+          let count = match ? parseInt(match[0]) : 0; 
+          count++;
+          document.querySelector(".cartCount").innerText = `CART(${count})`;
           if(parseInt(itemQuant.innerText)==5){
             increment.disabled=true;
           }else{
@@ -119,6 +124,11 @@ document.querySelectorAll(".btn-sm").forEach((btn)=>{
         }else if(action=="decrement"){
           itemQuant.innerText=parseInt(itemQuant.innerText)-1;
           totalPrice.innerText=`₹${parseInt(itemQuant.innerText.replace("₹",""))*parseInt(price.innerText.replace("₹",""))}`;
+          let cText = document.querySelector(".cartCount").innerText; 
+          let match = cText.match(/\d+/); 
+          let count = match ? parseInt(match[0]) : 0; 
+          count--;
+          document.querySelector(".cartCount").innerText = `CART(${count})`;
           if(parseInt(itemQuant.innerText)==1){
             decrement.disabled=true;
           }else{
@@ -181,6 +191,12 @@ document.querySelectorAll(".trash-btn").forEach((btn)=>{
      }).then((res)=>res.json())
        .then((data)=>{
         if(data.success){
+          let itemQuant=document.getElementById(`itemQuant${product}`);
+          let cText = document.querySelector(".cartCount").innerText; 
+          let match = cText.match(/\d+/); 
+          let count = match ? parseInt(match[0]) : 0; 
+          count=count-parseInt(itemQuant.innerText);
+          document.querySelector(".cartCount").innerText = `CART(${count})`;
           row.remove();
           findGrandTotal();
         }
