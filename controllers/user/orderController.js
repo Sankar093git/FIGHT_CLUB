@@ -124,6 +124,7 @@ const cancelOrder = async (req, res) => {
   try {
     const userId = req.session.user;
     const orderId = req.params.id;
+    const cancelMessage=req.body.message;
 
     const order = await Order.findOne({
       orderId: orderId,
@@ -152,6 +153,7 @@ const cancelOrder = async (req, res) => {
     
 
     order.status = "Cancelled";
+    order.reasonForCancellation=cancelMessage;
     await order.save(); 
 
     for (const prod of order.products) {

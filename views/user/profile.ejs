@@ -551,19 +551,27 @@ function populateAddressForm(id,label, street, city, state, country, postalCode,
 
 function cancelOrder(orderId) {
   Swal.fire({
-    title: "Are you sure?",
-    text: "Do you really want to cancel this order?",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Yes, cancel it",
-    cancelButtonText: "No, keep it",
-  }).then((result) => {
+     title: 'Tell us why?',
+     html: `<textarea id="swal-textarea" class="swal2-textarea" 
+        style="width: 80%; max-width: 500px;" rows="5"></textarea>`,
+  showCancelButton: true,
+  confirmButtonText: 'Submit',
+  preConfirm: () => {
+    const val = document.getElementById('swal-textarea').value;
+    if (!val.trim()) {
+      Swal.showValidationMessage('Message cannot be empty!');
+    }
+    return val;
+  }
+}).then((result) => {
     if (result.isConfirmed) {
+      
       fetch(`/cancel-order/${orderId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        body:JSON.stringify({message:result.value})
       })
         .then((res) => res.json())
         .then((data) => {
@@ -599,8 +607,8 @@ function cancelOrder(orderId) {
 
 function returnOrder(orderId){
      Swal.fire({
-  title: 'Tell us why?',
-  html: `<textarea id="swal-textarea" class="swal2-textarea" 
+     title: 'Tell us why?',
+     html: `<textarea id="swal-textarea" class="swal2-textarea" 
         style="width: 80%; max-width: 500px;" rows="5"></textarea>`,
   showCancelButton: true,
   confirmButtonText: 'Submit',
