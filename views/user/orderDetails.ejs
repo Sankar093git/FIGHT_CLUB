@@ -75,9 +75,9 @@
                 <div>
                   <p class="fw-semibold mb-0 small">₹<%= prod.quantity * prod.product.salesPrice %></p>
                  <% if(status=="Delivered"||prod.status=="Delivered") {%>
-                  <button class="btn btn-danger return" onclick="returnProduct('<%=prod.product._id%>','<%=prod.size%>','<%=prod.quantity%>')" <%= (prod.status === "Return rejected"||prod.status === "Cancelled"||prod.status === "Return processing" || prod.status === "Returned"||status==="Cancelled"||status==="Returned"||status==="Return processing")?"disabled":"" %>>Return</button>
+                  <button class="btn btn-danger return" onclick="returnProduct('<%=prod.product._id%>','<%=prod.size%>','<%=prod.quantity%>')" <%= (prod.status === "Return processing"||prod.status === "Return rejected"||prod.status === "Cancelled"||prod.status === "Return processing" || prod.status === "Returned"||status==="Cancelled"||status==="Returned"||status==="Return processing")?"disabled":"" %>>Return</button>
                  <% }else{ %> 
-                   <button class="btn btn-danger cancel" onclick="cancelProduct('<%=prod.product._id%>','<%=prod.size%>','<%=prod.quantity%>')" <%= (prod.status === "Return rejected"||prod.status === "Cancelled" || prod.status === "Returned"||status==="Cancelled"||status==="Returned"||status==="Return processing")?"disabled":"" %>>Cancel</button>
+                   <button class="btn btn-danger cancel" onclick="cancelProduct('<%=prod.product._id%>','<%=prod.size%>','<%=prod.quantity%>')" <%= (prod.status === "Return processing"||prod.status === "Return rejected"||prod.status === "Cancelled" || prod.status === "Returned"||status==="Cancelled"||status==="Returned"||status==="Return processing")?"disabled":"" %>>Cancel</button>
                   <% } %>
                 </div>
               </div>

@@ -162,10 +162,13 @@ const changeOrderStatus = async (req, res) => {
     if (currentReturnApproval) {
 
       for (const prod of order.products) {
-        await Product.updateOne(
+         if(prod.status=="Return processing"){
+          prod.status="Returned";
+          await Product.updateOne(
           { _id: prod.product, "variants.size": prod.size },
           { $inc: { "variants.$.stock": prod.quantity } }
         );
+        }
       }
 
       order.status = "Returned";
@@ -176,6 +179,11 @@ const changeOrderStatus = async (req, res) => {
         message: "Return approved successfully"
       });
     }else {
+      for(let item of order.products){
+        if(item.status=="Return processing"){
+          item.status="Return rejected"
+        }
+      }
       order.status = "Return rejected";
       await order.save();
 

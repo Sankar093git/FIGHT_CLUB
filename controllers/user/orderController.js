@@ -197,7 +197,7 @@ const returnOrder = async (req, res) => {
     }
 
     order.products.forEach(prod => {
-      if(!["Returned","Delivered","Cancelled","Return Processing","Shipped","Return rejected"].includes(prod.status)){
+      if(!["Returned","Cancelled","Return Processing","Shipped","Return rejected"].includes(prod.status)){
       prod.status = "Return processing";
       }
     });
@@ -301,45 +301,146 @@ const editAddress= async(req,res)=>{
     }
 }
 
-const singleCancel=async(req,res)=>{
+const singleCancel = async (req, res) => {
   try {
-     const productId = new mongoose.Types.ObjectId(req.params.productId);
-    const {id,size,value,quantity}=req.body;
-    console.log(req.body);
-    console.log(id)
-    if(value){
-      await Order.updateOne({orderId:id,"products.product":productId,"products.size": size},{$inc:{"products.$.quantity":-value},$set:{"products.$.status":"Partially cancelled"}});
+    const productId = new mongoose.Types.ObjectId(req.params.productId);
+    const { id, size, value, quantity } = req.body;
 
-      await Product.updateOne({_id:productId,"variants.size":size},{$inc:{"variants.$.stock":value}});
-      return res.status(200).json({success:true, message:"Your amount shall be refunded"});
-    }else{
-      await Order.updateOne({orderId:id, "products.product":productId,"products.size": size},{$set:{"products.$.status":"Cancelled"}});
-
-      await Product.updateOne({_id:productId,"variants.size":size},{$inc:{"variants.$.stock":quantity}});
-      return res.status(200).json({success:true, message:"Your amount shall be refunded"});
+    // 1. Fetch product safely
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
-  } catch (error) {
-    console.log("Error while returning single product",error.message);
-    res.status(500).json({success:true,message:"Something went wrong!"})
-  }
- }
 
- const singleReturn = async(req,res)=>{
+    // 2. Prepare update logic
+    let orderUpdate;
+    let stockToRestore;
+
+    if (value) {
+      // Partial Cancellation
+      orderUpdate = {
+        $inc: { "products.$[item].quantity": -value },
+        $set: { "products.$[item].status": "Partially cancelled" }
+      };
+      stockToRestore = value;
+    } else {
+      // Full Cancellation
+      orderUpdate = {
+        $set: { "products.$[item].status": "Cancelled" }
+      };
+      stockToRestore = quantity;
+    }
+
+    // 3. Update Order using arrayFilters (The fix)
+    const orderResult = await Order.updateOne(
+      { orderId: id }, 
+      orderUpdate,
+      {
+        arrayFilters: [
+          { 
+            "item.product": productId, 
+            "item.size": size 
+          }
+        ]
+      }
+    );
+    const orderDetails=await Order.findOne({orderId:id});
+    const products=orderDetails.products;
+    const totalStatus=deriveTotalStatus(products);
+    orderDetails.status= totalStatus
+    await orderDetails.save();
+    // 4. Update Product Stock
+    await Product.updateOne(
+      { _id: productId, "variants.size": size },
+      { $inc: { "variants.$.stock": stockToRestore } }
+    );
+
+    return res.status(200).json({ 
+      success: true, 
+      message: `Cancellation for ${product.productName} processed.` 
+    });
+
+  } catch (error) {
+    console.error("Error while canceling product:", error.message);
+    res.status(500).json({ success: false, message: "Something went wrong!" });
+  }
+};
+
+ const singleReturn = async (req, res) => {
   try {
-    const productId=req.params.productId;
-    const {id,size,value}=req.body;
-    if(value){
-      await Order.updateOne({orderId:id,"products.product":productId,"products.size": size},{$set:{"products.$.status":"Return processing(P)","products.$.returnQuantity":value}});
-      return res.status(200).json({success:true, message:"Refund request has been sumbitted"});
-    }else{
-      await Order.updateOne({orderId:id, "products.product":productId,"products.size": size},{$set:{"products.$.status":"Return processing"}});
-      return res.status(200).json({success:true, message:"Your refund shall be processed"});
+    const productId = new mongoose.Types.ObjectId(req.params.productId);
+    const { id, size, value } = req.body;
+
+    // 1. Fetch product safely to get the name for the logs/response
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
+
+    const productName = product.productName;
+    console.log("Processing return for:", productName, "Size:", size);
+
+    // 2. Prepare the update object
+    const updateFields = value 
+      ? { 
+          "products.$[elem].status": "Return processing(P)", 
+          "products.$[elem].returnQuantity": value 
+        }
+      : { 
+          "products.$[elem].status": "Return processing" 
+        };
+
+    // 3. Perform the update using arrayFilters
+    const result = await Order.updateOne(
+      { orderId: id }, 
+      { $set: updateFields },
+      {
+        arrayFilters: [
+          { 
+            "elem.product": productId, 
+            "elem.size": size 
+          }
+        ]
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ success: false, message: "Order or Item matching size not found" });
+    }
+
+    const responseMsg = value 
+      ? "Refund request has been submitted" 
+      : "Your refund shall be processed";
+
+    const orderDetails=await Order.findOne({orderId:id});
+    const products=orderDetails.products;
+    const totalStatus=deriveTotalStatus(products);
+    orderDetails.status= totalStatus
+    await orderDetails.save();
+
+    return res.status(200).json({ success: true, message: responseMsg });
+
   } catch (error) {
-    console.error("Error while returning a single product",error.message);
-    res.status(500).json({success:true,message:error.message});
+    console.error("Error while returning a single product:", error.message);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
- }
+};
+
+function deriveTotalStatus(products) {
+  console.log("Function is working")
+  const statuses = products.map(p => p.status);
+
+  if (statuses.every(s => s === "Cancelled")) return "Cancelled";
+  
+  const activeItems = statuses.filter(s => s !== "Cancelled" && s !== "Returned");
+
+  if (activeItems.some(s => s === "Pending")) return "Processing";
+  if (activeItems.every(s => s === "Shipped")) return "Shipped";
+  if (activeItems.every(s => s === "Out for delivery")) return "Out for delivery";
+  if (activeItems.every(s => s === "Delivered")) return "Delivered";
+
+  return "Processing";
+}
 
 module.exports={
     loadCheckout,
