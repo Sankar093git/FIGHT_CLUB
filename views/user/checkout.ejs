@@ -91,14 +91,24 @@
 
           <hr>
 
-          <div class="d-flex justify-content-between fw-bold">
+         <div class="d-flex justify-content-between fw-bold">
             <span>Total:</span>
             <span id="totalAmount">₹<%= summary.total %></span>
           </div>
-
-          <button id="placeOrderBtn" class="btn btn-success w-100 mt-4">
-            <i class="bi bi-cash-coin"></i> Place Order (Cash on Delivery)
-          </button>
+          <div class="mb-3">
+           <label class="fw-bold">Select Payment Method:</label>
+           <div class="form-check">
+           <input class="form-check-input" type="radio" name="paymentMethod" id="codOption" value="COD" checked>
+           <label class="form-check-label" for="codOption">Cash on Delivery</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="paymentMethod" id="onlineOption" value="ONLINE">
+            <label class="form-check-label" for="onlineOption">Pay Online</label>
+          </div>
+        </div>
+        <button id="payBtn" class="btn btn-success w-100 mt-3">
+         <i class="bi bi-cash-coin"></i> Place Order
+       </button>
         </div>
       </div>
     </div>
@@ -213,9 +223,9 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
-
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-document.getElementById('placeOrderBtn').addEventListener('click', async () => {
+document.getElementById('payBtn').addEventListener('click', async () => {
   const selected = document.querySelector('input[name="selectedAddress"]:checked');
   if (!selected) {
     Swal.fire({
@@ -225,14 +235,15 @@ document.getElementById('placeOrderBtn').addEventListener('click', async () => {
    });
     return;
   }
-
+  let paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+      
   try {
-    const response = await fetch('/place-order', {
+    if(paymentMethod==="COD"){
+      const response = await fetch('/place-order', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         addressId: selected.value,
-        totalAmount:document.getElementById("totalAmount").innerText.replace(/[^\d.-]/g, ""),
         paymentMethod: 'COD'
       })
     });
@@ -243,6 +254,58 @@ document.getElementById('placeOrderBtn').addEventListener('click', async () => {
      Swal.fire({
        icon: "error",  title: "Error",  text: data.message || "Failed to place order.", });
     }
+
+  }else if(paymentMethod==="ONLINE"){
+        
+      const orderRes = await fetch('/payment/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const orderData = await orderRes.json();
+      if (!orderData.success) {
+        Swal.fire({ icon: "error", title: "Error", text: orderData.message });
+        return;
+      }
+
+      const rzpOptions = {
+        key: "<%= process.env.RAZORPAY_KEY_ID %>",
+        amount: orderData.order.amount,
+        currency: orderData.order.currency,
+        name: "Your Shop Name",
+        description: "Order Payment",
+        order_id: orderData.order.id,
+        handler: async function (response) {
+          const verifyRes = await fetch('/place-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              addressId: selected.value,
+              paymentMethod: 'ONLINE'
+            })
+          });
+
+          const verifyData = await verifyRes.json();
+          if (verifyData.success) {
+            Swal.fire({ icon: "success", title: "Order Placed!", text: "Order ID: " + verifyData.orderId });
+            window.location.href = `/order-success?orderId=${verifyData.orderId}`;
+          } else {
+            Swal.fire({ icon: "error", title: "Payment Failed", text: verifyData.message || "Try again" });
+          }
+        },
+        prefill: {
+          name: "<%= user.name %>",
+          email: "<%= user.email %>",
+          contact: "<%= user.phone %>"
+        },
+        theme: { color: "#528FF0" }
+      };
+
+      const rzp1 = new Razorpay(rzpOptions);
+      rzp1.open();
+  }
   } catch (err) {
     console.error(err);
     Swal.fire({

@@ -3,6 +3,8 @@ const Order=require("../../models/orderSchema");
 const crypto=require("crypto");
 const Product=require("../../models/productSchema");
 const mongoose=require("mongoose");
+const paymentController=require("../../controllers/user/paymentController");
+
 
 const loadCheckout= async(req,res)=>{
     try {
@@ -38,6 +40,14 @@ const loadCheckout= async(req,res)=>{
 const placeOrder = async (req, res) => {
   try {
     const userId = req.session.user;
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      paymentMethod,
+    } = req.body;
+
+    console.log(req.body);
+    console.log(userId)
 
     const userData = await User.findById(userId).populate("cart.product");
 
@@ -55,24 +65,10 @@ const placeOrder = async (req, res) => {
       }
     }
 
-    for (let x of userData.cart) {
-    const result=await Product.updateOne(
-        { _id: x.product._id, "variants.size": x.size },
-        { $inc: { "variants.$.stock": -x.quantity } }
-    );
-
-    if (result.modifiedCount === 0) {
-     return res.status(400).json({
-     success: false,
-     message: "Stock changed. Please try again."
-    });
-  }
-}
-
   const validCartItems=userData.cart.filter(item=>item.product.isBlocked===false)
-  if(validCartItems.length===0){{
+  if(validCartItems.length===0){
     return res.status(403).json({success:false,message:"One or more product is no longer available"});
-  }}
+  }
   const totalAmount = validCartItems.reduce((acc, item) => {
     const price = item.product.salesPrice || 0;
     return acc + (price * item.quantity);
@@ -88,6 +84,31 @@ const placeOrder = async (req, res) => {
     }
 
     const orderId = "ORD-" + crypto.randomBytes(4).toString("hex");
+    let isPaid=false;
+     if(paymentMethod==="ONLINE"){
+     isPaid = await paymentController.verifyPayment({
+                         razorpay_order_id,
+                         razorpay_payment_id,
+                         razorpay_signature: req.body.razorpay_signature
+                        });
+    if (!isPaid) {
+      return res.status(400).json({ success: false, message: "Payment verification failed" });
+     }
+    }
+     console.log(isPaid);
+     for (let x of userData.cart) {
+    const result=await Product.updateOne(
+        { _id: x.product._id, "variants.size": x.size },
+        { $inc: { "variants.$.stock": -x.quantity } }
+    );
+
+    if (result.modifiedCount === 0) {
+     return res.status(400).json({
+     success: false,
+     message: "Stock changed. Please try again."
+    });
+  }
+   }
 
     const newOrder = new Order({
       user: userId,
@@ -95,9 +116,15 @@ const placeOrder = async (req, res) => {
       products:  validCartItems,
       address: selectedAddress,
       totalAmount: totalAmount,
+      paymentMethod: paymentMethod,
+      paymentStatus: isPaid==true?"PAID":"PENDING",
+      razorpay: {
+        orderId: razorpay_order_id,
+        paymentId: razorpay_payment_id
+      },
       status: "Pending"
     });
-
+    console.log(newOrder)
     await newOrder.save();
 
     await User.updateOne({ _id: userId },{ $set: { cart: [] } });

@@ -82,6 +82,22 @@ const orderSchema = new mongoose.Schema({
     type: String, 
     default: "N/A" 
   },
+   paymentMethod: {
+    type:String,
+    required:true
+   },
+   paymentStatus:{
+    type:String,
+    required:true
+   },
+   razorpay: {
+        orderId:{
+          type:String,
+        } ,
+        paymentId:{
+          type:String
+        }
+      },
   totalAmount: { 
     type: Number, 
     required: true 
@@ -89,3 +105,4 @@ const orderSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 module.exports = mongoose.model("Order", orderSchema);
+

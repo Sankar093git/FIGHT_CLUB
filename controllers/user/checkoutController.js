@@ -14,8 +14,12 @@ const loadCheckout= async(req,res)=>{
         item.product && item.product.isBlocked === false
        );
         validCartItems.forEach((num)=>{
+            if(num.quantity>5){
+                num.quantity=5
+            }
             priceList.push(num.product.salesPrice*num.quantity);
         });
+
         summary.subtotal=priceList.reduce((acc,num)=>acc+num,0);
         summary.discount=200;
         summary.taxes=50;

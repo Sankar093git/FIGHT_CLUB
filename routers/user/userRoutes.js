@@ -9,6 +9,7 @@ const uploads=require("../../helpers/multer");
 const profileController=require("../../controllers/user/profileController");
 const checkoutController=require("../../controllers/user/checkoutController");
 const orderController=require("../../controllers/user/orderController");
+const paymentController=require("../../controllers/user/paymentController");
 
 //signup and login management
 
@@ -74,6 +75,7 @@ router.patch("/return/:productId",userAuth,orderController.singleReturn);
 router.get("/order-success",userAuth,orderController.orderSuccess);
 router.post("/add-new-address",userAuth,checkoutController.addAddress);
 router.post("/edit-current-address/:id",userAuth,checkoutController.editAddress);
+router.post("/payment/create-order",userAuth,paymentController.createRazorpayOrder);
 
 
 
