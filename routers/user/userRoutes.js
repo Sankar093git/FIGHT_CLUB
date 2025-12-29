@@ -10,6 +10,8 @@ const profileController=require("../../controllers/user/profileController");
 const checkoutController=require("../../controllers/user/checkoutController");
 const orderController=require("../../controllers/user/orderController");
 const paymentController=require("../../controllers/user/paymentController");
+const generalController=require("../../controllers/user/generalController");
+
 
 //signup and login management
 
@@ -30,6 +32,7 @@ router.get("/auth/google/callback",passport.authenticate("google",{failureRedire
     req.session.google=true;
  res.redirect("/")
 })
+
 //forgot password
 
 router.get("/forgotpassword",userController.loadForgotPassword);
@@ -64,6 +67,9 @@ router.post("/edit-profile",userAuth,profileController.editProfile);
 router.get("/otp-verification",userAuth,profileController.loadVerifyOtp);
 router.post("/otp-verification",userAuth,profileController.verifyOtp);
 
+//page not found
+router.get("/error",generalController.pageNotFound);
+
 //checkout management
 router.get("/checkout",userAuth,checkoutController.loadCheckout);
 router.get("/orders",userAuth,orderController.displayOrder);
@@ -76,6 +82,7 @@ router.get("/order-success",userAuth,orderController.orderSuccess);
 router.post("/add-new-address",userAuth,checkoutController.addAddress);
 router.post("/edit-current-address/:id",userAuth,checkoutController.editAddress);
 router.post("/payment/create-order",userAuth,paymentController.createRazorpayOrder);
+router.get("/payment-failed",userAuth,orderController.paymentFailure);
 
 
 

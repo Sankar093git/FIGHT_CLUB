@@ -101,6 +101,10 @@ const orderSchema = new mongoose.Schema({
   totalAmount: { 
     type: Number, 
     required: true 
+  },
+  retryCount:{
+    type:Number,
+    default:0
   }
 }, { timestamps: true });
 

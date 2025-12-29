@@ -8,6 +8,7 @@ const adminRouter=require("./routers/admin/adminRoutes");
 const path=require("path");
 const passport=require("./config/passport");
 const navbarContext=require("./middlewares/navbarContext");
+const errorHandler=require("./middlewares/errorHandling");
 
 connectDB();
 
@@ -40,6 +41,8 @@ app.use((req,res,next)=>{
 app.use("/",navbarContext);
 app.use("/",userRouter);
 app.use("/admin",adminRouter);
+
+app.use(errorHandler);
 
 
 

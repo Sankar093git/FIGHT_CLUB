@@ -61,6 +61,12 @@
     .hideReturnHandlers{
       display: none;
     }
+    .orderPagination{
+      display:flex;
+      flex-direction:column;
+      align-items: center;
+      justify-content: center;
+    }
   </style>
 <body>
   <div class="container-fluid py-3 px-4">
@@ -109,7 +115,7 @@
       </div>
     </div>
 
-    <!-- Orders Table -->
+    <div class="orderPagination"><!-- Orders Table -->
     <div class="card shadow-sm">
       <div class="card-body p-0">
         <div class="table-responsive">
@@ -178,11 +184,7 @@
     </div>
 
     <!-- Pagination -->
- <div class="d-flex justify-content-between align-items-center mt-3">
-  <div class="text-muted small">
-    Showing <%= (currentPage-1)*limit + 1 %> to 
-            <%= Math.min(currentPage*limit, totalOrders) %> of <%= totalOrders %> orders
-  </div>
+ <div class="d-flex flex-column justify-content-between align-items-center mt-3">
   <nav>
     <ul class="pagination pagination-sm mb-0">
 
@@ -205,6 +207,11 @@
 
     </ul>
   </nav>
+  <div class="text-muted small">
+    Showing <%= (currentPage-1)*limit + 1 %> to 
+            <%= Math.min(currentPage*limit, totalOrders) %> of <%= totalOrders %> orders
+  </div>
+</div>
 </div>
    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> 
   <script>

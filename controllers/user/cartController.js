@@ -39,7 +39,7 @@ const loadCart=async (req,res)=>{
         });
     } catch (error) {
         console.error("Error while loading cart-page",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
 }
 
@@ -82,7 +82,7 @@ const changeQuantity= async (req,res)=>{
         
     } catch (error) {
         console.error("Error while changing quantity",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
 }
 
@@ -96,7 +96,7 @@ const removeItem = async (req, res) => {
    res.status(200).json({success:true});
   } catch (error) {
     console.error("Error while removing item", error);
-    res.redirect("/error");
+    res.staatus(500).redirect("/error");
   }
 };
 

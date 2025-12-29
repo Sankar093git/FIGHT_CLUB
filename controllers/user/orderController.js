@@ -24,7 +24,7 @@ const loadCheckout= async(req,res)=>{
         summary.taxes=50;
         summary.shipping=100;
         summary.total=(summary.subtotal+summary.taxes+summary.shipping)-summary.discount;
-        res.render("checkout",{
+        res.status(200).render("checkout",{
             user:req.session.userName||userName,
             image:null,
             addresses:userData.address,
@@ -33,7 +33,7 @@ const loadCheckout= async(req,res)=>{
            })
     } catch (error) {
         console.error("Error while loading checkout page",error);
-        res.redirect("/error")
+        res.status(500).redirect("/error")
     }
 }
 
@@ -140,11 +140,54 @@ const placeOrder = async (req, res) => {
 
 const orderSuccess= async (req,res)=>{
     try {
-        res.render("orderPlaced");
+        res.status(200).render("orderPlaced");
     } catch (error) {
         console.error("Error while loading success page :",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
+}
+
+const paymentFailure= async(req,res)=>{
+  try {
+    const orderId=req.query.orderId;
+    res.status(400).render("orderFailed",{
+      orderId:orderId,
+    });
+  } catch (error) {
+    console.error("Payment failure page:",error);
+  }
+}
+
+const retryPayment=async(req,res)=>{
+  try {
+     const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      paymentMethod,
+    } = req.body
+    const orderId=req.params.id;
+    const orderDetails=await Order.findOne({orderId:orderId});
+
+    
+     isPaid = await paymentController.verifyPayment({
+                         razorpay_order_id,
+                         razorpay_payment_id,
+                         razorpay_signature: req.body.razorpay_signature
+                        });
+    if (!isPaid) {
+      return res.status(400).json({ success: false, message: "Payment verification failed" });
+     }
+    orderDetails.paymentStatus=isPaid==true?"PAID":"PENDING"
+    orderDetails.razorpay= {
+        orderId: razorpay_order_id,
+        paymentId: razorpay_payment_id
+      },
+
+      orderDetails.save();
+
+  } catch (error) {
+    console.error("Retry payment:",error);
+  }
 }
 
 const cancelOrder = async (req, res) => {
@@ -288,7 +331,7 @@ const displayOrder = async (req, res) => {
 
   } catch (error) {
     console.error("Error while displaying order:", error);
-    res.redirect("/error");
+    res.status(500).redirect("/error");
   }
 };
 
@@ -321,10 +364,10 @@ const editAddress= async(req,res)=>{
             "address.$.phone": phone,
             "address.$.isDefault":isDefault
         }});
-        res.redirect("/checkout");
+        res.status(200).redirect("/checkout");
     } catch (error) {
         console.error("Error while editing address : ",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
 }
 
@@ -479,5 +522,6 @@ module.exports={
     addAddress,
     orderSuccess,
     singleCancel,
-    singleReturn
+    singleReturn,
+    paymentFailure
 }

@@ -286,13 +286,12 @@ document.getElementById('payBtn').addEventListener('click', async () => {
               paymentMethod: 'ONLINE'
             })
           });
-
           const verifyData = await verifyRes.json();
           if (verifyData.success) {
             Swal.fire({ icon: "success", title: "Order Placed!", text: "Order ID: " + verifyData.orderId });
             window.location.href = `/order-success?orderId=${verifyData.orderId}`;
           } else {
-            Swal.fire({ icon: "error", title: "Payment Failed", text: verifyData.message || "Try again" });
+            window.location.href=`/payment-failed?orderId=${verifyData.orderId}`
           }
         },
         prefill: {

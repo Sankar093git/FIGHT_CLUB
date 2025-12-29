@@ -1,6 +1,7 @@
 const razorpay = require("../../config/razorpay");
 const mongoose = require("mongoose");
 const User=require("../../models/userSchema");
+const Order=require("../../models/orderSchema");
 const crypto = require("crypto");
 
 const createRazorpayOrder = async (req, res) => {
@@ -39,6 +40,37 @@ const createRazorpayOrder = async (req, res) => {
     });
   }
 }
+
+const retryPayment=async(req,res)=>{
+  try {
+    const orderId=req.query.orderId;
+    const orderDetails=await Order.findOne({orderId:orderId});
+    if(!orderDetails){
+      return res.status(403).json({success:false,message:"Order does not exist!"})
+    }
+    const totalAmount=orderDetails.totalAmount;
+    
+    const options = {
+      amount: totalAmount * 100,
+      currency: "INR",
+      receipt: `receipt_${Date.now()}`
+    };
+
+    const order = await razorpay.orders.create(options);
+
+    res.status(200).json({
+      success: true,
+      order
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Order creation failed"
+    });
+  }
+}
+
 
 const verifyPayment = async ( {razorpay_order_id,razorpay_payment_id,razorpay_signature}) => {
   try {
