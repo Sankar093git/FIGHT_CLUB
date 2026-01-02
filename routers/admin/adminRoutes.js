@@ -6,6 +6,7 @@ const categoryController=require("../../controllers/admin/categoryController");
 const productController=require("../../controllers/admin/productController");
 const brandController=require("../../controllers/admin/brandController");
 const orderController=require("../../controllers/admin/orderController");
+const couponController=require("../../controllers/admin/couponController");
 const {adminAuth,adminAuth1}=require("../../middlewares/auth");
 const multer=require("multer");
 const uploads=require("../../helpers/multer");
@@ -43,9 +44,11 @@ router.post("/block-or-unblock-products/:id",adminAuth,productController.blockOr
 //Brand management
 router.get("/brands",adminAuth,brandController.getBrandList);
 router.post("/add-brand",adminAuth,uploads.single("image"),brandController.addBrand);
-router.delete("/delete-brand/:id",adminAuth,brandController.deleteBrand)
-router.patch("/block-or-unblock-brand/:id",adminAuth,brandController.blockORunblockBrand)
+router.delete("/delete-brand/:id",adminAuth,brandController.deleteBrand);
+router.patch("/block-or-unblock-brand/:id",adminAuth,brandController.blockORunblockBrand);
 
+//Coupon management
+router.get("/coupon",adminAuth,couponController.loadCouponManagement);
 
 //Order management
 router.get("/orderList",adminAuth,orderController.getOrderList);
