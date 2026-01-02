@@ -6,53 +6,22 @@ const crypto = require("crypto");
 
 const createRazorpayOrder = async (req, res) => {
   try {
-        const userId=req.session.user;
-        const userDetails= await User.findOne({_id:userId}).populate("cart.product");
-        let totalAmount=0;
-        for(let item of userDetails.cart){
-            totalAmount+=item.product.salesPrice*item.quantity;
-        }
-    
-    if (!totalAmount || totalAmount <= 0) {
-        return res.status(400).json({
-        success: false,
-        message: "Cart is empty"
-       });
-     }
-
-    const options = {
-      amount: totalAmount * 100,
-      currency: "INR",
-      receipt: `receipt_${Date.now()}`
-    };
-
-    const order = await razorpay.orders.create(options);
-
-    res.status(200).json({
-      success: true,
-      order
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Order creation failed"
-    });
-  }
-}
-
-const retryPayment=async(req,res)=>{
-  try {
     const orderId=req.query.orderId;
-    const orderDetails=await Order.findOne({orderId:orderId});
-    if(!orderDetails){
-      return res.status(403).json({success:false,message:"Order does not exist!"})
+    let totalAmount=0;
+    const currency="INR"
+    if(orderId){
+      const orderDetails= await Order.findOne({orderId:orderId});
+      if (orderDetails.paymentStatus === "PAID") {
+        return res.status(400).json({ success: false, message: "Order is already paid." });
+      }
+      totalAmount=orderDetails.totalAmount;
+
+    }else{
+      return res.status(400).json({success:false,message:"Order does not exist"})
     }
-    const totalAmount=orderDetails.totalAmount;
-    
     const options = {
       amount: totalAmount * 100,
-      currency: "INR",
+      currency: currency,
       receipt: `receipt_${Date.now()}`
     };
 

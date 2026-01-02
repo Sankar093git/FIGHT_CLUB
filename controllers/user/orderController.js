@@ -41,20 +41,15 @@ const placeOrder = async (req, res) => {
   try {
     const userId = req.session.user;
     const {
-      razorpay_order_id,
-      razorpay_payment_id,
       paymentMethod,
     } = req.body;
-
-    console.log(req.body);
-    console.log(userId)
 
     const userData = await User.findById(userId).populate("cart.product");
 
     if (!userData || userData.cart.length === 0) {
       return res.status(400).json({ success: false, message: "Cart is empty" });
     }
-
+//Stock validation
     for(let x of userData.cart){
       const variant=x.product.variants.find(v=>v.size===x.size);
       if(!variant||variant.stock===0){
@@ -65,11 +60,11 @@ const placeOrder = async (req, res) => {
       }
     }
 
-  const validCartItems=userData.cart.filter(item=>item.product.isBlocked===false)
-  if(validCartItems.length===0){
-    return res.status(403).json({success:false,message:"One or more product is no longer available"});
-  }
-  const totalAmount = validCartItems.reduce((acc, item) => {
+    const validCartItems=userData.cart.filter(item=>item.product.isBlocked===false)
+    if(validCartItems.length===0){
+      return res.status(403).json({success:false,message:"One or more product is no longer available"});
+    }
+    const totalAmount = validCartItems.reduce((acc, item) => {
     const price = item.product.salesPrice || 0;
     return acc + (price * item.quantity);
   }, 0);
@@ -83,21 +78,11 @@ const placeOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid address" });
     }
 
-    const orderId = "ORD-" + crypto.randomBytes(4).toString("hex");
-    let isPaid=false;
-     if(paymentMethod==="ONLINE"){
-     isPaid = await paymentController.verifyPayment({
-                         razorpay_order_id,
-                         razorpay_payment_id,
-                         razorpay_signature: req.body.razorpay_signature
-                        });
-    if (!isPaid) {
-      return res.status(400).json({ success: false, message: "Payment verification failed" });
-     }
-    }
-     console.log(isPaid);
-     for (let x of userData.cart) {
-    const result=await Product.updateOne(
+   const orderId = "ORD-" + crypto.randomBytes(4).toString("hex");
+
+   if(paymentMethod=="COD"){// Stock will be deducted only if the payment method is COD
+       for (let x of userData.cart) {
+   const result=await Product.updateOne(
         { _id: x.product._id, "variants.size": x.size },
         { $inc: { "variants.$.stock": -x.quantity } }
     );
@@ -107,9 +92,9 @@ const placeOrder = async (req, res) => {
      success: false,
      message: "Stock changed. Please try again."
     });
-  }
    }
-
+    }
+   }
     const newOrder = new Order({
       user: userId,
       orderId: orderId,
@@ -117,17 +102,13 @@ const placeOrder = async (req, res) => {
       address: selectedAddress,
       totalAmount: totalAmount,
       paymentMethod: paymentMethod,
-      paymentStatus: isPaid==true?"PAID":"PENDING",
-      razorpay: {
-        orderId: razorpay_order_id,
-        paymentId: razorpay_payment_id
-      },
+      paymentStatus: "PENDING",
       status: "Pending"
     });
-    console.log(newOrder)
+  
     await newOrder.save();
 
-    await User.updateOne({ _id: userId },{ $set: { cart: [] } });
+    await User.updateOne({ _id: userId },{ $set: { cart: [] } }); //Emptying cart after order placement.
 
     res.status(201).json({success: true, orderId: orderId});
 
@@ -150,43 +131,60 @@ const orderSuccess= async (req,res)=>{
 const paymentFailure= async(req,res)=>{
   try {
     const orderId=req.query.orderId;
+    const userDetails= await User.findOne({_id:req.session.user});
     res.status(400).render("orderFailed",{
       orderId:orderId,
+      user:userDetails
     });
   } catch (error) {
     console.error("Payment failure page:",error);
   }
 }
 
-const retryPayment=async(req,res)=>{
+const updatePayment=async(req,res)=>{
   try {
-     const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      paymentMethod,
-    } = req.body
-    const orderId=req.params.id;
-    const orderDetails=await Order.findOne({orderId:orderId});
-
-    
-     isPaid = await paymentController.verifyPayment({
+    console.log("payment updation is triggering!");
+    const {razorpay_order_id,razorpay_payment_id,razorpay_signature}=req.body;
+    const orderId=req.params.orderId;
+    const orderDetails= await Order.findOne({orderId:orderId});
+    if(!orderDetails){
+     return res.status(400).json({success:false,message:"Order not found"});
+    }
+    if(orderDetails.paymentStatus=="PAID"){
+      return res.status(400).json({success:false,message:"Payment already done"})
+    }
+    let isPaid = await paymentController.verifyPayment({
                          razorpay_order_id,
                          razorpay_payment_id,
-                         razorpay_signature: req.body.razorpay_signature
+                         razorpay_signature: razorpay_signature
                         });
     if (!isPaid) {
       return res.status(400).json({ success: false, message: "Payment verification failed" });
      }
-    orderDetails.paymentStatus=isPaid==true?"PAID":"PENDING"
-    orderDetails.razorpay= {
+    
+     orderDetails.paymentStatus=isPaid==true?"PAID":"PENDING"
+     orderDetails.razorpay= {
         orderId: razorpay_order_id,
         paymentId: razorpay_payment_id
       },
 
-      orderDetails.save();
+      await orderDetails.save();
+      for(let item of orderDetails.products){
+         const id=item.product._id;
+         const size=item.size;
+         const quantity=item.quantity;
+         await Product.updateOne({_id:id,"variants.size":size,"variants.stock": { $gte: quantity }},{$inc:{"variants.$.stock":-quantity}});
+      }
+      console.log("Payment verified and stock updated");
+     return res.status(200).json({
+      success: true,
+      message: "Payment verified and stock updated",
+      orderId: orderDetails.orderId
+     });
+
 
   } catch (error) {
-    console.error("Retry payment:",error);
+    console.error("Payment updation:",error);
   }
 }
 
@@ -523,5 +521,6 @@ module.exports={
     orderSuccess,
     singleCancel,
     singleReturn,
-    paymentFailure
+    paymentFailure,
+    updatePayment,
 }

@@ -82,7 +82,9 @@ router.get("/order-success",userAuth,orderController.orderSuccess);
 router.post("/add-new-address",userAuth,checkoutController.addAddress);
 router.post("/edit-current-address/:id",userAuth,checkoutController.editAddress);
 router.post("/payment/create-order",userAuth,paymentController.createRazorpayOrder);
+router.post("/update-order-payment-status/:orderId",userAuth,orderController.updatePayment);
 router.get("/payment-failed",userAuth,orderController.paymentFailure);
+
 
 
 

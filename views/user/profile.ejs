@@ -245,11 +245,13 @@ h4::after {
                   <td><%= order.createdAt.toDateString() %></td>
                   <td>
                     <a href="/orders?id=<%= order.orderId %>" class="btn btn-sm btn-outline-primary">View</a>
-                    <% if (order.status === "Pending" || order.status === "Processing") { %>
+                    <%if(order.paymentMethod==="ONLINE"&&order.paymentStatus==="PENDING") {%>
+                      <button   class="btn btn-sm btn-outline-danger" id="pay"onclick="retryPayment('<%= order.orderId %>')">Pay now</button>
+                    <%}else if (order.status === "Pending" || order.status === "Processing") { %>
                       <button   class="btn btn-sm btn-outline-danger"  onclick="cancelOrder('<%= order.orderId %>')">Cancel</button>
                     <% }else if(order.status === "Delivered" || order.status === "Shipped"){ %>
                     <button   class="btn btn-sm btn-outline-danger"  onclick="returnOrder('<%= order.orderId %>')">Return</button>
-                    <% } %>
+                    <% } %>     
                   </td>
                 </tr>
               <% }) %>
@@ -463,7 +465,7 @@ h4::after {
     </div>
   </div>
 </div>
-
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
   document.getElementById("addressForm").addEventListener("submit", function (e) {
     e.preventDefault();
@@ -682,6 +684,85 @@ function removeFromWishlist(productId) {
         .catch((error) =>Swal.fire("Error", `${error.message}`, "error"));
     }
   });
+}
+
+async function  retryPayment(orderId){
+  const btn=document.getElementById("pay");
+  btn.disabled=true;
+  try {
+        const orderRes = await fetch(`/payment/create-order?orderId=${orderId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      const orderData = await orderRes.json();
+      
+      if (!orderData.success) {
+        Swal.fire({ icon: "error", title: "Error", text: orderData.message });
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i> Retry Payment';
+        return;
+      }
+
+      // B. Razorpay Modal Configuration
+      const rzpOptions = {
+        key: "<%= process.env.RAZORPAY_KEY_ID %>",
+        amount: orderData.order.amount,
+        currency: orderData.order.currency,
+        name: "Your Shop Name",
+        description: "Order Payment",
+        order_id: orderData.order.id,
+        handler: async function (response) {
+          // THIS RUNS ONLY ON SUCCESSFUL PAYMENT
+          const verifyRes = await fetch(`/update-order-payment-status/${orderId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            })
+          });
+
+          const verifyData = await verifyRes.json();
+          if (verifyData.success) {
+            window.location.href = `/order-success?orderId=${verifyData.orderId}`;
+          } else {
+            // If verification fails on backend after payment
+            window.location.href = `/payment-failed?orderId=${verifyData.order.id}`;
+          }
+        },
+        prefill: {
+          name: "<%= user.name %>",
+          email: "<%= user.email %>",
+          contact: "<%= user.phone %>"
+        },
+        theme: { color: "#528FF0" },
+        modal: {
+          ondismiss: function() {
+            // Handle user closing the modal manually
+            window.location.href = `/payment-failed?orderId=${orderId}`;
+          }
+        }
+      };
+      const rzp1 = new Razorpay(rzpOptions);
+      // C. Handle Intentional/Bank Failures
+      rzp1.on('payment.failed', function (response) {
+        // Redirecting to failure page using orderData from the first fetch
+        window.location.href = `/payment-failed?orderId=${orderId}`;
+      });
+      rzp1.open();
+  } catch (error) {
+    console.error("Retry payment:",error);
+    Swal.fire({
+      title:"Oops!",
+      text:"Something went wrong",
+      icon:"error"
+    })
+  }finally{
+    btn.disabled=false
+  }
+
 }
 
 
