@@ -25,6 +25,10 @@ const couponSchema = new mongoose.Schema({
     type: Number,
     default: 0 
   },
+    startDate: {
+    type: Date,
+    required: true
+  },
   expiryDate: {
     type: Date,
     required: true
@@ -33,7 +37,7 @@ const couponSchema = new mongoose.Schema({
     type: Number,
     default: 1 
   },
-  usedCount: {
+  redemptions: {
     type: Number,
     default: 0
   },
@@ -41,9 +45,10 @@ const couponSchema = new mongoose.Schema({
     type: Number,
     default: 1 
   },
-  active: {
-    type: Boolean,
-    default: true
+  status: {
+    type: String,
+    enum:["Active","Expired","Scheduled"],
+    default: "Active"
   }
 }, { timestamps: true });
 

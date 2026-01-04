@@ -269,9 +269,13 @@
       background: linear-gradient(90deg, var(--primary) 0%, var(--success) 100%);
       border-radius: 3px;
     }
+
+    td,th{
+      text-align: center;
+    }
   </style>
 
-  <div class="container mt-5 pb-5">
+  <div class="container mt-5 pb-2">
     <!-- Stats Row -->
     <div class="row g-4 mb-4">
       <div class="col-md-3">
@@ -279,7 +283,7 @@
           <div class="icon" style="background: rgba(79, 70, 229, 0.1); color: var(--primary);">
             <i class="bi bi-ticket"></i>
           </div>
-          <h3>12</h3>
+          <h3><%=totalCoupons%></h3>
           <p>Total Coupons</p>
         </div>
       </div>
@@ -288,7 +292,7 @@
           <div class="icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">
             <i class="bi bi-check-circle"></i>
           </div>
-          <h3>8</h3>
+          <h3><%=activeCoupons%></h3>
           <p>Active Coupons</p>
         </div>
       </div>
@@ -297,7 +301,7 @@
           <div class="icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
             <i class="bi bi-graph-up"></i>
           </div>
-          <h3>342</h3>
+          <h3><%=totalRedemptions%></h3>
           <p>Total Redemptions</p>
         </div>
       </div>
@@ -306,7 +310,7 @@
           <div class="icon" style="background: rgba(239, 68, 68, 0.1); color: var(--danger);">
             <i class="bi bi-currency-rupee"></i>
           </div>
-          <h3>₹24,500</h3>
+          <h3>₹0</h3>
           <p>Discount Given</p>
         </div>
       </div>
@@ -320,13 +324,15 @@
           <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#couponModal" onclick="openAddModal()">
             <i class="bi bi-plus-lg me-2"></i>Add Coupon
           </button>
-          <input type="text" class="form-control form-control-sm" placeholder="Search coupons..." style="width: 200px;">
-          <select class="form-select form-select-sm" style="width: 140px;">
+          <input type="text" id="search" value="<%= search %>" class="form-control form-control-sm" placeholder="Search coupons..." style="width: 200px;">
+          <select class="form-select form-select-sm" id="status" style="width: 140px;">
             <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="expired">Expired</option>
-            <option value="scheduled">Scheduled</option>
+            <option value="Active" <%=filter.status=="Active"?"selected":""%>>Active</option>
+            <option value="Expired" <%=filter.status=="Expired"?"selected":""%>>Expired</option>
+            <option value="Scheduled" <%=filter.status=="Scheduled"?"selected":""%>>Scheduled</option>
           </select>
+          <button class="btn btn-primary btn-sm" onclick="applyFilters()">Submit</button>
+          <button class="btn btn-danger btn-sm" onclick="clearFilters()">Clear</button>
         </div>
       </div>
       <div class="table-responsive">
@@ -343,107 +349,71 @@
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td><span class="coupon-code">SUMMER25</span></td>
-              <td><span class="discount-value">25%</span></td>
-              <td>Percentage</td>
-              <td>₹500</td>
+          <tbody id="body">
+            <% coupon.forEach((item)=>{%>
+            <tr id="couponRow<%=item._id%>">
+              <td><span class="coupon-code"><%=item.code%></span></td>
+              <td><span class="discount-value"><%=item.discountValue%></span></td>
+              <td><%=item.discountType%></td>
+              <td>₹<%=item.minPurchase%></td>
               <td>
-                <span>45 / 100</span>
+                <span><%=item.redemptions%> / <%=item.usageLimit%></span>
                 <div class="usage-bar"><div class="usage-bar-fill" style="width: 45%;"></div></div>
               </td>
               <td>
-                <small class="text-muted">Jan 01 - Mar 31, 2026</small>
+                <small class="text-muted"><%=item.startDate.toLocaleString("en-IN",{day:"numeric",month:"long",year:"numeric"})%>-<%=item.expiryDate.toLocaleString("en-IN",{day:"numeric",month:"long",year:"numeric"})%></small>
               </td>
-              <td><span class="badge-status badge-active">Active</span></td>
+              <% if(item.status==="Active") {%>
+                <td><span class="badge-status badge-active"><%=item.status%></span></td>
+              <%}else if(item.status==="Scheduled"){%>
+                <td><span class="badge-status badge-scheduled"><%=item.status%></span></td>
+              <%}else{%>
+                <td><span class="badge-status badge-expired"><%=item.status%></span></td> 
+                <% } %>
               <td>
                 <div class="d-flex gap-2">
-                  <button class="btn btn-action btn-edit" onclick="openEditModal('SUMMER25', 25, 'percentage', 500, 100, '2026-01-01', '2026-03-31')">
+                  <button class="btn btn-action btn-edit" onclick="openEditModal('<%=item.code%>', '<%=item.discountValue%>', '<%=item.discountType%>', '<%=item.maxDiscount%>', '<%=item.usageLimit%>','<%=item.startDate%>' ,'<%=item.expiryDate%>','<%=item._id%>')">
                     <i class="bi bi-pencil"></i>
                   </button>
-                  <button class="btn btn-action btn-delete" onclick="deleteCoupon('SUMMER25')">
+                  <button class="btn btn-action btn-delete" onclick="deleteCoupon('<%=item.code%>','<%=item._id%>')">
                     <i class="bi bi-trash"></i>
                   </button>
                 </div>
               </td>
             </tr>
-            <tr>
-              <td><span class="coupon-code">FLAT200</span></td>
-              <td><span class="discount-value">₹200</span></td>
-              <td>Fixed Amount</td>
-              <td>₹1,000</td>
-              <td>
-                <span>78 / 200</span>
-                <div class="usage-bar"><div class="usage-bar-fill" style="width: 39%;"></div></div>
-              </td>
-              <td>
-                <small class="text-muted">Feb 01 - Apr 30, 2026</small>
-              </td>
-              <td><span class="badge-status badge-active">Active</span></td>
-              <td>
-                <div class="d-flex gap-2">
-                  <button class="btn btn-action btn-edit" onclick="openEditModal('FLAT200', 200, 'fixed', 1000, 200, '2026-02-01', '2026-04-30')">
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                  <button class="btn btn-action btn-delete" onclick="deleteCoupon('FLAT200')">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td><span class="coupon-code">WELCOME10</span></td>
-              <td><span class="discount-value">10%</span></td>
-              <td>Percentage</td>
-              <td>₹0</td>
-              <td>
-                <span>156 / Unlimited</span>
-                <div class="usage-bar"><div class="usage-bar-fill" style="width: 100%;"></div></div>
-              </td>
-              <td>
-                <small class="text-muted">Always Valid</small>
-              </td>
-              <td><span class="badge-status badge-active">Active</span></td>
-              <td>
-                <div class="d-flex gap-2">
-                  <button class="btn btn-action btn-edit" onclick="openEditModal('WELCOME10', 10, 'percentage', 0, 0, '', '')">
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                  <button class="btn btn-action btn-delete" onclick="deleteCoupon('WELCOME10')">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td><span class="coupon-code">NEWYEAR50</span></td>
-              <td><span class="discount-value">50%</span></td>
-              <td>Percentage</td>
-              <td>₹2,000</td>
-              <td>
-                <span>100 / 100</span>
-                <div class="usage-bar"><div class="usage-bar-fill" style="width: 100%;"></div></div>
-              </td>
-              <td>
-                <small class="text-muted">Dec 25 - Jan 05, 2025</small>
-              </td>
-              <td><span class="badge-status badge-expired">Expired</span></td>
-              <td>
-                <div class="d-flex gap-2">
-                  <button class="btn btn-action btn-edit" onclick="openEditModal('NEWYEAR50', 50, 'percentage', 2000, 100, '2025-12-25', '2026-01-05')">
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                  <button class="btn btn-action btn-delete" onclick="deleteCoupon('NEWYEAR50')">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
+           <% }) %>
           </tbody>
         </table>
       </div>
     </div>
+  </div>
+
+  <div class="d-flex flex-column justify-content-between align-items-center mt-0">
+  <nav>
+    <ul class="pagination pagination-sm mb-0">
+
+      <!-- Previous button -->
+      <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+        <a class="page-link" <%=currentPage==1?"Disabled":""%>href="?page=<%= parseInt(currentPage)-1 %>">Previous</a>
+      </li>
+
+      <!-- Page numbers -->
+      <% for(let i=1; i <= totalPages; i++) { %>
+        <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+          <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+        </li>
+      <% } %>
+
+      <!-- Next button -->
+      <li class="page-item <%= currentPage == totalPages ? 'disabled' : '' %>">
+        <a class="page-link"<%=currentPage==totalPages?"Disabled":""%> href="?page=<%= parseInt(currentPage)+1 %>">Next</a>
+      </li>
+
+    </ul>
+  </nav>
+  <div class="text-muted small">
+    Showing <%= (currentPage-1)*limit + 1 %> to 
+            <%= Math.min(currentPage*limit, totalCoupons) %> of <%= totalCoupons %> coupons
   </div>
 
   <!-- Add/Edit Coupon Modal -->
@@ -515,19 +485,19 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
     let isEditMode = false;
-    let editingCode = null;
+    let editingId = null;
 
     function openAddModal() {
       isEditMode = false;
-      editingCode = null;
+      editingId = null;
       document.getElementById('couponModalLabel').innerHTML = '<i class="bi bi-plus-circle me-2 text-primary"></i>Add New Coupon';
       document.getElementById('couponForm').reset();
       document.getElementById('couponCode').removeAttribute('readonly');
     }
 
-    function openEditModal(code, value, type, minPurchase, limit, startDate, endDate) {
+    function openEditModal(code, value, type, minPurchase, limit, startDate, endDate, id) {
       isEditMode = true;
-      editingCode = code;
+      editingId = id;
       document.getElementById('couponModalLabel').innerHTML = '<i class="bi bi-pencil me-2 text-primary"></i>Edit Coupon';
       
       document.getElementById('couponCode').value = code;
@@ -536,28 +506,42 @@
       document.getElementById('discountValue').value = value;
       document.getElementById('minPurchase').value = minPurchase;
       document.getElementById('usageLimit').value = limit;
-      document.getElementById('startDate').value = startDate;
-      document.getElementById('endDate').value = endDate;
+      document.getElementById('startDate').value = formatForDateInput(startDate);;
+      document.getElementById('endDate').value = formatForDateInput(endDate);
 
       const modal = new bootstrap.Modal(document.getElementById('couponModal'));
       modal.show();
     }
 
-    function deleteCoupon(code) {
-      Swal.fire({
-        title: 'Delete Coupon?',
-        text: `Are you sure you want to delete "${code}"?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        confirmButtonText: 'Yes, delete it'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          // Add your delete API call here
-          Swal.fire('Deleted!', 'Coupon has been deleted.', 'success');
+   function deleteCoupon(code, id) {
+  Swal.fire({
+    title: 'Delete Coupon?',
+    text: `Are you sure you want to delete "${code}"?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444',
+    confirmButtonText: 'Yes, delete it'
+  }).then((result) => {
+    if (!result.isConfirmed) return;
+
+    fetch(`/admin/coupon/${id}`, { method: "DELETE" })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) {
+          return Swal.fire('Error', data.message || 'Delete failed', 'error');
         }
+
+        Swal.fire('Deleted!', 'Coupon has been deleted.', 'success');
+
+        const row = document.getElementById(`couponRow${id}`);
+        if (row) row.remove();
+      })
+      .catch(() => {
+        Swal.fire('Error', 'Network error. Try again.', 'error');
       });
-    }
+  });
+}
+
 
     document.getElementById('couponForm').addEventListener('submit', function(e) {
       e.preventDefault();
@@ -584,18 +568,182 @@
         Swal.fire('Error', 'End date must be after start date', 'error');
         return;
       }
-
-      // Add your API call here
-      console.log(isEditMode ? 'Updating:' : 'Creating:', formData);
-
-      Swal.fire({
-        title: 'Success!',
-        text: isEditMode ? 'Coupon updated successfully!' : 'Coupon created successfully!',
-        icon: 'success'
-      }).then(() => {
-        bootstrap.Modal.getInstance(document.getElementById('couponModal')).hide();
-      });
+      if(isEditMode==false){
+        fetch("/admin/coupon",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify(formData)
+      }).then((res)=>res.json())
+      .then((data)=>{
+        if(data.success){
+          Swal.fire({
+            title:"Success",
+            text:data.message,
+            icon:"success"
+          }).then((result)=>{
+            if(result.isConfirmed){
+             const modalEl = document.getElementById('couponModal');
+             const modalInstance = bootstrap.Modal.getInstance(modalEl);
+              if (modalInstance) {
+                modalInstance.hide();
+              }
+             document.body.classList.remove('modal-open');
+             document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+             addNewRow(formData.code, formData.discountValue, formData.discountType, formData.minPurchase, formData.usageLimit, formData.endDate);
+            }
+          })
+        }else{
+          Swal.fire({
+            title:"Error",
+            text:data.message,
+            icon:"error"
+          })
+        }
+      })
+      }else{
+        fetch(`/admin/coupon/${editingId}`,{
+          method:"PATCH",
+          headers:{
+            "Content-Type":"application/json"
+          },
+          body:JSON.stringify(formData)
+        }).then((res)=>res.json())
+        .then((data)=>{
+          if(data.success){
+            Swal.fire({
+              title:"Success",
+              message:data.message,
+              icon:"success"
+            }).then(()=>{
+             updateCouponRow(editingId,formData);
+            })
+          }else{
+            Swal.fire({
+              title:"Error",
+              text:"Something went wrong!",
+              icon:"error"
+            })
+          }
+        })
+      }
+      
     });
+
+    function addNewRow(code, value, type, minPurchase,limit,expiryDate){
+      try {
+        const status="active";
+        const redemptions=0;
+        const row=document.createElement("tr");
+        const body=document.getElementById("body");
+        row.innerHTML=`<td><span class="coupon-code">${code}</span></td>
+              <td><span class="discount-value">${value}</span></td>
+              <td>${type}</td>
+              <td>${minPurchase}</td>
+              <td>
+                <span>${redemptions} / ${limit}</span>
+                <div class="usage-bar"><div class="usage-bar-fill" style="width: 45%;"></div></div>
+              </td>
+              <td>
+                <small class="text-muted">${expiryDate}</small>
+              </td>
+              <td><span class="badge-status badge-active">${status}</span></td>
+              <td>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-action btn-edit" onclick="openEditModal('${code}', ${value}, '${type}', ${minPurchase},${limit},'${startDate}','${expiryDate}')">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-action btn-delete" onclick="deleteCoupon('${code}')">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>`
+      if (body.children.length >= 5) {
+         body.lastElementChild.remove();
+        }
+        body.prepend(row);
+      } catch (error) {
+        console.error("Coupon row creation:",error);
+        Swal.fire({
+          title:"Error",
+          text:"Something went wrong!",
+          icon:"error"
+        })
+      }
+    }
+
+  function updateCouponRow(couponId, data) {
+  const row = document.getElementById(`couponRow${couponId}`);
+  if (!row) return;
+
+  // Update coupon code
+  row.querySelector(".coupon-code").textContent = data.code;
+
+  // Update discount value
+  row.querySelector(".discount-value").textContent = data.discountValue;
+
+  // Update discount type (3rd column)
+  row.children[2].textContent = data.discountType;
+
+  // Update minimum purchase
+  row.children[3].textContent = `₹${data.minPurchase}`;
+
+  // Update usage limit (keep redemptions same)
+  const usageSpan = row.children[4].querySelector("span");
+  const redemptions = usageSpan.textContent.split("/")[0].trim();
+  usageSpan.textContent = `${redemptions} / ${data.usageLimit}`;
+
+  
+  const start = new Date(data.startDate);
+  const end = new Date(data.endDate);
+
+  row.children[5].querySelector("small").textContent =
+    `${formatDate(start)} - ${formatDate(end)}`;
+
+  
+  const statusBadge = row.querySelector(".badge-status");
+  const now = new Date();
+
+  let status = "scheduled";
+  if (start <= now && end >= now) status = "active";
+  else if (end < now) status = "expired";
+
+  statusBadge.textContent = status;
+  statusBadge.className = `badge-status badge-${status}`;
+}
+
+function formatDate(date) {
+  return date.toLocaleString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
+}
+
+function formatForDateInput(dateValue) {
+  const date = new Date(dateValue);
+  return date.toISOString().split("T")[0]; // YYYY-MM-DD
+}
+
+    function applyFilters() {
+    const search = document.getElementById("search").value.trim();
+    const status = document.getElementById("status").value;
+
+    const params = new URLSearchParams();
+
+    if (search) params.set("search", search);
+    if (status) params.set("status", status);
+    params.set("page", 1);
+
+    window.location.href = `?${params.toString()}`;
+  }
+
+  function clearFilters() {
+  window.location.href = "/admin/coupon";
+}
+
+    
   </script>
 <%- include("../../views/admin/partials/footer") %>
 

@@ -49,6 +49,9 @@ router.patch("/block-or-unblock-brand/:id",adminAuth,brandController.blockORunbl
 
 //Coupon management
 router.get("/coupon",adminAuth,couponController.loadCouponManagement);
+router.post("/coupon",adminAuth,couponController.addcoupon);
+router.patch("/coupon/:couponId",adminAuth,couponController.editCoupon);
+router.delete("/coupon/:couponId",adminAuth,couponController.deleteCoupon);
 
 //Order management
 router.get("/orderList",adminAuth,orderController.getOrderList);
