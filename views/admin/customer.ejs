@@ -588,7 +588,7 @@ function blockOrUnblockUser(userId, userName) {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    method: "GET",
+                    method: "PATCH",
                     url: `/admin/block-or-unblock-user?id=${userId}`,
                     data: {},
                     success: (response) => {

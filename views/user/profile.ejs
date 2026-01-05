@@ -518,7 +518,7 @@ h4::after {
   formData.append("profileImageInput", file); 
 
   fetch(`/change-profile-pic/${userId}`, {
-    method: "POST",
+    method: "PATCH",
     body: formData
   })
     .then(res => res.json())
@@ -655,7 +655,7 @@ function removeFromWishlist(productId) {
   }).then((result) => {
     if (result.isConfirmed) {
       fetch(`/remove-from-wishlist/${productId}`, {
-        method: "POST",
+        method: "DELETE",
         headers: { "Content-Type": "application/json" }
       })
         .then(res => res.json())

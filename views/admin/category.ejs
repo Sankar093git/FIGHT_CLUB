@@ -766,7 +766,7 @@
     if (amount) {
       try {
         const response = await fetch("/admin/add-categoryOffer", {
-          method: "POST",
+          method: "PATCH",
           headers: {
             "content-type": "application/json"
           },
@@ -843,7 +843,7 @@
       }).then((result) => {
         if (result.isConfirmed) {
           $.ajax({
-            method: "DELETE",
+            method: "PATCH",
             url: `/admin/delete-category/${catId}`,
             data: {},
             success: (response) => {

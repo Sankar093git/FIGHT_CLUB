@@ -35,15 +35,17 @@ const getAddProduct=async (req,res)=>{
 
 const addProducts = async (req, res) => {
   try {
-
+     
     const { productName } = req.body;
-
+    const v = JSON.parse(req.body.variants);
+    console.log(req.body.variants);
+    const quantity= v.map((v)=>parseInt(v.stock)).reduce((acc,num)=>acc+num,0);
     
     const productExists = await Product.findOne({ productName });
     if (productExists) {
       return res.status(400).json("Product already exists");
     }
-
+    console.log(req.body.color)
     
     const uploadDir = path.join(__dirname, "public", "uploads", "re-image");
     if (!fs.existsSync(uploadDir)) {
@@ -76,7 +78,8 @@ const addProducts = async (req, res) => {
       brand: req.body.brand,
       category: category._id,
       regularPrice: req.body.regularPrice,
-      salesPrice: req.body.salePrice, 
+      salesPrice: req.body.salePrice,
+      quantity:quantity, 
       createdOn: new Date(),
       variants:JSON.parse(req.body.variants),
       size: req.body.size,
@@ -86,11 +89,10 @@ const addProducts = async (req, res) => {
     });
 
     await newProduct.save();
-    return res.status(200).redirect("/admin/product");
-
+    return res.status(200).json({success:true});
   } catch (error) {
     console.error("Error while adding product:", error);
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({success:false, message: "Internal Server Error" });
   }
 };
 

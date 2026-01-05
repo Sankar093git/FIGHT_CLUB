@@ -40,7 +40,7 @@ router.post("/forgotpassword",userController.emailVerification);
 router.get("/verify-pass-otp",userController.loadVerifyPassOtp)
 router.post("/verify-pass-otp",userController.verifyPassOtp)
 router.get("/reset-password",userController.loadResetPassword);
-router.post("/reset-password",userController.resetPassword);
+router.patch("/reset-password",userController.resetPassword);
 
 //Shop management
 
@@ -48,7 +48,7 @@ router.get("/shop",userAuth,shopController.loadShopPage);
 router.get("/product-details",userAuth,shopController.loadProductDetails);
 router.post("/add-to-cart/:id",userAuth,shopController.addToCart);
 router.post("/add-to-wishlist/:id",userAuth,shopController.addTowishlist);
-router.post("/remove-from-wishlist/:id",userAuth,shopController.removeFromWishlist)
+router.delete("/remove-from-wishlist/:id",userAuth,shopController.removeFromWishlist)
 
 //cart management
 
@@ -62,7 +62,7 @@ router.post("/add-address",userAuth,profileController.addAddress);
 router.post("/edit-address/:id",userAuth,profileController.editAddress);
 router.get("/delete-address/:id",userAuth,profileController.deleteAddress);
 router.get("/edit-profile",userAuth,profileController.loadEditProfile);
-router.post("/change-profile-pic/:id",userAuth,uploads.single("profileImageInput"),profileController.changeProfilePicture);
+router.patch("/change-profile-pic/:id",userAuth,uploads.single("profileImageInput"),profileController.changeProfilePicture);
 router.post("/edit-profile",userAuth,profileController.editProfile);
 router.get("/otp-verification",userAuth,profileController.loadVerifyOtp);
 router.post("/otp-verification",userAuth,profileController.verifyOtp);

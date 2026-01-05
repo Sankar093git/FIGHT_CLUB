@@ -1049,7 +1049,7 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 fetch(`/admin/delete-image/${image}`, {
-                    method: "POST",
+                    method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ productId })
                 })
@@ -1178,7 +1178,7 @@ function validateAndSubmit(id) {
     formData.append("variants", JSON.stringify(variants));
 
     fetch(`/admin/edit-product/${id}`, {
-        method: "POST",
+        method: "PATCH",
         body: formData
     })
     .then(res => res.json())

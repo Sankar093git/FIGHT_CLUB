@@ -254,7 +254,7 @@ function handleOrderStatus(status,orderId,email){
           }
          }).then(()=>{
           fetch(`/admin/change-order-status/${orderId}`,{
-      method:"POST",
+      method:"PATCH",
      headers:{
       "content-type":"application/json"
      },
@@ -288,7 +288,7 @@ function handleOrderStatus(status,orderId,email){
          })
          }else{
      fetch(`/admin/change-order-status/${orderId}`,{
-      method:"POST",
+      method:"PATCH",
      headers:{
       "content-type":"application/json"
      },
@@ -329,7 +329,7 @@ function handleOrderStatus(status,orderId,email){
       currentReturnApproval = approve;  
       if (currentReturnApproval) {
         fetch(`/admin/handle-refund/${orderId}`,{
-          method:"POST",
+          method:"PATCH",
           headers:{
             "content-type":"application/json"
           },
@@ -351,7 +351,7 @@ function handleOrderStatus(status,orderId,email){
           })
       } else {
         fetch(`/admin/handle-refund/${orderId}`,{
-          method:"POST",
+          method:"PATCH",
           headers:{
             "content-type":"application/json"
           },

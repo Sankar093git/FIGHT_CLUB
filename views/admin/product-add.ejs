@@ -850,12 +850,19 @@ function addVariantRow() {
     const row = document.createElement('div');
     row.className = 'variant-row d-flex gap-2 mb-2';
     row.innerHTML = `
-        <input type="text" class="form-control size-input" placeholder="Size (e.g., S, M, 42, 10ml)">
-        <input type="text" class="form-control quantity-input" placeholder="Quantity" min="0">
-        <button type="button" class="btn btn-danger btn-sm remove-variant">&times;</button>
+        <div>
+                        <input type="text" class="form-control variantSize size-input" placeholder="Size (e.g., S, M, 42, 10ml)">
+                        <span class="error size"  style="display: none;"></span>
+                        </div>
+                        <div>
+                        <input type="text" class="form-control variantQuantity quantity-input" placeholder="Quantity" min="0">
+                        <span class="error quantity"  style="display: none;"></span>
+                        </div>
+                        <button type="button" class="btn btn-danger btn-sm remove-variant">&times;</button>
     `;
     document.getElementById('variantRows').appendChild(row);
 }
+
 
 document.getElementById('variantRows').addEventListener('click', (e) => {
     if (e.target.classList.contains('remove-variant')) {
@@ -945,8 +952,11 @@ function validateAndSubmit() {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            alert("Product added successfully!");
-            window.location.href = "/admin/products";
+            Swal.fire({
+                title:"Success",
+                text:data.message,
+                icon:"success"
+            }).then(()=>window.location.href = "/admin/products")
         } else {
             alert(data.message || "Something went wrong");
         }

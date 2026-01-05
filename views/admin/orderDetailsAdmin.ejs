@@ -67,6 +67,7 @@
     <option value="Pending" <%= prod.status === 'Pending' ? 'selected' : '' %>>Pending</option>
     <option value="Processing" <%= prod.status === 'Processing' ? 'selected' : '' %>>Processing</option>
     <option value="Shipped" <%= prod.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+    <option value="Out for delivery" <%= prod.status === 'Out for delivery' ? 'selected' : '' %>>Out for delivery</option>
     <option value="Delivered" <%= prod.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
     <option value="Cancelled" <%= prod.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
     <option value="Partially cancelled" <%= prod.status === 'Partially cancelled' ? 'selected' : '' %>>Partially cancelled</option>

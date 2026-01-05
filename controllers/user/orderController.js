@@ -507,6 +507,8 @@ function deriveTotalStatus(products) {
   if (activeItems.every(s => s === "Shipped")) return "Shipped";
   if (activeItems.every(s => s === "Out for delivery")) return "Out for delivery";
   if (activeItems.every(s => s === "Delivered")) return "Delivered";
+  if (activeItems.every(s => s === "Returned")) return "Returned";
+  if (activeItems.every(s => s === "Return processing")) return "Processing return";
 
   return "Processing";
 }
