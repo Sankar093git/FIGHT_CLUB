@@ -127,7 +127,7 @@ const changeOrderStatus = async (req, res) => {
     await order.save();
 
 
-    res.json({ success: true });
+    res.status(200).json({ success: true });
 
   } catch (error) {
     console.error("Error while changing order status:", error);
@@ -187,7 +187,7 @@ const changeOrderStatus = async (req, res) => {
       order.status = "Return rejected";
       await order.save();
 
-      return res.json({
+      return res.status(200).json({
         success: true,
         message: "Return rejected successfully"
       });
@@ -211,7 +211,7 @@ const changeOrderStatus = async (req, res) => {
       .populate("user", "name email");
 
     if (!order) {
-      return res.redirect("/404");
+      return res.redirect("/admin/error");
     }
 
     const subTotal = order.products.reduce((acc, item) => {
@@ -223,7 +223,7 @@ const changeOrderStatus = async (req, res) => {
     const discount = 200;
     const total = subTotal + shipping + taxes - discount;
 
-    res.render("orderDetailsAdmin", {
+    res.status(200).render("orderDetailsAdmin", {
       Product: order.products,
       addr: order.address,
       subtotal: subTotal,
@@ -240,7 +240,7 @@ const changeOrderStatus = async (req, res) => {
 
   } catch (error) {
     console.error("Error while displaying admin order:", error);
-    res.redirect("/error");
+    res.status(500).redirect("/error");
   }
 };
 

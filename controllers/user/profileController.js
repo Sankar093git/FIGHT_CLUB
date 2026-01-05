@@ -15,7 +15,7 @@ const loadProfile=async (req,res)=>{
         const totalOrderPages=Math.ceil(totalOrders/orderLimit);
         const image=findUser.userImage;
         const username=findUser.name;
-        res.render('profile',{
+        res.status(200).render('profile',{
             userData:findUser,
             user:req.session.userName||username,
             image:image,
@@ -25,18 +25,18 @@ const loadProfile=async (req,res)=>{
         })
     } catch (error) {
         console.log("Error while loading profilepage",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
 }
 
 const addAddress= async (req,res)=>{
     try {
         await User.updateOne({_id:req.session.user},{$addToSet:{address:req.body}});
-        res.redirect("/profile");
+        res.status(200).redirect("/profile");
 
     } catch (error) {
         console.error("Error while adding address",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
 }
 
@@ -56,21 +56,21 @@ const editAddress= async (req,res)=>{
              "address.$.isDefault":isDefault
         }});
 
-        res.redirect("/profile");
+        res.status(200).redirect("/profile");
         
     } catch (error) {
         console.error("Addess edit error,",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
 }
 const deleteAddress= async (req,res)=>{
     try {
         const id=req.params.id;
         await User.updateOne({_id:req.session.user},{$pull:{address:{_id:id}}})
-        res.redirect("/profile")
+        res.status(200).redirect("/profile")
     } catch (error) {
         console.error("Error while deleting address",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
 }
 
@@ -78,11 +78,12 @@ const loadEditProfile= async (req,res)=>{
     try {
 
         const userData= await User.findOne({_id:req.session.user});
-        res.render("edit-profile",{
+        res.status(200).render("edit-profile",{
            userData:userData
         })
     } catch (error) {
         console.error("Error while loading edit profile page",error);
+        res.status(500).redirect("/error");
     }
 }
 
@@ -91,12 +92,12 @@ const changeProfilePicture=async(req,res)=>{
         const id=req.params.id;
         const image=req.file.filename;
         await User.updateOne({_id:id},{$set:{userImage:image}});
-        res.json({success:true,
+        res.status(200).json({success:true,
             image:"/uploads/profiles/"+image
         });
     } catch (error) {
         console.error("Error while changing the profile picture", error);
-        res.json({message:"Somthing went wrong"});
+        res.status(500).json({message:"Somthing went wrong"});
     }
 }
 
@@ -111,20 +112,20 @@ const editProfile = async (req,res)=>{
         const sendMail= await sendVerificationMail(otp,req.session.email);
         req.session.otp=otp;
         if( sendMail){
-            res.json({result:true});
+            res.status(200).json({result:true});
         }else{
-            res.json({result:false});
+            res.status(500).json({result:false});
         }
 
     } catch (error) {
         console.log("Error while editing the user profile",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
 }
 
 const loadVerifyOtp=async(req,res)=>{
     try {
-        res.render("verify-otp-editProfile");
+        res.status(200).render("verify-otp-editProfile");
     } catch (error) {
         console.error("Error while loading otp page",error);
     }
@@ -149,17 +150,17 @@ const verifyOtp=async(req,res)=>{
             if(userData.email==newEmail&&newPass){
                 const newPassword = await securePassword(newPass);
                 await User.updateOne({_id:req.session.user},{$set:{phone:newPhone,password:newPassword}});
-                return res.json({success:true, message:"OTP verified successfully"});
+                return res.status(200).json({success:true, message:"OTP verified successfully"});
             }else{
                  await User.updateOne({_id:req.session.user},{$set:{email:newEmail,phone:newPhone}});
-                return res.json({success:true, message:"Email Id changed succesfully"});
+                return res.status(200).json({success:true, message:"Email Id changed succesfully"});
             }
         }else{
-            res.json({success:false, message:"Invalid OTP!"});
+            res.status(403).json({success:false, message:"Invalid OTP!"});
         }
     } catch (error) {
         console.error("Error occured while verifying otp",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
 }
 

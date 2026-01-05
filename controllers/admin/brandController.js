@@ -8,7 +8,7 @@ const getBrandList=async(req,res)=>{
         const data= await Brand.find().skip(skip).limit(limit);
         const totalDocuments = await Brand.countDocuments();
         const totalpages=Math.ceil(totalDocuments/limit);
-        res.render("brand",{
+        res.status(200).render("brand",{
             count:totalDocuments,
             data:data,
             totalPages:totalpages,
@@ -16,7 +16,7 @@ const getBrandList=async(req,res)=>{
         });
     } catch (error) {
         console.error("Error while loading brands",error);
-        res.redirect("/admin/error");
+        res.status(500).redirect("/admin/error");
     }
 }
 
@@ -28,10 +28,10 @@ const addBrand=async (req,res)=>{
        if(findBrand){
          if(image){
             await Brand.updateOne({brandName:name},{$set:{brandName:name,logo:image}});
-            return res.json({ success: true, message: "Brand edited successfully!" });
+            return res.status(200).json({ success: true, message: "Brand edited successfully!" });
          }else{
             await Brand.updateOne({brandName:name},{$set:{brandName:name}});
-            return res.json({ success: true, message: "Brand edited successfully!" });
+            return res.status(200).json({ success: true, message: "Brand edited successfully!" });
          }
        }else{
        const newBrand= new Brand({
@@ -40,7 +40,7 @@ const addBrand=async (req,res)=>{
        });
        await newBrand.save();
        const brand= await Brand.findOne({brandName:name});
-       return res.json({ 
+       return res.status(200).json({ 
         success: true, 
         message: "Brand added successfully!",
         brand:brand
@@ -48,7 +48,7 @@ const addBrand=async (req,res)=>{
     }  
     } catch (error) {
         console.error("Error while adding brand",error);
-        res.json({ success: false, message: "Error adding brand" });
+        res.status(500).json({ success: false, message: "Error adding brand" });
     }
 }
 

@@ -21,7 +21,7 @@ const loadCategory = async (req, res) => {
     const totalCategories = await Category.countDocuments({name: { $regex: new RegExp(search, 'i') },isDeleted:false});
     const totalPages = Math.ceil(totalCategories / limit);
 
-    res.render("category", {
+    res.status(200).render("category", {
       cat: categoryData,
       currentPage: page,
       totalPages,
@@ -30,7 +30,7 @@ const loadCategory = async (req, res) => {
     });
   } catch (error) {
     console.error("Error loading categories:", error);
-    res.redirect("/admin/error");
+    res.status(500).redirect("/admin/error");
   }
 };
 

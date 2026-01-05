@@ -17,7 +17,7 @@ const loadCustomer= async(req,res)=>{
                 {email:{$regex:".*"+search+".*",$options:"i"}}
             ]}).countDocuments();
         const totalPages=Math.ceil(count/limit);
-        res.render("customer",{
+        res.status(200).render("customer",{
             queryVal:req.query,
             totalData:totalData,
             data:userData||null,
@@ -28,7 +28,7 @@ const loadCustomer= async(req,res)=>{
 
     } catch (error) {
         console.error("Error while loading customerlist",error);
-        res.redirect("/admin/error");
+        res.status(500).redirect("/admin/error");
     }
 }
 

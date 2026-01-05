@@ -138,6 +138,7 @@ const paymentFailure= async(req,res)=>{
     });
   } catch (error) {
     console.error("Payment failure page:",error);
+    res.status(500).redirect("/error")
   }
 }
 
@@ -275,7 +276,7 @@ const returnOrder = async (req, res) => {
     
     await order.save();
 
-    res.json({
+    res.status(200).json({
       success: true,
       message: "Return request submitted",
       reason: returnMessage
@@ -314,7 +315,7 @@ const displayOrder = async (req, res) => {
     const total = subTotal + shipping + taxes - discount;
 
     //  Render order details page
-    res.render("orderDetails", {
+    res.status(200).render("orderDetails", {
       Product: order.products,
       addr: order.address,
       subtotal: subTotal,
@@ -339,11 +340,11 @@ const displayOrder = async (req, res) => {
 const addAddress= async (req,res)=>{
     try {
         await User.updateOne({_id:req.session.user},{$addToSet:{address:req.body}});
-        res.redirect("/checkout");
+        res.status(200).redirect("/checkout");
 
     } catch (error) {
         console.error("Error while adding address",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
 }
 

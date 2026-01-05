@@ -15,10 +15,10 @@ const loadProducts=async(req,res)=>{
         const data= await Product.find({productName:{$regex:new RegExp(search,'i')}}).limit(limit).skip(skip).populate("category");
         const count= await Product.find({}).countDocuments();
         const totalPages=Math.ceil(count/limit);
-        res.render("products",{queryVal:req.query,data:data,totalPages:totalPages,currentPage:page});
+        res.status(200).render("products",{queryVal:req.query,data:data,totalPages:totalPages,currentPage:page});
     } catch (error) {
         console.error("Error while loading the product list",error);
-        res.redirect("/admin/error");
+        res.status(500).redirect("/admin/error");
     }
 }
 
@@ -26,10 +26,10 @@ const getAddProduct=async (req,res)=>{
     try {
         const brand= await Brand.find({isUnlisted:false});
         const category=await Category.find({isListed:true})
-        res.render("product-add",{brand:brand,cat:category});
+        res.status(200).render("product-add",{brand:brand,cat:category});
     } catch (error) {
         console.log("Error while loading edit product page",error);
-        res.redirect("/admin/error");
+        res.status(500).redirect("/admin/error");
     }
 }
 
@@ -86,7 +86,7 @@ const addProducts = async (req, res) => {
     });
 
     await newProduct.save();
-    return res.redirect("/admin/product");
+    return res.status(200).redirect("/admin/product");
 
   } catch (error) {
     console.error("Error while adding product:", error);
@@ -101,7 +101,7 @@ const loadEditProduct= async(req,res)=>{
         const brand=await Brand.find({isUnlisted:false});
         const category=await Category.find({isListed:true});
         const product=await Product.find({_id:id}).populate("category");
-        res.render("edit-product",{
+        res.status(200).render("edit-product",{
             product:product[0],
             variants:product[0].variants,
             cat:category,
@@ -110,6 +110,7 @@ const loadEditProduct= async(req,res)=>{
         console.log(product);
     } catch (error) {
         console.error("Error while loading edit products",error)
+        res.status(500).redirect("/admin/error");
     }
 }
 
@@ -197,12 +198,12 @@ const deleteImages=async(req,res)=>{
             console.log(`${imageId} deletion failed`);
         }
 
-        res.json({success:true});
+        res.status(200).json({success:true});
 
         
     } catch (error) {
         console.log("Error while deleting image",error);
-        res.redirect("/admin/error");
+        res.status(500).redirect("/admin/error");
     }
 }
 

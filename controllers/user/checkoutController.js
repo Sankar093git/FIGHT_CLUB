@@ -26,7 +26,7 @@ const loadCheckout= async(req,res)=>{
         summary.shipping=100;
         summary.total=(summary.subtotal+summary.taxes+summary.shipping)-summary.discount;
         console.log(summary);
-        res.render("checkout",{
+        res.status(200).render("checkout",{
             user:req.session.userName||userName,
             image:null,
             addresses:userData.address,
@@ -35,7 +35,7 @@ const loadCheckout= async(req,res)=>{
            })
     } catch (error) {
         console.error("Error while loading checkout page",error);
-        res.redirect("/error")
+        res.status(500).redirect("/error")
     }
 }
 
@@ -43,11 +43,11 @@ const loadCheckout= async(req,res)=>{
 const addAddress= async (req,res)=>{
     try {
         await User.updateOne({_id:req.session.user},{$addToSet:{address:req.body}});
-        res.redirect("/checkout");
+        res.status(200).redirect("/checkout");
 
     } catch (error) {
         console.error("Error while adding address",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
 }
 
@@ -66,10 +66,10 @@ const editAddress= async(req,res)=>{
             "address.$.phone": phone,
             "address.$.isDefault":isDefault
         }});
-        res.redirect("/checkout");
+        res.status(200).redirect("/checkout");
     } catch (error) {
         console.error("Error while editing address : ",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
 }
 

@@ -25,7 +25,7 @@ const loadCouponManagement= async (req,res)=>{
         const totalPages=Math.ceil(totalCoupons/limit);
         const coupons= await Coupon.find();
         const totalRedemptions= coupons.map((r)=>r.redemptions).reduce((acc,num)=>acc+num,0);
-        res.render("coupon",{
+        res.status(200).render("coupon",{
             coupon:couponDetails,
             totalPages:totalPages,
             currentPage:page,
@@ -130,6 +130,7 @@ const editCoupon = async (req, res) => {
     coupon.maxDiscount = maxDiscount ?? coupon.maxDiscount;
     coupon.startDate = startDate ?? coupon.startDate;
     coupon.expiryDate = endDate ?? coupon.expiryDate;
+    coupon.description=description??coupon.description;
 
     // Auto status calculation
     const now = new Date();
@@ -143,7 +144,7 @@ const editCoupon = async (req, res) => {
 
     await coupon.save();
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       message: "Coupon updated successfully",
       coupon

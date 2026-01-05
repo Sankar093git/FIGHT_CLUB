@@ -11,24 +11,24 @@ const loadHome= async (req,res)=>{
             res.render("home",{
                 user:findUser.name,
                 image:req.session.image
-        
             });
         }else{
-            res.render("home");
+            res.status(200).render("home");
         }
         
     } catch (error) {
-        console.error("Error while loading homepage",error)
+        console.error("Error while loading homepage",error);
+        res.status(500).redirect("/error");
     }
 }
 const loadSignUp=async(req,res)=>{
     try {
 
-        res.render("signUp",{message:null});
+        res.status(200).render("signUp",{message:null});
         
     } catch (error) {
         console.log('Error while loading page',error);
-        res.redirect("/pageNotFound");
+        res.status(500).redirect("/pageNotFound");
     }
 }
 
@@ -115,28 +115,28 @@ const signUp=async (req,res)=>{
         console.log(` The otp is ${OTP}`);
         const mailSent= await sendVerificationMail(OTP,email);
         if(mailSent){
-            res.redirect("/verify-otp");
+            res.status(200).redirect("/verify-otp");
         }else{
             console.log("Email verification failed")
         }
     }else{
-       res.render("signup",{message:"User already exists!"});
+       res.status(400).render("signup",{message:"User already exists!"});
     }
         
     } catch (error) {
         console.error("Error while creating account", error);
-        res.redirect("/pageNotFound");
+        res.status(500).redirect("/pageNotFound");
     }
 }
 
 const loadLogin=async(req,res)=>{
     try {
-       res.render("login",{
+       res.status(200).render("login",{
         message:""
        });
     } catch (error) {
         console.error("Error while loading login page",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
 }
 const login = async (req, res) => {
@@ -146,7 +146,7 @@ const login = async (req, res) => {
     const findUser = await User.findOne({ email: email });
 
     if (!findUser) {
-      return res.json({ message: "User not found" });
+      return res.status(400).json({ message: "User not found" });
     }
 
     const isPasswordMatch = await bcrypt.compare(password, findUser.password);
@@ -156,33 +156,33 @@ const login = async (req, res) => {
       req.session.userName=findUser.name;
       req.session.image=findUser.userImage
       req.session.email=email;
-      res.redirect("/");
+      res.status(200).redirect("/");
     } else {
-      res.render("login",{
+      res.status(400).render("login",{
         message:"Enter valid credentials"
       })
     }
   } catch (error) {
     console.error("Error while logging in", error);
-    res.redirect("/error");
+    res.status(500).redirect("/error");
   }
 }
 
 const loadVerifyOtp=async(req,res)=>{
     try {
-        res.render("verify-otp");
+        res.status(200).render("verify-otp");
     } catch (error) {
         console.error("Error while loading verify otp page",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
 }
 
 const loadVerifyPassOtp=async(req,res)=>{
     try {
-        res.render("verifypassOtp");
+        res.status(200).render("verifypassOtp");
     } catch (error) {
         console.error("Error while loading verify otp page",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
 }
 
@@ -212,18 +212,19 @@ const verifyOtp=async(req,res)=>{
             await User.updateOne({email:req.session.email},{$set:{isVerified:1}});
             res.status(200).json({success:true,message:"OTP verified succcesfully"})
         }else{
-            res.status(200).json({success:false,message:"Invalid OTP"});
+            res.status(400).json({success:false,message:"Invalid OTP"});
         }
     } catch (error) {
         console.log("Error while otp verification",error);
+        res.status(500).json({success:false,message:"Something went wrong!"});
     }
 }
 const loadForgotPassword=async(req,res)=>{
     try {
-        res.render("forgot-password");
+        res.status(200).render("forgot-password");
     } catch (error) {
         console.error("Error while loading forgot password",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
 }
 
@@ -243,20 +244,20 @@ const emailVerification=async(req,res)=>{
             res.status(503).json({success:false,message:"Unable to send email!"});
          }
         }else{
-            res.status().json({success:false,message:"Email does not exist!"})
+            res.status(400).json({success:false,message:"Email does not exist!"})
         }
     } catch (error) {
         console.error("Error while verifying email Id",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
 }
 
 const loadResetPassword=async(req,res)=>{
     try {
-        res.render("reset-password");
+        res.status(200).render("reset-password");
     } catch (error) {
         console.error("Error while loading the page",error);
-        res.redirect("/error")
+        res.status(400).redirect("/error")
     }
 }
 
@@ -283,7 +284,7 @@ const resetPassword = async (req, res) => {
 
   } catch (error) {
     console.error("Error while resetting password:", error);
-    return res.json({success:false});
+    return res.status(500).json({success:false});
   }
 };
 
@@ -298,7 +299,7 @@ const verifyPassOtp=async(req,res)=>{
         }
     } catch (error) {
         console.error("Error while verifying otp",error);
-        res.redirect("/error");
+        res.status(500).redirect("/error");
     }
 }
 
@@ -306,9 +307,10 @@ const verifyPassOtp=async(req,res)=>{
 const logout=async(req,res)=>{
     try {
         req.session.destroy();
-        res.redirect("/")
+        res.status(200).redirect("/");
     } catch (error) {
         console.error("Error while logging out",error)
+        res.status(500).redirect("/error");
     }
 }
 

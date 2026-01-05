@@ -31,7 +31,7 @@ const loadCart=async (req,res)=>{
                             quantity: item.quantity
                           }));
         await User.updateOne({ _id: user }, { $set: { cart: dbCartUpdate } })                 
-        res.render("cart",{
+        res.status(200).render("cart",{
             userData:userData,
             cart:validCartItems,
             user:userData.name,

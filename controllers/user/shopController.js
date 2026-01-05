@@ -97,8 +97,7 @@ const loadProductDetails=async (req,res)=>{
         const data=await Product.findOne({_id:id,isBlocked:false}).populate("category");
         const catId=data.category._id;
         const relatedProducts= await Product.find({category:catId});
-        //console.log(userId);
-        res.render("productDetails",{
+        res.status(200).render("productDetails",{
             product:data,
             relatedProducts:relatedProducts,
             user:user,
@@ -106,7 +105,7 @@ const loadProductDetails=async (req,res)=>{
         });
     } catch (error) {
         console.log(error);
-        res.redirect("/admin/error")
+        res.status(500).redirect("/admin/error");
     }
 }
 
@@ -145,10 +144,10 @@ const addToCart = async (req, res) => {
         { $push: { cart: { product: id,size:size, quantity: 1 } } }
       );
     }  
-    res.redirect(`/product/${id}`);
+    res.status(200).redirect(`/product/${id}`);
   } catch (error) {
     console.error("Error while adding to cart:", error);
-    res.redirect("/error");
+    res.status(500).redirect("/error");
   }
 };
 
@@ -160,14 +159,14 @@ const addTowishlist=async(req,res)=>{
     const wishlist=userData.wishlist;
     const prodExists=wishlist.find((prod)=>prod.product==prodId);
     if(prodExists){
-      return res.status(200).json({success:true,message:"Product already in wishlist"})
+      return res.status(403).json({success:true,message:"Product already in wishlist"})
     }else{
       await User.updateOne({_id:userId},{$push:{wishlist:{product:prodId}}});
       return res.status(200).json({success:true,message:"Product added to wishlist"})
     }
   } catch (error) {
     console.error(error);
-    res.json({success:false,message:"Something went wrong!"});
+    res.status(500).json({success:false,message:"Something went wrong!"});
   }
 }
 

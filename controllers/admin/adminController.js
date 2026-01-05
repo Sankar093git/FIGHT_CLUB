@@ -2,19 +2,19 @@ const User=require("../../models/userSchema");
 const bcrypt=require("bcrypt");
 const loadLogin=async(req,res)=>{
     try {
-        res.render("adminLogin",{message:null});
+        res.status(200).render("adminLogin",{message:null});
     } catch (error) {
         console.log("Error while loading the login page",error);
-        res/redirect("/adminerror");
+        res.status(500).redirect("/adminerror");
     }
 }
 
 const loadDashboard=async(req,res)=>{
     try {
-        res.render("dashboard");
+        res.status(200).render("dashboard");
     } catch (error) {
         console.error("Error while loading dashboard",error);
-        res.redirect("/adminerror");
+        res.status(500).redirect("/adminerror");
     }
 }
 
@@ -26,16 +26,16 @@ const login=async(req,res)=>{
         if(findUser){
             const passMatch= await bcrypt.compare(password,findUser.password);
             if(passMatch){
-                res.redirect("/admin");
+                res.status(200).redirect("/admin");
             }else{
-                res.render("adminLogin",{message:"Please enter the correct credentials"})
+                res.status(403).render("adminLogin",{message:"Please enter the correct credentials"})
             }
         }else{
-             res.render("adminLogin",{message:"User not found"});
+             res.status(403).render("adminLogin",{message:"User not found"});
         }
     } catch (error) {
         console.error("Error while login in",error);
-        res.render("adminLogin",{message:"Something went wrong, please try again."});
+        res.status(500).render("adminLogin",{message:"Something went wrong, please try again."});
     }
 }
 
@@ -46,10 +46,10 @@ const logout=async(req,res)=>{
                 console.error(err);
             }
         });
-        res.redirect("/admin/login");
+        res.status(200).redirect("/admin/login");
     } catch (error) {
         console.error("Error while logging out",error);
-        res.redirect("/admin/error")
+        res.status(500).redirect("/admin/error")
     }
 }
 
