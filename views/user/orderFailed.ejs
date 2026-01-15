@@ -104,7 +104,8 @@ document.querySelector('.retryPay').addEventListener('click', async (e) => {
          // A. Create Razorpay Order on Server
    const orderRes = await fetch(`/payment/create-order?orderId=${orderId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body:JSON.stringify({isRetry:true})
       });
       
       const orderData = await orderRes.json();

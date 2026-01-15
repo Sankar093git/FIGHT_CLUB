@@ -72,6 +72,7 @@ router.get("/error",generalController.pageNotFound);
 
 //checkout management
 router.get("/checkout",userAuth,checkoutController.loadCheckout);
+router.patch("/coupon",userAuth,checkoutController.applyCoupon)
 router.get("/orders",userAuth,orderController.displayOrder);
 router.post("/place-order",userAuth,orderController.placeOrder);
 router.post("/cancel-order/:id",userAuth,orderController.cancelOrder);

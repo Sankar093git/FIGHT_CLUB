@@ -82,6 +82,7 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
+    redeemedCoupons:[String],
     cart: [
       {
         product: {
@@ -109,7 +110,7 @@ const userSchema = new mongoose.Schema(
       required: true
     }
   }
-],
+]
   },
   { timestamps: true }
 );

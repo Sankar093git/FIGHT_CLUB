@@ -2,47 +2,22 @@ const User=require("../../models/userSchema");
 const Order=require("../../models/orderSchema");
 const crypto=require("crypto");
 const Product=require("../../models/productSchema");
+const Coupon=require("../../models/couponSchema");
 const mongoose=require("mongoose");
 const paymentController=require("../../controllers/user/paymentController");
-
-
-const loadCheckout= async(req,res)=>{
-    try {
-        let userName=null;
-      if(req.session.google==true){
-       const userDetails= await User.findOne({_id:req.session.user});
-       userName=userDetails.name;
-     }
-        let summary={};
-        let priceList=[];
-        const userData=await User.findOne({_id:req.session.user}).populate("cart.product").exec();
-        userData.cart.forEach((num)=>{
-            priceList.push(num.product.salesPrice);
-        });
-        summary.subtotal=priceList.reduce((acc,num)=>acc+num,0);
-        summary.discount=200;
-        summary.taxes=50;
-        summary.shipping=100;
-        summary.total=(summary.subtotal+summary.taxes+summary.shipping)-summary.discount;
-        res.status(200).render("checkout",{
-            user:req.session.userName||userName,
-            image:null,
-            addresses:userData.address,
-            cartItems:userData.cart,
-            summary:summary,
-           })
-    } catch (error) {
-        console.error("Error while loading checkout page",error);
-        res.status(500).redirect("/error")
-    }
-}
 
 const placeOrder = async (req, res) => {
   try {
     const userId = req.session.user;
+    const taxes=50;
+    const shipping=100;
     const {
-      paymentMethod,
+      paymentMethod
+      ,couponCode
     } = req.body;
+    let couponValid=true;
+
+    console.log(couponCode);
 
     const userData = await User.findById(userId).populate("cart.product");
 
@@ -60,14 +35,30 @@ const placeOrder = async (req, res) => {
       }
     }
 
+    if(userData.redeemedCoupons.includes(couponCode)){
+         couponValid=false
+    }
+
     const validCartItems=userData.cart.filter(item=>item.product.isBlocked===false)
     if(validCartItems.length===0){
       return res.status(403).json({success:false,message:"One or more product is no longer available"});
     }
-    const totalAmount = validCartItems.reduce((acc, item) => {
+
+    let totalAmount = validCartItems.reduce((acc, item) => {
     const price = item.product.salesPrice || 0;
     return acc + (price * item.quantity);
-  }, 0);
+  }, 0)+taxes+shipping;
+   let discountValue=0;
+   if(couponCode&&couponValid){
+      const couponDetails = await Coupon.findOne({code:couponCode});
+      if(couponDetails.discountType=="fixed"){
+        discountValue=couponDetails.discountValue;
+        totalAmount=totalAmount-discountValue;
+      }else if(couponDetails.discountType=="percentage"){
+        discountValue=totalAmount*(couponDetails.discountValue/100);
+        totalAmount=totalAmount-discountValue;
+      }
+    }
 
     const addressId = req.body.addressId;
     const selectedAddress = userData.address.find(
@@ -101,6 +92,7 @@ const placeOrder = async (req, res) => {
       products:  validCartItems,
       address: selectedAddress,
       totalAmount: totalAmount,
+      discountValue:discountValue,
       paymentMethod: paymentMethod,
       paymentStatus: "PENDING",
       status: "Pending"
@@ -109,6 +101,7 @@ const placeOrder = async (req, res) => {
     await newOrder.save();
 
     await User.updateOne({ _id: userId },{ $set: { cart: [] } }); //Emptying cart after order placement.
+    console.log(totalAmount);
 
     res.status(201).json({success: true, orderId: orderId});
 
@@ -132,6 +125,7 @@ const paymentFailure= async(req,res)=>{
   try {
     const orderId=req.query.orderId;
     const userDetails= await User.findOne({_id:req.session.user});
+    await Order.updateOne({orderId:orderId},{$inc:{retryCount:1}});
     res.status(400).render("orderFailed",{
       orderId:orderId,
       user:userDetails
@@ -186,6 +180,7 @@ const updatePayment=async(req,res)=>{
 
   } catch (error) {
     console.error("Payment updation:",error);
+    res.status(500).json({success:false, message:'Something went wrong!'});
   }
 }
 
@@ -514,7 +509,6 @@ function deriveTotalStatus(products) {
 }
 
 module.exports={
-    loadCheckout,
     displayOrder,
     cancelOrder,
     returnOrder,

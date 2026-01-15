@@ -103,6 +103,10 @@ const orderSchema = new mongoose.Schema({
     type: Number, 
     required: true 
   },
+  discountValue:{
+    type:Number,
+    default:0
+  },
   retryCount:{
     type:Number,
     default:0

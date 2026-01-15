@@ -23,10 +23,9 @@ main {
   }
 
 </style>
-b
+
 <main class="container py-5 cart">
   <h2 class="mb-4 mt-5">My Cart</h2>
-
   <% if (userData.cart && userData.cart.length > 0) { %>
     <table class="table table-bordered align-middle">
       <thead>
@@ -83,9 +82,9 @@ b
   <% } else { %>
     <p>Your cart is empty.</p>
   <% } %>
+
 </main>
 <script>
-
 //incrementing the quantity number
 
 document.querySelectorAll(".btn-sm").forEach((btn)=>{

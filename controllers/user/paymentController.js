@@ -22,7 +22,7 @@ const createRazorpayOrder = async (req, res) => {
     const options = {
       amount: totalAmount * 100,
       currency: currency,
-      receipt: `receipt_${Date.now()}`
+      receipt: `receipt_${Date.now()}`,
     };
 
     const order = await razorpay.orders.create(options);
