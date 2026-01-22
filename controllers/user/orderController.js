@@ -409,32 +409,32 @@ const singleCancel = async (req, res) => {
     const productId = new mongoose.Types.ObjectId(req.params.productId);
     const { id, size, value, quantity } = req.body;
 
-    // 1. Fetch product safely
+    //Fetch product safely
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    // 2. Prepare update logic
+    //Prepare update logic
     let orderUpdate;
     let stockToRestore;
 
     if (value) {
-      // Partial Cancellation
+      //Partial Cancellation
       orderUpdate = {
         $inc: { "products.$[item].quantity": -value },
         $set: { "products.$[item].status": "Partially cancelled" }
       };
       stockToRestore = value;
     } else {
-      // Full Cancellation
+      //Full Cancellation
       orderUpdate = {
         $set: { "products.$[item].status": "Cancelled" }
       };
       stockToRestore = quantity;
     }
 
-    // 3. Update Order using arrayFilters (The fix)
+    //Update Order using arrayFilters (The fix)
     const orderResult = await Order.updateOne(
       { orderId: id }, 
       orderUpdate,
@@ -447,12 +447,43 @@ const singleCancel = async (req, res) => {
         ]
       }
     );
+    let refundAmount=0
+    if(value){
+      refundAmount=product.salesPrice*value-Math.floor(orderDetails.discountValue/orderDetails.products.length);
+    }else{
+      refundAmount=product.salesPrice*quantity-Math.floor(orderDetails.discountValue/orderDetails.products.length)
+    }
     const orderDetails=await Order.findOne({orderId:id});
     const products=orderDetails.products;
     const totalStatus=deriveTotalStatus(products);
     orderDetails.status= totalStatus
+    orderDetails.totalAmount-=refundAmount;
     await orderDetails.save();
-    // 4. Update Product Stock
+    //Refunding/wallet updation
+    const transactionId = "TRA-" + crypto.randomBytes(4).toString("hex");
+    
+    const walletDetails= await Wallet.findOne({userId:req.session.user});
+    if(!walletDetails){
+      const newWallet= new Wallet({
+        userId:req.session.user,
+        balance:refundAmount
+      });
+      await newWallet.save();
+    }else{
+      await Wallet.updateOne({userId:req.session.user},{$inc:{balance:refundAmount}});
+    }
+    const newTransaction= new Transactions({
+      userId:req.session.user,
+      transactionId:transactionId,
+      type:"credit",
+      method:"refund",
+      amount:refundAmount,
+      relatedOrderId:id,
+      description:"Cancel message"
+    });
+    await newTransaction.save();
+    //Refunding/wallet updation ends here
+    //Update Product Stock
     await Product.updateOne(
       { _id: productId, "variants.size": size },
       { $inc: { "variants.$.stock": stockToRestore } }
