@@ -3,8 +3,10 @@ const Order=require("../../models/orderSchema");
 const crypto=require("crypto");
 const Product=require("../../models/productSchema");
 const Coupon=require("../../models/couponSchema");
+const Wallet=require("../../models/walletShema");
 const mongoose=require("mongoose");
 const paymentController=require("../../controllers/user/paymentController");
+const Transactions=require("../../models/transactionSchema");
 
 const placeOrder = async (req, res) => {
   try {
@@ -15,7 +17,6 @@ const placeOrder = async (req, res) => {
       paymentMethod
       ,couponCode
     } = req.body;
-    let couponValid=true;
 
     console.log(couponCode);
 
@@ -35,9 +36,6 @@ const placeOrder = async (req, res) => {
       }
     }
 
-    if(userData.redeemedCoupons.includes(couponCode)){
-         couponValid=false
-    }
 
     const validCartItems=userData.cart.filter(item=>item.product.isBlocked===false)
     if(validCartItems.length===0){
@@ -46,20 +44,22 @@ const placeOrder = async (req, res) => {
 
     let totalAmount = validCartItems.reduce((acc, item) => {
     const price = item.product.salesPrice || 0;
-    return acc + (price * item.quantity);
-  }, 0)+taxes+shipping;
+    return acc + (price * item.quantity)
+  }, 0)+shipping+taxes;
+   console.log(totalAmount);
    let discountValue=0;
-   if(couponCode&&couponValid){
+   if(couponCode){
       const couponDetails = await Coupon.findOne({code:couponCode});
       if(couponDetails.discountType=="fixed"){
         discountValue=couponDetails.discountValue;
         totalAmount=totalAmount-discountValue;
+        console.log("discount value",discountValue);
       }else if(couponDetails.discountType=="percentage"){
         discountValue=totalAmount*(couponDetails.discountValue/100);
         totalAmount=totalAmount-discountValue;
       }
     }
-
+    console.log(totalAmount);
     const addressId = req.body.addressId;
     const selectedAddress = userData.address.find(
       addr => addr._id.toString() === addressId
@@ -101,7 +101,6 @@ const placeOrder = async (req, res) => {
     await newOrder.save();
 
     await User.updateOne({ _id: userId },{ $set: { cart: [] } }); //Emptying cart after order placement.
-    console.log(totalAmount);
 
     res.status(201).json({success: true, orderId: orderId});
 
@@ -193,7 +192,7 @@ const cancelOrder = async (req, res) => {
     const order = await Order.findOne({
       orderId: orderId,
       user: userId
-    });
+    }).populate("products.product")
 
     if (!order) {
       return res.status(404).json({
@@ -209,18 +208,58 @@ const cancelOrder = async (req, res) => {
       });
     }
 
+    if (["Cancelled", "Partially cancelled"].includes(order.status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Order is already cancelled"
+      });
+    }
+    const validProducts=order.products.filter((prod)=>prod.status=="Pending");
+    const refundAmount=validProducts.map((prod)=>prod.quantity*prod.product.salesPrice).reduce((acc,num)=>acc+num,0)-(Math.floor(order.discountValue/order.products.length));
+
     order.products.forEach(prod => {
       if(!["Returned","Delivered","Cancelled","Return Processing","Shipped","Return rejected"].includes(prod.status)){
         prod.status = "Cancelled";
       }
     });
-    
 
-    order.status = "Cancelled";
+    let statuses=order.products.map((p)=>p.status);
+
+    if(statuses.every((s)=>s==="Cancelled")){
+      order.status = "Cancelled";
+    }else{
+      order.status = "Partially cancelled";
+    }
     order.reasonForCancellation=cancelMessage;
     await order.save(); 
+// Wallet-logic
+    const transactionId = "TRA-" + crypto.randomBytes(4).toString("hex");
+     if(order.paymentStatus=="PAID" && refundAmount > 0){
+      let newTransaction= new Transactions({
+        userId:userId,
+        transactionId:transactionId,
+        type:"credit",
+        method:"refund",
+        amount:refundAmount,
+        relatedOrderId:orderId,
+        description:cancelMessage
+      })
 
-    for (const prod of order.products) {
+      await newTransaction.save();
+
+    const walletDetails= await Wallet.findOne({userId:req.session.user});
+    if(!walletDetails){
+      let newWallet = new Wallet({
+        userId:req.session.user,
+        balance:refundAmount,
+      })
+      await newWallet.save();
+    }else{
+      await Wallet.updateOne({userId:req.session.user},{$inc:{balance:refundAmount}})
+    }
+  }
+// Wallet logic ends here
+    for (const prod of validProducts) {
       await Product.updateOne(
         { _id: prod.product, "variants.size": prod.size },
         { $inc: { "variants.$.stock": prod.quantity } }

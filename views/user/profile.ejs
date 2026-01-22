@@ -279,13 +279,20 @@ h4::after {
   </nav>
   <% } %>
       </div>
+
+     
       <!-- Wallet -->
 <div class="card dashboard-card p-4 mb-4 wallet-container">
   <h4>My Wallet</h4>
-  
+  <% if(wallet) {%>
   <div class="alert alert-info mb-4">
-    <h5 class="mb-0">Available Balance: ₹0.00</h5>
+    <h5 class="mb-0">Available Balance: ₹<%=wallet.balance%></h5>
   </div>
+  <% }else{ %>
+    <div class="alert alert-info mb-4">
+    <h5 class="mb-0">Available Balance: ₹0</h5>
+  </div>
+ <% } %>
 
   <h5 class="mb-3">Transaction History</h5>
   <table class="table table-bordered align-middle wallet-table">
@@ -299,25 +306,40 @@ h4::after {
       </tr>
     </thead>
     <tbody>
+      <% if(transactions) {%>
+        <%transactions.forEach((transaction)=>{%>
       <tr>
-        <td>#TXN12345</td>
-        <td>#ORD67890</td>
-        <td class="text-success">₹500.00</td>
-        <td><span class="badge bg-success">Credit</span></td>
-        <td>Jan 15, 2025</td>
+        <td><%= transaction.transactionId%></td>
+        <td><%= transaction.relatedOrderId%></td>
+        <td class="text-success">₹<%= transaction.amount%></td>
+        <td><span class="badge bg-success"><%= transaction.type%></span></td>
+        <td><%= new Date(transaction.createdAt).toLocaleDateString() %></td>
       </tr>
-      <tr>
-        <td>#TXN12346</td>
-        <td>#ORD67891</td>
-        <td class="text-danger">-₹200.00</td>
-        <td><span class="badge bg-danger">Debit</span></td>
-        <td>Jan 14, 2025</td>
-      </tr>
+      <%})%>
+      <% }else{%>
       <tr><td colspan="5" class="text-center">No transactions found.</td></tr>
+      <% } %>
     </tbody>
   </table>
+  <!-- Pagination -->
+  <% if (totalTpages > 1) { %>
+  <nav aria-label="Orders pagination">
+    <ul class="pagination pagination-sm justify-content-center mb-0">
+      <li class="page-item <%= currentTpage == 1 ? 'disabled' : '' %>">
+        <a class="page-link" href="?tpage=<%= currentTpage - 1 %>">Previous</a>
+      </li>
+      <% for (let i = 1; i <= totalTpages; i++) { %>
+        <li class="page-item <%= currentTpage === i ? 'active' : '' %>">
+          <a class="page-link" href="?tpage=<%= i %>"><%= i %></a>
+        </li>
+      <% } %>
+      <li class="page-item <%= currentTpage == totalTpages ? 'disabled' : '' %>">
+        <a class="page-link" href="?tpage=<%= currentTpage + 1 %>">Next</a>
+      </li>
+    </ul>
+  </nav>
+  <% } %>
 </div>
-
 <!-- Wishlist Section - Add this right after the wallet section -->
 <div class="card dashboard-card p-4 mb-4">
   <h4>My Wishlist</h4>
@@ -764,10 +786,6 @@ async function  retryPayment(orderId){
   }
 
 }
-
-
-
-
 </script>
 
 

@@ -2,6 +2,8 @@ const User=require("../../models/userSchema");
 const{sendVerificationMail,generateOTP,securePassword}=require("../../controllers/user/userController1");
 const Product=require("../../models/productSchema");
 const Orders=require("../../models/orderSchema");
+const Wallet=require("../../models/walletShema");
+const Transaction=require("../../models/transactionSchema");
 
 const loadProfile=async (req,res)=>{
     try {
@@ -10,18 +12,31 @@ const loadProfile=async (req,res)=>{
         const skip=(orderPage-1)*orderLimit
         const id=req.session.user;
         const findUser=await User.findOne({_id:id,isBlocked:false}).populate("wishlist.product");
-        const orderDetails=(await Orders.find({user:id}).sort({ createdAt: -1 }).skip(skip).limit(orderLimit));
+        //fetching order details and order pagination
+        const orderDetails=await Orders.find({user:id}).sort({ createdAt: -1 }).skip(skip).limit(orderLimit);
         const totalOrders=await Orders.countDocuments({ user: id });
         const totalOrderPages=Math.ceil(totalOrders/orderLimit);
         const image=findUser.userImage;
         const username=findUser.name;
+        //fetching wallet/transaction details and respective pagination
+        const walletDetails= await Wallet.findOne({userId:req.session.user});
+        const tpage=req.query.tpage||1;
+        const transactionLimit=5;
+        const transSkip=(tpage-1)*transactionLimit;
+        const transactions= await Transaction.find({userId:req.session.user}).sort({createdAt:-1}).skip(transSkip).limit(transactionLimit);
+        const totalTrancastions= await Transaction.countDocuments({userId:req.session.user});
+        const totalTpages=Math.ceil(totalTrancastions/transactionLimit);
         res.status(200).render('profile',{
             userData:findUser,
             user:req.session.userName||username,
             image:image,
             orders:orderDetails,
             totalOrderPages:totalOrderPages,
-            currentOrderPage:orderPage
+            currentOrderPage:orderPage,
+            wallet:walletDetails,
+            transactions:transactions,
+            totalTpages:totalTpages,
+            currentTpage:tpage,
         })
     } catch (error) {
         console.log("Error while loading profilepage",error);

@@ -14,6 +14,7 @@ const createRazorpayOrder = async (req, res) => {
       if (orderDetails.paymentStatus === "PAID") {
         return res.status(400).json({ success: false, message: "Order is already paid." });
       }
+      
       totalAmount=orderDetails.totalAmount;
 
     }else{
