@@ -483,6 +483,7 @@ const singleCancel = async (req, res) => {
     });
     await newTransaction.save();
     //Refunding/wallet updation ends here
+    
     //Update Product Stock
     await Product.updateOne(
       { _id: productId, "variants.size": size },

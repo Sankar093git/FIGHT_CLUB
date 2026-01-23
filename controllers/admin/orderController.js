@@ -2,6 +2,9 @@ const User=require("../../models/userSchema");
 const Product=require("../../models/productSchema");
 const Order=require("../../models/orderSchema");
 const mongoose=require("mongoose");
+const Wallet=require("../../models/walletShema");
+const Transaction=require("../../models/transactionSchema");
+const crypto=require("crypto");
 
 const getOrderList = async (req, res) => {
   try {
@@ -143,7 +146,7 @@ const changeOrderStatus = async (req, res) => {
     const orderId = req.params.id;
     const { currentReturnApproval } = req.body;
 
-    const order = await Order.findOne({ orderId });
+    const order = await Order.findOne({ orderId }).populate("products.product");
 
     if (!order) {
       return res.status(404).json({
@@ -170,7 +173,38 @@ const changeOrderStatus = async (req, res) => {
         );
         }
       }
-
+      //Wallet updation / refund logic
+      const transactionId = "TRA-" + crypto.randomBytes(4).toString("hex");
+      const validProducts=order.products.filter((item)=>item.status=="Return processing");
+      const refundArray=validProducts.map((item)=>item.product.salesPrice*item.quantity);
+      console.log(refundArray);
+      const totalSalesPrice=refundArray.reduce((acc,num)=>acc+num,0);
+      const discountSplit=Math.floor(order.discountValue/order.products.length);
+      const multiplier=refundArray.length
+      console.log(multiplier)
+      const refundAmount=totalSalesPrice-discountSplit*multiplier;
+      console.log(refundAmount)
+      const walletDetails= await Wallet.findOne({userId:order.user});
+      if(!walletDetails){
+        const newWallet= new Wallet({
+          userId:order.user,
+          balance:refundAmount
+        });
+        newWallet.save();
+      }else{
+        await Wallet.updateOne({userId:order.user},{$inc:{balance:refundAmount}});
+      }
+      const newTransaction= new Transaction({
+      userId:order.user,
+      transactionId:transactionId,
+      type:"credit",
+      method:"refund",
+      amount:refundAmount,
+      relatedOrderId:orderId,
+      description:"return message"
+    });
+    await newTransaction.save();
+      //Wallet updation/ refund logic ends here
       order.status = "Returned";
       await order.save();
 
@@ -312,7 +346,8 @@ const handlesingleReturn = async (req, res) => {
         message: "Invalid return quantity"
       });
     }
-
+    const transactionId = "TRA-" + crypto.randomBytes(4).toString("hex");
+    const productDetails= await Product.findOne({_id:productId});
     //full return
     if (returnQuantity === 0) {
       await Order.updateOne(
@@ -327,13 +362,40 @@ const handlesingleReturn = async (req, res) => {
           }
         }
       );
-
       await Product.updateOne(
         { _id: productId, "variants.size": size },
         { $inc: { "variants.$.stock": quantity } }
       );
 
-      return res.status(200).json({
+      let refundAmount=productDetails.salesPrice*quantity-Math.floor(orderDetails.discountValue/orderDetails.products.length);
+      orderDetails.totalAmount-=refundAmount;
+      await orderDetails.save();
+
+      //Wallet updation/ refund logic
+
+      const walletDetails= await Wallet.findOne({userId:orderDetails.user});
+      if(!walletDetails){
+        let newWallet= new Wallet({
+          userId:orderDetails.user,
+          balance:refundAmount
+        })
+        await newWallet.save();
+      }else{
+        await Wallet.updateOne({userId:orderDetails.user},{$inc:{balance:refundAmount}});
+      }
+
+      const newTransaction= new Transaction({
+      userId:orderDetails.user,
+      transactionId:transactionId,
+      type:"credit",
+      method:"refund",
+      amount:refundAmount,
+      relatedOrderId:id,
+      description:"return message"
+    });
+    await newTransaction.save();
+
+    return res.status(200).json({
         success: true,
         message: "Product returned successfully"
       });
@@ -360,6 +422,34 @@ const handlesingleReturn = async (req, res) => {
       { _id: productId, "variants.size": size },
       { $inc: { "variants.$.stock": returnQuantity } }
     );
+
+    let refundAmount=productDetails.salesPrice*returnQuantity-Math.floor(orderDetails.discountValue/orderDetails.products.length);
+      orderDetails.totalAmount-=refundAmount;
+      await orderDetails.save();
+
+      //Wallet updation/ refund logic
+
+      const walletDetails= await Wallet.findOne({userId:orderDetails.user});
+      if(!walletDetails){
+        let newWallet= new Wallet({
+          userId:orderDetails.user,
+          balance:refundAmount
+        })
+        await newWallet.save();
+      }else{
+        await Wallet.updateOne({userId:orderDetails.user},{$inc:{balance:refundAmount}});
+      }
+
+      const newTransaction= new Transaction({
+      userId:req.session.user,
+      transactionId:transactionId,
+      type:"credit",
+      method:"refund",
+      amount:refundAmount,
+      relatedOrderId:id,
+      description:"return message"
+    });
+    await newTransaction.save();
 
     return res.status(200).json({
       success: true,
