@@ -1,4 +1,5 @@
 const Category=require("../../models/categorySchema");
+const Product= require("../../models/productSchema");
 
 const loadCategory = async (req, res) => {
   try {
@@ -66,7 +67,7 @@ const addCategory = async (req, res) => {
 
 const addOffer = async (req, res) => {
   try {
-    const percentage = parseFloat(req.body.percentage);
+    const percentage = parseInt(req.body.percentage);
     const categoryId = req.body.categoryId;
 
     console.log("Received percentage and categoryId:", percentage, categoryId);
@@ -81,9 +82,18 @@ const addOffer = async (req, res) => {
     }
 
     await Category.updateOne({ _id: categoryId }, { $set: { categoryOffer: percentage } });
-
-    res.json({ status: true });
-
+    
+    const products= await Product.find({category:categoryId});
+    for(let product of products){
+      if(product.offer===0||product.offer<percentage){
+      let discount=product.salesPrice*(percentage/100);
+      product.salesPrice+=product.productDiscount||0;
+      product.salesPrice-=discount;
+      product.categoryDiscount=discount;
+      await product.save();
+      }
+    }  
+    res.status(200).json({ status: true, message:"Offer has been added!" });
   } catch (error) {
     console.log("Backend error", error);
     res.status(500).json({ status: false, message: "Internal Server Error" });
@@ -100,9 +110,17 @@ const removeOffer = async (req, res) => {
     }
 
     await Category.updateOne({ _id: categoryId }, { $set: { categoryOffer: 0 } });
-
-    res.json({ status: true });
-
+    const products= await Product.find({category:categoryId});
+    for(let product of products){
+      product.salesPrice+=product.categoryDiscount
+      if(product.offer>0){
+        let discount=product.salesPrice*(product.offer/100);
+        product.salesPrice-=discount;
+        product.productDiscount=discount;
+      }
+      await product.save();
+    }  
+    res.status(200).json({ success: true, message:"Offer has been removed"});
   } catch (error) {
     console.error("Backend error while removing offer:", error);
     res.status(500).json({ status: false, message: "Internal Server Error" });

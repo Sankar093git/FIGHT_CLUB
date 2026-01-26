@@ -1,5 +1,6 @@
 const User=require("../../models/userSchema");
 const bcrypt=require("bcrypt");
+const crypto=require("crypto");
 const session = require("express-session");
 const nodemailer=require("nodemailer");
 require("dotenv").config()
@@ -51,7 +52,7 @@ const generateOTP=async()=>{
     }
 }
 
-const sendVerificationMail=async(OTP,email)=>{
+const sendVerificationMail=async(OTP,referalCode,email)=>{
     try {
         const transporter=nodemailer.createTransport({
             service:"gmail",
@@ -64,7 +65,18 @@ const sendVerificationMail=async(OTP,email)=>{
             }
         })
 
-        const info= await transporter.sendMail({
+        if(OTP===null){
+            const info= await transporter.sendMail({
+            from:process.env.NODEMAILER_EMAIL,
+            to:email,
+            subject:"Referral promo code",
+            text:`Your Referal code is ${referalCode}`,
+            html:`<b>Your Referal code:${referalCode}</b>`
+        })
+
+        return info.accepted.length>0;
+        }else if(referalCode===null){
+            const info= await transporter.sendMail({
             from:process.env.NODEMAILER_EMAIL,
             to:email,
             subject:"Verify your account",
@@ -73,6 +85,8 @@ const sendVerificationMail=async(OTP,email)=>{
         })
 
         return info.accepted.length>0;
+
+        }
 
     } catch (error) {
         console.error("Error while sendin verification mail",error);
@@ -210,7 +224,13 @@ const verifyOtp=async(req,res)=>{
         const {otp}=req.body;
         if(OTP===otp){
             await User.updateOne({email:req.session.email},{$set:{isVerified:1}});
-            res.status(200).json({success:true,message:"OTP verified succcesfully"})
+            const referalCode = "REF-" + crypto.randomBytes(4).toString("hex");
+            const sentMail= await sendVerificationMail(null,referalCode,req.session.email);
+         if(sentMail){
+             res.status(200).json({success:true,message:"OTP verified succcesfully, your referal code has been sent!"});
+         }else{
+            res.status(503).json({success:false,message:"Unable to send email!"});
+         }
         }else{
             res.status(400).json({success:false,message:"Invalid OTP"});
         }
@@ -237,7 +257,7 @@ const emailVerification=async(req,res)=>{
          const OTP= await generateOTP();
          req.session.otp=OTP;
          console.log(OTP);
-         const sentMail= await sendVerificationMail(OTP,email);
+         const sentMail= await sendVerificationMail(OTP,null,email);
          if(sentMail){
             res.status(200).json({success:true,message:"OTP has been send to your mail!"});
          }else{
@@ -309,7 +329,7 @@ const logout=async(req,res)=>{
         req.session.destroy();
         res.status(200).redirect("/");
     } catch (error) {
-        console.error("Error while logging out",error)
+        console.error("Error while logging out",error);
         res.status(500).redirect("/error");
     }
 }

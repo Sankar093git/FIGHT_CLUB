@@ -42,6 +42,10 @@ router.patch("/edit-product/:id",adminAuth,uploads.array("images",4),productCont
 router.patch("/delete-image/:id",adminAuth,productController.deleteImages);
 router.patch("/block-or-unblock-products/:id",adminAuth,productController.blockOrUnblockproduct);
 
+//offer management
+router.patch("/product-offer",adminAuth,productController.addOffer);
+router.patch("/remove-product-offer",adminAuth,productController.removeOffer);
+
 //Brand management
 router.get("/brands",adminAuth,brandController.getBrandList);
 router.post("/add-brand",adminAuth,uploads.single("image"),brandController.addBrand);

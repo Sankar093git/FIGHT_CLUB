@@ -108,8 +108,7 @@ const loadEditProduct= async(req,res)=>{
             variants:product[0].variants,
             cat:category,
             brand:brand
-        })
-        console.log(product);
+        });
     } catch (error) {
         console.error("Error while loading edit products",error)
         res.status(500).redirect("/admin/error");
@@ -120,7 +119,8 @@ const editproduct = async (req, res) => {
   try {
     const images = [];
     const id = req.params.id;
-    const { productName, brand, description, regularPrice, salesPrice, category,variants } = req.body;
+    const { productName, brand, description, regularPrice, salePrice, category,variants } = req.body;
+    console.log(salePrice);
 
     let variant=JSON.parse(variants);
     let quantity=variant.map((n)=>n.stock).reduce((acc,n)=>acc+n,0);
@@ -161,7 +161,7 @@ const editproduct = async (req, res) => {
           brand,
           description,
           regularPrice,
-          salesPrice,
+          salesPrice:salePrice,
           variants:JSON.parse(variants),
           category: cat._id,  
           quantity
@@ -225,6 +225,45 @@ const blockOrUnblockproduct=async (req,res)=>{
     res.status(500).json({success:false})
   }
 }
+
+const addOffer= async(req,res)=>{
+  try {
+    const {percentage,productId}=req.body;
+    const productDetails= await Product.findOne({_id:productId}).populate("category");
+    const discount= productDetails.salesPrice*(parseInt(percentage)/100);
+    if(productDetails.category.categoryOffer===0||productDetails.category.categoryOffer<percentage);
+    productDetails.salesPrice+=productDetails.categoryDiscount||0;
+    productDetails.salesPrice-= discount;
+    productDetails.productDiscount=discount;
+    productDetails.offer=parseInt(percentage);
+    await productDetails.save();
+    res.status(200).json({success:true,message:"Offer has been added!"});
+  } catch (error) {
+    console.log("Product offer: ",error);
+    res.status(500).json({success:false,message:"Something went wrong"});
+  }
+}
+
+const removeOffer= async(req,res)=>{
+  try {
+    const {productId}=req.body;
+    const productDetails= await Product.findOne({_id:productId});
+    if(productDetails.offer===0){
+      return res.status(400).json({success:true,message:"Offer does not exist"});
+    } 
+    productDetails.salesPrice+=productDetails.productDiscount;
+    productDetails.offer=0;
+    productDetails.productDiscount=0;
+    if(productDetails.category.categoryOffer>0){
+      productDetails.salesPrice-=productDetails.categoryDiscount
+    }
+    await productDetails.save();
+    res.status(200).json({success:true,message:"Offer has been removed"})   
+  } catch (error) {
+    console.log("Remove offer error: ",error);
+    res.status(500).json({success:true,message:"Something went wrong"});
+  }
+}
 module.exports={
     loadProducts,
     getAddProduct,
@@ -232,5 +271,7 @@ module.exports={
     loadEditProduct,
     editproduct,
     deleteImages,
-    blockOrUnblockproduct
+    blockOrUnblockproduct,
+    addOffer,
+    removeOffer
 }

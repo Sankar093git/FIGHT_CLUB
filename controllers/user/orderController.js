@@ -447,13 +447,13 @@ const singleCancel = async (req, res) => {
         ]
       }
     );
+    const orderDetails=await Order.findOne({orderId:id});
     let refundAmount=0
     if(value){
       refundAmount=product.salesPrice*value-Math.floor(orderDetails.discountValue/orderDetails.products.length);
     }else{
       refundAmount=product.salesPrice*quantity-Math.floor(orderDetails.discountValue/orderDetails.products.length)
     }
-    const orderDetails=await Order.findOne({orderId:id});
     const products=orderDetails.products;
     const totalStatus=deriveTotalStatus(products);
     orderDetails.status= totalStatus

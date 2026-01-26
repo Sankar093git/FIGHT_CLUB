@@ -482,17 +482,17 @@
                             <span class="price-tag">₹<%= data[i].salesPrice %></span>
                         </td>
                         <td>
-                            <% if(data[i].productOffer > 0) { %>
+                            <% if(data[i].offer > 0) { %>
                                 <span class="offer-badge">
+                                    <%= data[i].offer %>
                                     <i class="fa fa-percent"></i>
-                                    <%= data[i].productOffer %>%
                                 </span>
                             <% } else { %>
                                 <span class="offer-badge no-offer">No Offer</span>
                             <% } %>
                         </td>
                         <td>
-                            <% if(data[i].productOffer === 0) { %>
+                            <% if(data[i].offer === 0) { %>
                                 <button class="btn-action btn-offer-add" onclick="return addOffer('<%= data[i]._id %>')">
                                     <i class="fa fa-plus"></i> Add Offer
                                 </button>
@@ -550,18 +550,27 @@
             confirmButtonColor: '#6366f1'
         })
         $.ajax({
-            url: "/admin/add-product-offer",
-            method: "post",
+            url: "/admin/product-offer",
+            method: "patch",
             data: {
                 percentage: amount,
                 productId: productId,
             },
             success: (response) => {
-                if (response.status === true) {
-                    location.reload()
-                    Swal.fire("Offer Added", "The offer has been added", "success");
+                if (response.success === true) {
+                    Swal.fire({
+                        title:"Success",
+                        text:response.message,
+                        icon:"success"
+                    }).then(()=>{
+                        window.location.reload();
+                    })
                 } else {
-                    alert("failed")
+                    Swal.fire({
+                        title:"Error",
+                        text:response.message,
+                        icon:"error"
+                    })
                 }
             }
         })
@@ -582,17 +591,26 @@
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     $.ajax({
-                        url: "/admin/removeProductOffer",
-                        method: "post",
+                        url: "/admin/remove-product-offer",
+                        method: "patch",
                         data: {
                             productId: productId
                         },
                         success: (response) => {
-                            if (response.status === true) {
-                                Swal.fire("Removed!", "The offer has been removed", "success");
-                                location.reload()
+                            if (response.success === true) {
+                                Swal.fire({
+                                    title:'Success',
+                                    text:response.message,
+                                    icon:"success"
+                                }).then(()=>{
+                                    window.location.reload();
+                                })
                             } else if (response.status === false) {
-                                Swal.fire("Failed")
+                                Swal.fire({
+                                    title:"Error",
+                                    text:response.message,
+                                    icon:"error"
+                                })
                             }
                         }
                     })
@@ -600,6 +618,11 @@
             })
         } catch (error) {
             console.log("Error while removing the offer", error);
+            Swal.fire({
+                        title:"Error",
+                        text:"Something definitly went wrong",
+                        icon:"error"
+                    })
         }
     }
 
