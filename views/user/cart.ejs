@@ -74,10 +74,10 @@ main {
     </table>
 
     <div class="text-end">
-      <a href="/checkout" class="btn btn-primary"
+      <button class="btn btn-primary" onclick="proccedToCheckout()"
          <%= userData.cart.some(item => item.product.stock === 0) ? "disabled" : "" %>>
         Proceed to Checkout
-      </a>
+      </button>
     </div>
   <% } else { %>
     <p>Your cart is empty.</p>
@@ -202,6 +202,23 @@ document.querySelectorAll(".trash-btn").forEach((btn)=>{
        })
   })
 })
+
+function proccedToCheckout(){
+  fetch("/validate-cart",{
+    method:"GET"
+  }).then((res)=>res.json())
+  .then((data)=>{
+    if(data.success){
+      window.location.href="/checkout"
+    }else{
+      Swal.fire({
+        title:"Error",
+        text:data.message,
+        icon:"error"
+      })
+    }
+  })
+}
 findGrandTotal();
 hideButton();
 </script>

@@ -1,6 +1,30 @@
 const User=require("../../models/userSchema");
 const Coupon=require("../../models/couponSchema");
 const crypto=require("crypto");
+
+const validateCart= async(req,res)=>{
+    try {
+        const userData =await User.findOne({_id:req.session.user}).populate("cart.product").exec();
+
+        for (const item of userData.cart) {
+        const variant = item.product.variants.find(
+        v => v.size === item.size
+        );
+
+        if (!variant || variant.stock < item.quantity) {
+          
+           return res.status(400).json({success:false,message:`${item.product.productName} (${item.size}) is out of stock`})
+          
+         }
+        } 
+        
+        res.status(200).json({success:true});
+
+    } catch (error) {
+        console.error("Validate cart: ",error);
+        res.staatus(500).json({success:false,message:"Something went wrong"})
+    }
+}
 const loadCheckout= async(req,res)=>{
     try {
         let stockError=null;
@@ -8,7 +32,7 @@ const loadCheckout= async(req,res)=>{
       if(req.session.google==true){
        const userDetails= await User.findOne({_id:req.session.user});
        userName=userDetails.name;
-     }
+       }
         let summary={};
         let priceList=[];
         const userData =await User.findOne({_id:req.session.user}).populate("cart.product").exec();
@@ -19,8 +43,7 @@ const loadCheckout= async(req,res)=>{
 
         if (!variant || variant.stock < item.quantity) {
           
-           
-           stockError = `${item.product.productName} (${item.size}) is out of stock`
+           stockError=`${item.product.productName} (${item.size}) is out of stock`
           
          }
         }
@@ -141,5 +164,6 @@ module.exports={
     loadCheckout,
     addAddress,
     editAddress,
-    applyCoupon
+    applyCoupon,
+    validateCart
 }

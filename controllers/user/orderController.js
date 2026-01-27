@@ -409,6 +409,12 @@ const singleCancel = async (req, res) => {
     const productId = new mongoose.Types.ObjectId(req.params.productId);
     const { id, size, value, quantity } = req.body;
 
+    const orderDetails=await Order.findOne({orderId:id});
+
+    if(orderDetails.discountValue>0 && orderDetails.products.length>1){
+      return res.status(400).json({success:false,message:"Single cancel not possilble on coupon applied orders!"});
+    }
+
     //Fetch product safely
     const product = await Product.findById(productId);
     if (!product) {
@@ -447,7 +453,6 @@ const singleCancel = async (req, res) => {
         ]
       }
     );
-    const orderDetails=await Order.findOne({orderId:id});
     let refundAmount=0
     if(value){
       refundAmount=product.salesPrice*value-Math.floor(orderDetails.discountValue/orderDetails.products.length);
@@ -505,6 +510,11 @@ const singleCancel = async (req, res) => {
   try {
     const productId = new mongoose.Types.ObjectId(req.params.productId);
     const { id, size, value } = req.body;
+    const orderDetails=await Order.findOne({orderId:id});
+
+    if(orderDetails.discountValue>0 && orderDetails.products.length>1){
+      return res.status(400).json({success:false,message:"Single return not possilble on coupon applied orders!"});
+    }
 
     // 1. Fetch product safely to get the name for the logs/response
     const product = await Product.findById(productId);
@@ -547,7 +557,6 @@ const singleCancel = async (req, res) => {
       ? "Refund request has been submitted" 
       : "Your refund shall be processed";
 
-    const orderDetails=await Order.findOne({orderId:id});
     const products=orderDetails.products;
     const totalStatus=deriveTotalStatus(products);
     orderDetails.status= totalStatus

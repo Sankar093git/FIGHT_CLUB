@@ -71,6 +71,7 @@ router.post("/otp-verification",userAuth,profileController.verifyOtp);
 router.get("/error",generalController.pageNotFound);
 
 //checkout management
+router.get("/validate-cart",userAuth,checkoutController.validateCart);
 router.get("/checkout",userAuth,checkoutController.loadCheckout);
 router.patch("/coupon",userAuth,checkoutController.applyCoupon)
 router.get("/orders",userAuth,orderController.displayOrder);
