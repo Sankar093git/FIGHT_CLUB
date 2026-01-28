@@ -97,7 +97,9 @@ const sendVerificationMail=async(OTP,referalCode,email)=>{
 }
 const signUp=async (req,res)=>{
     try {
-        const {name,email,phone,password}=req.body;
+        const {name,email,phone,referedCode,password}=req.body;
+
+        console.log(referedCode);
 
         const checkUser= await User.findOne({email:email});
 
@@ -111,23 +113,30 @@ const signUp=async (req,res)=>{
              console.log(req.file);
              profileImage = req.file.filename; 
         }
-
+        const referalCode = "REF-" + crypto.randomBytes(4).toString("hex");
         const newUser= await User({
             name:name,
             email:email,
             phone:phone,
             password:passHash,
-            userImage:profileImage
+            userImage:profileImage,
+            referalCode:referalCode
         })
 
         await newUser.save();
+
         req.session.user=newUser._id;
         req.session.email=newUser.email
         req.session.image=newUser.userImage
+        req.session.referalCode=referalCode
         const OTP= await generateOTP();
+        if(referedCode){
+            await checkForReferal(referedCode,req.session.email);
+        }
         req.session.otp=OTP;
-        console.log(` The otp is ${OTP}`);
-        const mailSent= await sendVerificationMail(OTP,email);
+        console.log(` Your otp is ${OTP}`);
+        console.log(`Your referal code is ${referalCode}`);
+        const mailSent= await sendVerificationMail(OTP,null,email);
         if(mailSent){
             res.status(200).redirect("/verify-otp");
         }else{
@@ -224,12 +233,12 @@ const verifyOtp=async(req,res)=>{
         const {otp}=req.body;
         if(OTP===otp){
             await User.updateOne({email:req.session.email},{$set:{isVerified:1}});
-            const referalCode = "REF-" + crypto.randomBytes(4).toString("hex");
+            const referalCode=req.session.referalCode;
             const sentMail= await sendVerificationMail(null,referalCode,req.session.email);
          if(sentMail){
              res.status(200).json({success:true,message:"OTP verified succcesfully, your referal code has been sent!"});
          }else{
-            res.status(503).json({success:false,message:"Unable to send email!"});
+            res.status(503).json({success:false,message:"Unable to referal code!"});
          }
         }else{
             res.status(400).json({success:false,message:"Invalid OTP"});
@@ -332,6 +341,19 @@ const logout=async(req,res)=>{
         console.error("Error while logging out",error);
         res.status(500).redirect("/error");
     }
+}
+
+async function checkForReferal(code,email){
+   const referalCodes = await User.find(
+  { isBlocked: false },
+  { referalCode: 1, email: 1, _id: 0 }
+);
+
+for(let item of referalCodes){
+    if(item.referalCode==code){
+        await User.updateOne({email:email},{$set:{referedBy:item.email}});
+    }
+}
 }
 
 module.exports={

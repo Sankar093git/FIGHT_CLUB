@@ -108,6 +108,11 @@
     <div id="error5" class="error-message"></div>
   </div>
 
+  <div class="mb-3">
+    <input type="text" class="form-control" placeholder="Referal code(if any..)" name="referedCode" id="referalCode" />
+    <div id="error7" class="error-message"></div>
+  </div>
+
   <div class="d-grid gap-2">
     <button type="button" class="btn google-signin text-white" onclick="window.location.href='/auth/google'">
       Sign up with Google
@@ -131,6 +136,7 @@
     const phone = document.getElementById("phone");
     const password = document.getElementById("password");
     const cpassword = document.getElementById("cpassword");
+    const referalCode=document.getElementById("referalCode")
     const error1 = document.getElementById("error1");
     const error2 = document.getElementById("error2");
     const error3 = document.getElementById("error3");
@@ -140,6 +146,8 @@
     const profileImage = document.getElementById("profileImage");
     const previewImg = document.getElementById("previewImg");
     const error6 = document.getElementById("error6");
+    const error7 = document.getElementById("error7");
+
 
   profileImage.addEventListener("change", () => {
   const file = profileImage.files[0];
@@ -173,6 +181,18 @@
       } else {
         error1.style.display = "none";
         error1.innerHTML = "";
+      }
+    }
+
+     function referalCodeValidation() {
+      const referalCode = referalCode.value;
+      const referalPattern = /^REF-[0-9a-f]{8}$/;
+      if (!referalPattern.test(referalCode)) {
+        error7.style.display = "block";
+        error7.innerHTML = "Please enter a valid referal code";
+      } else {
+        error7.style.display = "none";
+        error7.innerHTML = "";
       }
     }
 
@@ -242,6 +262,7 @@
     clearErrorOnFocus(phone, error3);
     clearErrorOnFocus(password, error4);
     clearErrorOnFocus(cpassword, error5);
+    clearErrorOnFocus(referalCode, error7);
 
     document.addEventListener("DOMContentLoaded", () => {
       signform.addEventListener("submit", (e) => {
@@ -249,6 +270,9 @@
         emailValidation();
         phoneValidation();
         passValidation();
+        if(referalCode){
+          referalCodeValidation();
+        }
 
         if (
           error1.innerHTML ||
@@ -256,7 +280,8 @@
           error3.innerHTML ||
           error4.innerHTML ||
           error5.innerHTML ||
-          error6.innerHTML
+          error6.innerHTML ||
+          error7.innerHTML
         ) {
           e.preventDefault();
         }

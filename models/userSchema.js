@@ -82,6 +82,12 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
+    referalCode:{
+      type:String
+    },
+    referedBy:{
+      type:String
+    },
     redeemedCoupons:[String],
     cart: [
       {

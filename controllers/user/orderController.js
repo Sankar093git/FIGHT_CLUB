@@ -8,6 +8,7 @@ const mongoose=require("mongoose");
 const paymentController=require("../../controllers/user/paymentController");
 const Transactions=require("../../models/transactionSchema");
 
+
 const placeOrder = async (req, res) => {
   try {
     const userId = req.session.user;
@@ -160,7 +161,7 @@ const updatePayment=async(req,res)=>{
      orderDetails.razorpay= {
         orderId: razorpay_order_id,
         paymentId: razorpay_payment_id
-      },
+      }, 
 
       await orderDetails.save();
       for(let item of orderDetails.products){
@@ -170,13 +171,42 @@ const updatePayment=async(req,res)=>{
          await Product.updateOne({_id:id,"variants.size":size,"variants.stock": { $gte: quantity }},{$inc:{"variants.$.stock":-quantity}});
       }
       console.log("Payment verified and stock updated");
+      // Referal reward logic
+      const userDetails= await User.findOne({_id:req.session.user});
+      if(userDetails.referedBy){
+      const refereeDetails= await User.findOne({email:userDetails.referedBy})
+      const orders= await Order.countDocuments({user:req.session.user});
+      if(orders===1){
+         const walletDetails=await Wallet.findOne({userId:refereeDetails._id});
+         if(!walletDetails){
+          const newWallet= new Wallet({
+            userId:refereeDetails._id,
+            balance:200
+          });
+          await newWallet.save();
+         }else{
+          await Wallet.updateOne({userId:refereeDetails._id},{$inc:{balance:200}});
+         }
+        const transactionId = "TRA-" + crypto.randomBytes(4).toString("hex");
+        const newTransaction= new Transactions({
+        userId:refereeDetails._id,
+        transactionId:transactionId,
+        type:"credit",
+        method:"promo",
+        amount:200,
+        relatedOrderId:orderId,
+        description:"Referal reward"
+      })
+
+      await newTransaction.save();
+      }
+    }
+    //referal reward logic ends here
      return res.status(200).json({
       success: true,
       message: "Payment verified and stock updated",
       orderId: orderDetails.orderId
      });
-
-
   } catch (error) {
     console.error("Payment updation:",error);
     res.status(500).json({success:false, message:'Something went wrong!'});
