@@ -115,6 +115,9 @@ const applyCoupon= async(req,res)=>{
     return res.status(200).json({success:true,newTotal:totalAmount,discount:discountValue});
   }else if(couponDetails.discountType=="percentage"){
     discountValue=totalAmount*(couponDetails.discountValue/100);
+    if(discountValue>couponDetails.maxDiscount){
+        discountValue=couponDetails.maxDiscount;
+    }
     totalAmount=totalAmount-discountValue;
      await User.updateOne({_id:userId},{$push:{redeemedCoupons:couponCode}});
     return res.status(200).json({success:true,newTotal:totalAmount,discount:discountValue});

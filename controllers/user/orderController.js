@@ -57,6 +57,9 @@ const placeOrder = async (req, res) => {
         console.log("discount value",discountValue);
       }else if(couponDetails.discountType=="percentage"){
         discountValue=totalAmount*(couponDetails.discountValue/100);
+        if(discountValue>couponDetails.maxDiscount){
+          discountValue=couponDetails.maxDiscount
+        }
         totalAmount=totalAmount-discountValue;
       }
     }

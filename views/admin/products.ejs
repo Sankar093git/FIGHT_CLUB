@@ -628,8 +628,14 @@
 
     function blockProducts(productId) {
         try {
-            $.ajax({
-                method: "POST",
+            Swal.fire({
+                title:"Are you sure",
+                text:"Do you want to perform this action?",
+                icon:"question"
+            }).then((result)=>{
+                if(result.isConfirmed){
+                     $.ajax({
+                method: "PATCH",
                 url: `/admin/block-or-unblock-products/${productId}`,
                 data: {},
                 success: (response) => {
@@ -644,6 +650,9 @@
                     }
                 }
             })
+                }
+            })
+           
         } catch (error) {
             console.log("Error while blocking the product");
             Swal.fire("Failed", "Something went wrong", "error");

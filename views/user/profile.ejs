@@ -311,8 +311,13 @@ h4::after {
       <tr>
         <td><%= transaction.transactionId%></td>
         <td><%= transaction.relatedOrderId%></td>
-        <td class="text-success">₹<%= transaction.amount%></td>
+        <% if(transaction.type==="debit") {%>
+        <td class="text-danger">₹<%= transaction.amount%></td>
+        <td><span class="badge bg-danger"><%= transaction.type%></span></td>
+        <% }else{%>
+         <td class="text-success">₹<%= transaction.amount%></td> 
         <td><span class="badge bg-success"><%= transaction.type%></span></td>
+        <% } %>
         <td><%= new Date(transaction.createdAt).toLocaleDateString() %></td>
       </tr>
       <%})%>

@@ -55,6 +55,12 @@ const addcoupon= async(req,res)=>{
             description
         }=req.body;
 
+        const couponNames= await Coupon.find({},{_id:0,code:1});
+        console.log(couponNames);
+        const couponChecklist=couponNames.map((item)=>item.code.replace(/ /g, ""))
+        if(couponChecklist.includes(code.replace(/ /g, ""))){
+          return res.status(400).json({success:false,message:"Coupon name already exists!"});
+        }
         const newCoupon= new Coupon({
             code:code,
             discountType:discountType,
