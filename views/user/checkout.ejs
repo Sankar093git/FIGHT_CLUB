@@ -131,6 +131,10 @@
             <input class="form-check-input" type="radio" name="paymentMethod" id="onlineOption" value="ONLINE">
             <label class="form-check-label" for="onlineOption">Pay Online</label>
           </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="paymentMethod" id="walltOption" value="WALLET">
+            <label class="form-check-label" for="walletOption">Pay from wallet</label>
+          </div>
         </div>
         <button id="payBtn" class="btn btn-success w-100 mt-3">
          <i class="bi bi-cash-coin"></i> Place Order
@@ -373,6 +377,23 @@ document.getElementById('payBtn').addEventListener('click', async (e) => {
       });
       rzp1.open();
       }  
+    }else if(paymentMethod==="WALLET"){
+      const response = await fetch('/place-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          addressId: selected.value,
+          paymentMethod: 'WALLET',
+          couponCode:couponCode
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        window.location.href = `/order-success?orderId=${data.orderId}`;
+      } else {
+        Swal.fire({ icon: "error", title: "Error", text: data.message || "Failed to place order." });
+      }
     }
   } catch (err) {
     console.error("Checkout Error:", err);

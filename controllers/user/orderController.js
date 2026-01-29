@@ -72,7 +72,7 @@ const placeOrder = async (req, res) => {
 
    const orderId = "ORD-" + crypto.randomBytes(4).toString("hex");
 
-   if(paymentMethod=="COD"){// Stock will be deducted only if the payment method is COD
+   if(paymentMethod === "COD" || paymentMethod === "WALLET"){// Stock will be deducted only if the payment method is COD
        for (let x of userData.cart) {
    const result=await Product.updateOne(
         { _id: x.product._id, "variants.size": x.size },
@@ -87,6 +87,28 @@ const placeOrder = async (req, res) => {
    }
     }
    }
+
+   if(paymentMethod==="WALLET"){
+    const walletDetails= await Wallet.findOne({userId:req.session.user});
+    if(!walletDetails){
+      res.status(400).json({success:false, message:"Your wallet has not been initialised"});
+    }else if(walletDetails.balance===0||walletDetails.balance<totalAmount){
+      red.status(400).json({success:false,message:"Insufficient balance!"});
+    }else{
+      const transactionId = "TRA-" + crypto.randomBytes(4).toString("hex");
+      await Wallet.updateOne({userId:req.session.user},{$inc:{balance:-totalAmount}});
+      const newTransaction= new Transactions({
+        userId:req.session.user,
+        transactionId:transactionId,
+        type:"debit",
+        method:"orderPayment",
+        amount:totalAmount,
+        relatedOrderId:orderId,
+        description:"Order Payment"
+      })
+      await newTransaction.save()
+    }
+   }
     const newOrder = new Order({
       user: userId,
       orderId: orderId,
@@ -95,7 +117,7 @@ const placeOrder = async (req, res) => {
       totalAmount: totalAmount,
       discountValue:discountValue,
       paymentMethod: paymentMethod,
-      paymentStatus: "PENDING",
+      paymentStatus: paymentMethod==="WALLET"?"PAID":"PENDING",
       status: "Pending"
     });
   
