@@ -249,12 +249,12 @@ const changeOrderStatus = async (req, res) => {
     }
 
     const subTotal = order.products.reduce((acc, item) => {
-      return acc + (item.product.salesPrice * item.quantity);
+      return acc + (item.salePrice * item.quantity);
     }, 0);
 
     const shipping = 100;
     const taxes = 50;
-    const discount = 200;
+    const discount=order.discountValue;
     const total = subTotal + shipping + taxes - discount;
 
     res.status(200).render("orderDetailsAdmin", {
@@ -283,6 +283,8 @@ const handlesingleReturn = async (req, res) => {
     const productId = new mongoose.Types.ObjectId(req.params.productId);
     const { orderId, size, action } = req.body;
     console.log(orderId);
+
+
 
     //action=reject
     if (!action) {
@@ -313,10 +315,16 @@ const handlesingleReturn = async (req, res) => {
       });
     }
 
+
+
    //action=approve
     const orderDetails = await Order.findOne({
       orderId
     });
+
+    if(orderDetails.discountValue){
+      res.status(400).json({success:false,messge:"Return not possible due to coupon in order"});
+    }
 
     console.log(orderDetails);
 
@@ -347,7 +355,7 @@ const handlesingleReturn = async (req, res) => {
       });
     }
     const transactionId = "TRA-" + crypto.randomBytes(4).toString("hex");
-    const productDetails= await Product.findOne({_id:productId});
+    const productDetails= orderDetails.products.find((item)=>item.product==productId);
     //full return
     if (returnQuantity === 0) {
       await Order.updateOne(
@@ -367,7 +375,7 @@ const handlesingleReturn = async (req, res) => {
         { $inc: { "variants.$.stock": quantity } }
       );
 
-      let refundAmount=productDetails.salesPrice*quantity-Math.floor(orderDetails.discountValue/orderDetails.products.length);
+      let refundAmount=productDetails.salePrice*quantity;
       orderDetails.totalAmount-=refundAmount;
       await orderDetails.save();
 
@@ -423,7 +431,7 @@ const handlesingleReturn = async (req, res) => {
       { $inc: { "variants.$.stock": returnQuantity } }
     );
 
-    let refundAmount=productDetails.salesPrice*returnQuantity-Math.floor(orderDetails.discountValue/orderDetails.products.length);
+    let refundAmount=productDetails.salePrice*returnQuantity;
       orderDetails.totalAmount-=refundAmount;
       await orderDetails.save();
 

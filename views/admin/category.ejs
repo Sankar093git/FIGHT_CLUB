@@ -810,11 +810,12 @@
 
       const data = await response.json();
 
-      if (response.ok && data.status === true) {
-        Swal.fire(
-          "Offer removed",
-          "The offer has been removed",
-          "success"
+      if (data.success === true) {
+        Swal.fire({
+          title:"Success",
+          text:data.message,
+          icon:"success"
+        }
         ).then(() => {
           location.reload();
         });

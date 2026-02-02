@@ -78,6 +78,7 @@ const addProducts = async (req, res) => {
       brand: req.body.brand,
       category: category._id,
       regularPrice: req.body.regularPrice,
+      ogSalesPrice:req.body.salesPrice,
       salesPrice: req.body.salePrice,
       quantity:quantity, 
       createdOn: new Date(),
@@ -230,14 +231,15 @@ const addOffer= async(req,res)=>{
   try {
     const {percentage,productId}=req.body;
     const productDetails= await Product.findOne({_id:productId}).populate("category");
-    const discount= productDetails.salesPrice*(parseInt(percentage)/100);
-    if(productDetails.category.categoryOffer===0||productDetails.category.categoryOffer<percentage);
-    productDetails.salesPrice+=productDetails.categoryDiscount||0;
-    productDetails.salesPrice-= discount;
+    const discount= productDetails.ogSalesPrice*(parseInt(percentage)/100);
+    if(productDetails.category.categoryOffer===0||productDetails.category.categoryOffer<percentage){;
+    productDetails.salesPrice=productDetails.ogSalesPrice-discount;
     productDetails.productDiscount=discount;
     productDetails.offer=parseInt(percentage);
     await productDetails.save();
-    res.status(200).json({success:true,message:"Offer has been added!"});
+    return res.status(200).json({success:true,message:"Offer has been added!"})
+    }
+    res.status(400).json({success:false,message:"Please add an offer greater than category offer!"});
   } catch (error) {
     console.log("Product offer: ",error);
     res.status(500).json({success:false,message:"Something went wrong"});
@@ -247,15 +249,17 @@ const addOffer= async(req,res)=>{
 const removeOffer= async(req,res)=>{
   try {
     const {productId}=req.body;
-    const productDetails= await Product.findOne({_id:productId});
+    const productDetails= await Product.findOne({_id:productId}).populate("category");
     if(productDetails.offer===0){
       return res.status(400).json({success:true,message:"Offer does not exist"});
     } 
-    productDetails.salesPrice+=productDetails.productDiscount;
+    productDetails.salesPrice=productDetails.ogSalesPrice;
     productDetails.offer=0;
     productDetails.productDiscount=0;
     if(productDetails.category.categoryOffer>0){
-      productDetails.salesPrice-=productDetails.categoryDiscount
+      let discount=productDetails.ogSalesPrice*(productDetails.category.categoryOffer/100)
+      productDetails.salesPrice= productDetails.ogSalesPrice-discount;
+      productDetails.categoryDiscount=discount;
     }
     await productDetails.save();
     res.status(200).json({success:true,message:"Offer has been removed"})   
@@ -263,6 +267,14 @@ const removeOffer= async(req,res)=>{
     console.log("Remove offer error: ",error);
     res.status(500).json({success:true,message:"Something went wrong"});
   }
+}
+async function setOgsalesPrice(){
+  const products= await Product.find({});
+ for(let product of products){
+  product.ogSalesPrice=product.salesPrice
+  await product.save();
+ }
+  
 }
 module.exports={
     loadProducts,

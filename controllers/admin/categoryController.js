@@ -86,9 +86,8 @@ const addOffer = async (req, res) => {
     const products= await Product.find({category:categoryId});
     for(let product of products){
       if(product.offer===0||product.offer<percentage){
-      let discount=product.salesPrice*(percentage/100);
-      product.salesPrice+=product.productDiscount||0;
-      product.salesPrice-=discount;
+      let discount=product.ogSalesPrice*(percentage/100);
+      product.salesPrice=product.ogSalesPrice-discount;
       product.categoryDiscount=discount;
       await product.save();
       }
@@ -112,10 +111,11 @@ const removeOffer = async (req, res) => {
     await Category.updateOne({ _id: categoryId }, { $set: { categoryOffer: 0 } });
     const products= await Product.find({category:categoryId});
     for(let product of products){
-      product.salesPrice+=product.categoryDiscount
+      product.salesPrice=product.ogSalesPrice;
+      product.categoryDiscount=0;
       if(product.offer>0){
-        let discount=product.salesPrice*(product.offer/100);
-        product.salesPrice-=discount;
+        let discount=product.ogSalesPrice*(product.offer/100);
+        product.salesPrice=product.ogSalesPrice-discount;
         product.productDiscount=discount;
       }
       await product.save();

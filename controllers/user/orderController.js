@@ -139,6 +139,8 @@ const placeOrder = async (req, res) => {
 
 const orderSuccess= async (req,res)=>{
     try {
+      await setDiscountvalue();
+      await setproductDiscountPerOrder();
         res.status(200).render("orderPlaced");
     } catch (error) {
         console.error("Error while loading success page :",error);
@@ -394,13 +396,13 @@ const displayOrder = async (req, res) => {
 
     //  Calculate subtotal
     const subTotal = order.products.reduce((acc, item) => {
-      return acc + (item.product.salesPrice * item.quantity);
+      return acc + (item.salePrice * item.quantity);
     }, 0);
 
     //  Pricing (same logic as before)
     const shipping = 100;
     const taxes = 50;
-    const discount = 200;
+    const discount = order.discountValue;
     const total = subTotal + shipping + taxes - discount;
 
     //  Render order details page
@@ -476,6 +478,11 @@ const singleCancel = async (req, res) => {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
 
+    const productDetails= orderDetails.products.find((item)=>item.product===productId);
+    if (!productDetails) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
     //Prepare update logic
     let orderUpdate;
     let stockToRestore;
@@ -495,7 +502,7 @@ const singleCancel = async (req, res) => {
       stockToRestore = quantity;
     }
 
-    //Update Order using arrayFilters (The fix)
+    //Update Order using arrayFilters 
     const orderResult = await Order.updateOne(
       { orderId: id }, 
       orderUpdate,
@@ -510,9 +517,9 @@ const singleCancel = async (req, res) => {
     );
     let refundAmount=0
     if(value){
-      refundAmount=product.salesPrice*value-Math.floor(orderDetails.discountValue/orderDetails.products.length);
+      refundAmount=productDetails.salePrice*value-Math.floor(orderDetails.discountValue/orderDetails.products.length);
     }else{
-      refundAmount=product.salesPrice*quantity-Math.floor(orderDetails.discountValue/orderDetails.products.length)
+      refundAmount=productDetails.salePrice*quantity-Math.floor(orderDetails.discountValue/orderDetails.products.length)
     }
     const products=orderDetails.products;
     const totalStatus=deriveTotalStatus(products);
@@ -641,6 +648,36 @@ function deriveTotalStatus(products) {
   if (activeItems.every(s => s === "Return processing")) return "Processing return";
 
   return "Processing";
+}
+
+async function setDiscountvalue(){
+    try {
+     const orderDetails= await Order.find({analyticsFieldsAdded:false}).populate("products.product");
+     for(let order of orderDetails){
+      for(let item of order.products){
+        item.salePrice=item.product.salesPrice;
+        item.discount=item.product.productOffer>item.product.categoryOffer?item.product.productOffer:item.product.categoryOffer||0;
+     }
+    await order.save();
+   }
+    } catch (error) {
+        console.error("Setting discount value per product : ",error)
+    }
+}
+
+async function setproductDiscountPerOrder(){
+    try {
+        const orderDetails= await Order.find({analyticsFieldsAdded:false});
+
+    for(let order of orderDetails){
+        let totalOffer= order.products.map((item)=>item.discount).reduce((acc,num)=>acc+num,0);
+        order.totalProductDiscount=totalOffer;
+        order.analyticsFieldsAdded=true;
+        await order.save();
+    }
+    } catch (error) {
+        console.error("setproductDiscountPerOrder : ",error);
+    }
 }
 
 module.exports={

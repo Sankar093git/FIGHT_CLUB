@@ -26,6 +26,10 @@ const productSchema= new mongoose.Schema({
         type:Number,
         default:0
     },
+    ogSalesPrice:{
+        type:Number,
+        required:true
+    },
     salesPrice:{
         type:Number,
         required:true

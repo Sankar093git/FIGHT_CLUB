@@ -56,7 +56,7 @@
                 <div class="flex-grow-1">
                   <p class="mb-0 fw-semibold small"><%= prod.product.productName %></p>
                   <p class="mb-0 small text-muted">
-                    Qty: <%= prod.quantity %> × <%= prod.product.salesPrice %>
+                    Qty: <%= prod.quantity %> × <%= prod.salePrice %>
                   </p>
                   <div class="d-flex align-items-center gap-1">
   <span class="small text-muted">Status:</span>
@@ -85,7 +85,7 @@
                 <button class="btn btn-sm btn-outline-danger me-1" onclick="handleReturn('<%=prod.product._id%>','<%=prod.size%>',false)" >Reject</button>
                 <% } %>
                 <div>
-                  <p class="fw-semibold mb-0 small">₹<%= prod.quantity * prod.product.salesPrice %></p>
+                  <p class="fw-semibold mb-0 small">₹<%= prod.quantity * prod.salePrice %></p>
                 </div>
               </div>
             </div>

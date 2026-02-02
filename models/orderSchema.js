@@ -19,6 +19,9 @@ const orderSchema = new mongoose.Schema({
         ref: "Product", 
         required: true 
       },
+      salePrice:{
+        type:Number
+      },
       size: { 
         type: String, 
         required: true 
@@ -48,6 +51,10 @@ const orderSchema = new mongoose.Schema({
           "Return rejected"
         ],
         default: "Pending"
+      },
+      discount:{
+        type:Number,
+        default:0
       }
     }
   ],
@@ -103,9 +110,17 @@ const orderSchema = new mongoose.Schema({
     type: Number, 
     required: true 
   },
+  totalProductDiscount:{
+    type:Number,
+    default:0
+  },
   discountValue:{
     type:Number,
     default:0
+  },
+  analyticsFieldsAdded:{
+    type:Boolean,
+    default:false,
   },
   retryCount:{
     type:Number,

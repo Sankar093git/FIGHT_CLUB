@@ -1,5 +1,6 @@
 const User=require("../../models/userSchema");
 const bcrypt=require("bcrypt");
+const Order= require("../../models/orderSchema");
 const loadLogin=async(req,res)=>{
     try {
         res.status(200).render("adminLogin",{message:null});
@@ -11,6 +12,8 @@ const loadLogin=async(req,res)=>{
 
 const loadDashboard=async(req,res)=>{
     try {
+        await setDiscountvalue();
+        await setproductDiscountPerOrder();
         res.status(200).render("dashboard");
     } catch (error) {
         console.error("Error while loading dashboard",error);
@@ -53,6 +56,35 @@ const logout=async(req,res)=>{
     }
 }
 
+async function setDiscountvalue(){
+    try {
+     const orderDetails= await Order.find({analyticsFieldsAdded:false}).populate("products.product");
+     for(let order of orderDetails){
+      for(let item of order.products){
+        item.salePrice=item.product.salesPrice;
+        item.discount=item.product.productOffer>item.product.categoryOffer?item.product.productOffer:item.product.categoryOffer||0;
+     }
+    await order.save();
+   }
+    } catch (error) {
+        console.error("Setting discount value per product : ",error)
+    }
+}
+
+async function setproductDiscountPerOrder(){
+    try {
+        const orderDetails= await Order.find({analyticsFieldsAdded:false});
+
+    for(let order of orderDetails){
+        let totalOffer= order.products.map((item)=>item.discount).reduce((acc,num)=>acc+num,0);
+        order.totalProductDiscount=totalOffer;
+        order.analyticsFieldsAdded=true;
+        await order.save();
+    }
+    } catch (error) {
+        console.error("setproductDiscountPerOrder : ",error);
+    }
+}
 
 module.exports={
     loadLogin,

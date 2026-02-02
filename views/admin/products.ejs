@@ -542,39 +542,50 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script>
     async function addOffer(productId) {
-        const { value: amount } = await Swal.fire({
-            title: 'Offer in percentage',
-            input: "number",
-            inputLabel: "percentage",
-            inputPlaceholder: "%",
-            confirmButtonColor: '#6366f1'
-        })
-        $.ajax({
-            url: "/admin/product-offer",
-            method: "patch",
-            data: {
-                percentage: amount,
-                productId: productId,
+    const { value: amount } = await Swal.fire({
+        title: 'Offer in percentage',
+        input: "number",
+        inputLabel: "percentage",
+        inputPlaceholder: "%",
+        confirmButtonColor: '#6366f1'
+    });
+
+    if (amount) {
+        fetch("/admin/product-offer", {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json"
             },
-            success: (response) => {
-                if (response.success === true) {
-                    Swal.fire({
-                        title:"Success",
-                        text:response.message,
-                        icon:"success"
-                    }).then(()=>{
-                        window.location.reload();
-                    })
-                } else {
-                    Swal.fire({
-                        title:"Error",
-                        text:response.message,
-                        icon:"error"
-                    })
-                }
+            body: JSON.stringify({
+                percentage: amount,
+                productId: productId
+            })
+        })
+        .then((res) => res.json())
+        .then((data) => {
+            if (data.success) {
+                Swal.fire({
+                    title: "Success",
+                    text: data.message,
+                    icon: "success"
+                }).then(() => window.location.reload());
+            } else {
+                Swal.fire({
+                    title: "Error",
+                    text: data.message,
+                    icon: "error"
+                });
             }
         })
+        .catch((error) => {
+            Swal.fire({
+                title: "Error",
+                text: "Something went wrong!",
+                icon: "error"
+            });
+        });
     }
+}
 
     function removeOffer(productId) {
         try {

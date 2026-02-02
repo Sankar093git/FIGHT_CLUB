@@ -1,6 +1,6 @@
 const Order=require("../../models/orderSchema");
-const User=require("../../models/userSchema");
 const Transactions=require("../../models/transactionSchema");
+const Product=require("../../models/productSchema");
 
 const loadSalesReport= async(req,res)=>{
     try {
@@ -8,7 +8,7 @@ const loadSalesReport= async(req,res)=>{
         let totalSalesCount=0;
         const start=new Date(startDate);
         const end=new Date(endDate);
-        const orderDetails=await Order.find({createdAt:{$gte:start,$lte:end}});
+        const orderDetails=await Order.find({createdAt:{$gte:start,$lte:end}}).populate("user");
         console.log("Sample order : ",orderDetails.length);
 
         if(orderDetails.length===0){
@@ -69,7 +69,32 @@ const loadSalesReport= async(req,res)=>{
          ]);
         console.log("Total revenue : ",totalOrderAmount);
 
-        //Calculating total discount
+        //Calculating total offer discount
+        let [{totalOfferDiscount}]= await Order.aggregate([
+            {
+                $match:{
+                    createdAt:{$gte:start,$lte:end},
+                    paymentStatus:"PAID",
+                    status:{$nin:["Returned","Cancelled"]}
+                }
+            },
+            {
+                $unwind:"$products"
+            },
+            {
+                $group:{
+                    _id:null,
+                    totalOfferDiscount:{$sum:"$products.discount"}
+                }
+            },
+            {
+                $project:{
+                    _id:0
+                }
+            }
+        ]);
+        console.log("Total offer discount given : ",totalOfferDiscount);
+        //Calculating total coupon discount
 
         let [{totalDiscount}]= await Order.aggregate([
             {
@@ -92,7 +117,7 @@ const loadSalesReport= async(req,res)=>{
             }
         ]);
 
-        console.log("Total discount given : ", totalDiscount);
+        console.log("Total coupon discount given : ", totalDiscount);
 
         let [{totalRefund}]= await Transactions.aggregate([
             {
@@ -129,6 +154,9 @@ const loadSalesReport= async(req,res)=>{
         res.status(500).json({success:false,message:"Something went wrong"});
     }
 }
+
+
+
 
 module.exports={
     loadSalesReport

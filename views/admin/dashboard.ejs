@@ -580,7 +580,7 @@
         <tr>
           <td><strong>${order.orderId}</strong></td>
           <td>${formatDateDisplay(order.createdAt)}</td>
-          <td>${order.user}</td>
+          <td>${order.user.name}</td>
           <td>${order.products.length}</td>
           <td>₹${formatCurrency(order.totalAmount)}</td>
           <td class="text-warning">-₹${formatCurrency(order.discountValue)}</td>
