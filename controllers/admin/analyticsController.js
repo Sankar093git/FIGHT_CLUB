@@ -155,9 +155,6 @@ const loadSalesReport= async(req,res)=>{
     }
 }
 
-
-
-
 module.exports={
     loadSalesReport
 }

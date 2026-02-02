@@ -106,6 +106,9 @@ const orderSchema = new mongoose.Schema({
           type:String
         }
       },
+  subTotal: { 
+    type: Number,  
+  },    
   totalAmount: { 
     type: Number, 
     required: true 

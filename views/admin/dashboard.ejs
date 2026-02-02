@@ -315,7 +315,7 @@
         <div class="stat-card">
           <div class="d-flex justify-content-between align-items-start">
             <div>
-              <p class="stat-label mb-1">Total Discount</p>
+              <p class="stat-label mb-1">Coupon Deductions</p>
               <p class="stat-value mb-0 text-danger">₹<span id="totalCouponDeduction">0</span></p>
             </div>
             <div class="stat-icon coupon">
@@ -582,8 +582,8 @@
           <td>${formatDateDisplay(order.createdAt)}</td>
           <td>${order.user.name}</td>
           <td>${order.products.length}</td>
-          <td>₹${formatCurrency(order.totalAmount)}</td>
-          <td class="text-warning">-₹${formatCurrency(order.discountValue)}</td>
+          <td>₹${formatCurrency(order.subtotal)}</td>
+          <td class="text-warning">-₹${formatCurrency(order.totalProductDiscount)}</td>
           <td class="text-danger">-₹${formatCurrency(order.discountValue)}</td>
           <td class="text-success fw-bold">₹${formatCurrency(order.totalAmount)}</td>
           <td>${getStatusBadge(order.status)}</td>
@@ -591,8 +591,8 @@
       `).join('');
       // Update footer totals
       const totals = orders.reduce((acc, o) => ({
-        subtotal: acc.subtotal + o.totalAmount,
-        discount: acc.discount + o.discountValue,
+        subtotal: acc.subtotal + o.subtotal,
+        discount: acc.discount + o.totalProductDiscount,
         coupon: acc.coupon + o.discountValue,
         total: acc.total + o.totalAmount
       }), { subtotal: 0, discount: 0, coupon: 0, total: 0 });
@@ -681,6 +681,8 @@
       // Download
       XLSX.writeFile(wb, filename);
     }
+
+
     // Download as PDF
     function downloadPDF() {
       const { jsPDF } = window.jspdf;
@@ -695,21 +697,21 @@
       const totals = reportData.reduce((acc, o) => ({
         sales: acc.sales + 1,
         subtotal: acc.subtotal + o.subtotal,
-        discount: acc.discount + o.discount,
-        coupon: acc.coupon + o.couponDeduction,
-        total: acc.total + o.finalAmount
+        discount: acc.discount + o.totalProductDiscount,
+        coupon: acc.coupon + o.discountValue,
+        total: acc.total + o.totalAmount
       }), { sales: 0, subtotal: 0, discount: 0, coupon: 0, total: 0 });
       doc.text(`Total Sales: ${totals.sales} | Total Amount: ₹${formatCurrency(totals.total)} | Discount: ₹${formatCurrency(totals.discount)} | Coupon Deductions: ₹${formatCurrency(totals.coupon)}`, 14, 42);
       // Prepare table data
       const tableData = reportData.map(order => [
         order.orderId,
         formatDateDisplay(order.date),
-        order.customer,
-        order.items,
+        order.user.name,
+        order.products.length,
         '₹' + formatCurrency(order.subtotal),
-        '-₹' + formatCurrency(order.discount),
-        '-₹' + formatCurrency(order.couponDeduction),
-        '₹' + formatCurrency(order.finalAmount),
+        '-₹' + formatCurrency(order.totalProductDiscount),
+        '-₹' + formatCurrency(order.discountValue),
+        '₹' + formatCurrency(order.totalAmount),
         order.status
       ]);
       // Add grand total row

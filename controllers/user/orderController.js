@@ -652,6 +652,27 @@ function deriveTotalStatus(products) {
 
 async function setDiscountvalue(){
     try {
+      await Order.updateMany(
+    {analyticsFieldsAdded:false},
+    [
+        {
+            $set: {
+                subtotal: {
+                    $reduce: {
+                        input: "$products",
+                        initialValue: 0,
+                        in: { 
+                            $add: [
+                                "$$value", 
+                                { $multiply: ["$$this.salePrice", "$$this.quantity"] }
+                            ] 
+                        }
+                    }
+                }
+            }
+        }
+    ]
+);
      const orderDetails= await Order.find({analyticsFieldsAdded:false}).populate("products.product");
      for(let order of orderDetails){
       for(let item of order.products){
