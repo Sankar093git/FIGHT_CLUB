@@ -201,9 +201,6 @@
           <h1 class="mb-1"><i class="bi bi-graph-up-arrow me-2"></i>Sales Report</h1>
           <p class="mb-0 opacity-75">Analyze your sales performance and generate reports</p>
         </div>
-        <a href="/admin/dashboard" class="btn btn-light">
-          <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
-        </a>
       </div>
     </div>
   </div>
@@ -330,9 +327,6 @@
       <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <span><i class="bi bi-table me-2"></i>Sales Report Details</span>
         <div class="d-flex gap-2">
-          <button class="btn btn-success download-btn" onclick="downloadReport('excel')">
-            <i class="bi bi-file-earmark-excel"></i>Download Excel
-          </button>
           <button class="btn btn-danger download-btn" onclick="downloadReport('pdf')">
             <i class="bi bi-file-earmark-pdf"></i>Download PDF
           </button>
@@ -640,47 +634,7 @@
         downloadPDF();
       }
     }
-    // Download as Excel
-    function downloadExcel() {
-      // Prepare data for Excel
-      const excelData = reportData.map(order => ({
-        'Order ID': order.orderId,
-        'Date': formatDateDisplay(order.date),
-        'Customer': order.customer,
-        'Items': order.items,
-        'Subtotal (₹)': order.subtotal,
-        'Discount (₹)': order.discount,
-        'Coupon Deduction (₹)': order.couponDeduction,
-        'Final Amount (₹)': order.finalAmount,
-        'Status': order.status
-      }));
-      // Add summary row
-      const totals = reportData.reduce((acc, o) => ({
-        subtotal: acc.subtotal + o.subtotal,
-        discount: acc.discount + o.discount,
-        coupon: acc.coupon + o.couponDeduction,
-        total: acc.total + o.finalAmount
-      }), { subtotal: 0, discount: 0, coupon: 0, total: 0 });
-      excelData.push({
-        'Order ID': 'GRAND TOTAL',
-        'Date': '',
-        'Customer': '',
-        'Items': reportData.reduce((sum, o) => sum + o.items, 0),
-        'Subtotal (₹)': totals.subtotal,
-        'Discount (₹)': totals.discount,
-        'Coupon Deduction (₹)': totals.coupon,
-        'Final Amount (₹)': totals.total,
-        'Status': ''
-      });
-      // Create workbook
-      const ws = XLSX.utils.json_to_sheet(excelData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Sales Report');
-      // Generate filename
-      const filename = `Sales_Report_${formatDateForInput(currentStartDate)}_to_${formatDateForInput(currentEndDate)}.xlsx`;
-      // Download
-      XLSX.writeFile(wb, filename);
-    }
+    //download as excel
 
 
     // Download as PDF
@@ -705,7 +659,7 @@
       // Prepare table data
       const tableData = reportData.map(order => [
         order.orderId,
-        formatDateDisplay(order.date),
+        formatDateDisplay(order.createdAt),
         order.user.name,
         order.products.length,
         '₹' + formatCurrency(order.subtotal),
@@ -719,7 +673,7 @@
         'GRAND TOTAL',
         '',
         '',
-        reportData.reduce((sum, o) => sum + o.items, 0),
+        reportData.reduce((sum, o) => sum + o.products.length, 0),
         '₹' + formatCurrency(totals.subtotal),
         '-₹' + formatCurrency(totals.discount),
         '-₹' + formatCurrency(totals.coupon),

@@ -8,6 +8,7 @@ const loadSalesReport= async(req,res)=>{
         let totalSalesCount=0;
         const start=new Date(startDate);
         const end=new Date(endDate);
+        console.log(start,"---",end);
         const orderDetails=await Order.find({createdAt:{$gte:start,$lte:end}}).populate("user");
         console.log("Sample order : ",orderDetails.length);
 
@@ -119,7 +120,7 @@ const loadSalesReport= async(req,res)=>{
 
         console.log("Total coupon discount given : ", totalDiscount);
 
-        let [{totalRefund}]= await Transactions.aggregate([
+        let [{ totalRefund } = { totalRefund: 0 }]= await Transactions.aggregate([
             {
                 $match:{
                     method:"refund",
@@ -139,12 +140,14 @@ const loadSalesReport= async(req,res)=>{
             }
         ]);
 
+        
+
         console.log("Total refunds given : ",totalRefund);
 
         res.status(200).json({success:true,message:{
             totalSalesCount,
             totalOrderAmount,
-            totalRefund,
+            totalRefund:totalRefund||0,
             totalDiscount,
         },orders:orderDetails});
         
