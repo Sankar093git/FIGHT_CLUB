@@ -46,7 +46,7 @@ const orderSchema = new mongoose.Schema({
           "Partially cancelled",
           "Returned",
           "Return processing",
-          "Return processing(P)",
+          "Return processing-P",
           "Partially returned",
           "Return rejected"
         ],
@@ -112,6 +112,14 @@ const orderSchema = new mongoose.Schema({
   totalAmount: { 
     type: Number, 
     required: true 
+  },
+  refundedAmount:{
+    type:Number,
+    default:0
+  },
+  netAmount:{
+    type:Number,
+    default:0
   },
   totalProductDiscount:{
     type:Number,

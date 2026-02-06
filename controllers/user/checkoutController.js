@@ -128,6 +128,21 @@ const applyCoupon= async(req,res)=>{
   }
 }
 
+const removeCoupon= async(req,res)=>{
+    try {
+        let {code,totalAmount,discount}=req.body
+        totalAmount=Number(totalAmount.replace(/[^\d.]/g, ''));
+        discount=Number(discount.replace(/[^\d.]/g, ''))
+        const newTotal= totalAmount+discount;
+        console.log(newTotal)
+        await User.updateOne({_id:req.session.user},{$pull:{redeemedCoupons:code}});
+        res.status(200).json({success:true,message:"Coupon removed successfully",newTotal:newTotal,discount:0})
+    } catch (error) {
+        console.error("Remove coupon : ",error);
+        res.status(500).json({success:false,message:"Something went wrong!"});
+    }
+}
+
 
 const addAddress= async (req,res)=>{
     try {
@@ -168,5 +183,6 @@ module.exports={
     addAddress,
     editAddress,
     applyCoupon,
-    validateCart
+    validateCart,
+    removeCoupon
 }

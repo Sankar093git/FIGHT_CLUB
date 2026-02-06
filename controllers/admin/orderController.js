@@ -141,7 +141,7 @@ const changeOrderStatus = async (req, res) => {
   }
 };
 
- const handlingReturn = async (req, res) => {
+const handlingReturn = async (req, res) => {
   try {
     const orderId = req.params.id;
     const { currentReturnApproval } = req.body;
@@ -163,7 +163,123 @@ const changeOrderStatus = async (req, res) => {
     }
 
     if (currentReturnApproval) {
+      const validProducts = order.products.filter((item) => item.status === "Return processing");
+      
+      if (validProducts.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "No products found with return processing status"
+        });
+      }
 
+      // Update product statuses and restore stock
+      for (const prod of order.products) {
+        if (prod.status === "Return processing") {
+          prod.status = "Returned";
+          await Product.updateOne(
+            { _id: prod.product, "variants.size": prod.size },
+            { $inc: { "variants.$.stock": prod.quantity } }
+          );
+        }
+      }
+
+      // Calculate refund amount
+      const transactionId = "TRA-" + crypto.randomBytes(4).toString("hex");
+      const refundAmount = validProducts.reduce(
+        (sum, item) => sum + (item.salePrice * item.quantity), 
+        0
+      );
+
+      // Update wallet
+      const walletDetails = await Wallet.findOne({ userId: order.user });
+      if (!walletDetails) {
+        const newWallet = new Wallet({
+          userId: order.user,
+          balance: refundAmount
+        });
+        await newWallet.save();
+      } else {
+        await Wallet.updateOne(
+          { userId: order.user }, 
+          { $inc: { balance: refundAmount } }
+        );
+      }
+
+      // Create transaction record
+      const newTransaction = new Transaction({
+        userId: order.user,
+        transactionId: transactionId,
+        type: "credit",
+        method: "refund",
+        amount: refundAmount,
+        relatedOrderId: orderId,
+        description: "Refund for returned product(s)"
+      });
+      await newTransaction.save();
+
+      // Track refund separately (preserves original totalAmount for analytics)
+      order.refundedAmount = (order.refundedAmount || 0) + refundAmount;
+
+      // Determine final order status
+      const allReturned = order.products.every(item => item.status === "Returned");
+      order.status = allReturned ? "Returned" : "Partially returned";
+      
+      await order.save();
+
+      return res.json({
+        success: true,
+        message: "Return approved successfully",
+        refundAmount: refundAmount
+      });
+
+    } else {
+      // Rejection flow
+      for (let item of order.products) {
+        if (item.status === "Return processing") {
+          item.status = "Return rejected";
+        }
+      }
+      order.status = "Return rejected";
+      await order.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Return rejected successfully"
+      });
+    }
+
+  } catch (error) {
+    console.error("Error while handling return:", error);
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while processing the return"
+    });
+  }
+};
+
+ /*const handlingReturn = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const { currentReturnApproval } = req.body;
+
+    const order = await Order.findOne({ orderId }).populate("products.product");
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found"
+      });
+    }
+
+    if (order.status !== "Processing return") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid return state"
+      });
+    }
+
+    if (currentReturnApproval) {
+      const validProducts=order.products.filter((item)=>item.status=="Return processing");
       for (const prod of order.products) {
          if(prod.status=="Return processing"){
           prod.status="Returned";
@@ -175,14 +291,10 @@ const changeOrderStatus = async (req, res) => {
       }
       //Wallet updation / refund logic
       const transactionId = "TRA-" + crypto.randomBytes(4).toString("hex");
-      const validProducts=order.products.filter((item)=>item.status=="Return processing");
-      const refundArray=validProducts.map((item)=>item.product.salesPrice*item.quantity);
+      const refundArray=validProducts.map((item)=>item.salePrice*item.quantity);
       console.log(refundArray);
       const totalSalesPrice=refundArray.reduce((acc,num)=>acc+num,0);
-      const discountSplit=Math.floor(order.discountValue/order.products.length);
-      const multiplier=refundArray.length
-      console.log(multiplier)
-      const refundAmount=totalSalesPrice-discountSplit*multiplier;
+      const refundAmount=totalSalesPrice
       console.log(refundAmount)
       const walletDetails= await Wallet.findOne({userId:order.user});
       if(!walletDetails){
@@ -190,7 +302,7 @@ const changeOrderStatus = async (req, res) => {
           userId:order.user,
           balance:refundAmount
         });
-        newWallet.save();
+        await newWallet.save();
       }else{
         await Wallet.updateOne({userId:order.user},{$inc:{balance:refundAmount}});
       }
@@ -234,7 +346,7 @@ const changeOrderStatus = async (req, res) => {
       message: error.message
     });
   }
-};
+};*/
 
  const displayOrder = async (req, res) => {
   try {
@@ -282,12 +394,17 @@ const handlesingleReturn = async (req, res) => {
   try {
     const productId = new mongoose.Types.ObjectId(req.params.productId);
     const { orderId, size, action } = req.body;
-    console.log(orderId);
 
+    // Validate required fields
+    if (!orderId || !size) {
+      return res.status(400).json({
+        success: false,
+        message: "Order ID and size are required"
+      });
+    }
 
-
-    //action=reject
-    if (!action) {
+    // ACTION: REJECT
+    if (action === "reject") {
       const rejectResult = await Order.updateOne(
         {
           orderId,
@@ -315,26 +432,25 @@ const handlesingleReturn = async (req, res) => {
       });
     }
 
-
-
-   //action=approve
-    const orderDetails = await Order.findOne({
-      orderId
-    });
-
-    if(orderDetails.discountValue){
-      res.status(400).json({success:false,messge:"Return not possible due to coupon in order"});
-    }
-
-    console.log(orderDetails);
+    // ACTION: APPROVE (default when action is not "reject")
+    const orderDetails = await Order.findOne({ orderId });
 
     if (!orderDetails) {
       return res.status(404).json({
         success: false,
-        message: "Order or product not found"
+        message: "Order not found"
       });
     }
 
+    // Check if order has discount/coupon applied
+    if (orderDetails.discountValue&&orderDetails.products.length>1) {
+      return res.status(400).json({
+        success: false,
+        message: "Return not possible due to coupon in order"
+      });
+    }
+
+    // Find the matching product in the order
     const matchedProduct = orderDetails.products.find(
       p => p.product.equals(productId) && p.size === size
     );
@@ -346,18 +462,32 @@ const handlesingleReturn = async (req, res) => {
       });
     }
 
-    const { quantity, returnQuantity } = matchedProduct;
+    const { quantity, returnQuantity, salePrice } = matchedProduct;
 
-    if (returnQuantity < 0) {
+    // Validate return quantity
+    if (returnQuantity < 0 || returnQuantity > quantity) {
       return res.status(400).json({
         success: false,
         message: "Invalid return quantity"
       });
     }
-    const transactionId = "TRA-" + crypto.randomBytes(4).toString("hex");
-    const productDetails= orderDetails.products.find((item)=>item.product==productId);
-    //full return
+
     if (returnQuantity === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Return quantity cannot be zero"
+      });
+    }
+
+    // Generate transaction ID
+    const transactionId = "TRA-" + crypto.randomBytes(4).toString("hex");
+
+    // Determine if full or partial return
+    const isFullReturn = returnQuantity === quantity;
+    const returnStatus = isFullReturn ? "Returned" : "Partially returned";
+
+    // Update order status
+    if (isFullReturn) {
       await Order.updateOne(
         {
           orderId,
@@ -366,111 +496,100 @@ const handlesingleReturn = async (req, res) => {
         },
         {
           $set: {
-            "products.$.status": "Returned",
+            "products.$.status": returnStatus
           }
         }
       );
-      await Product.updateOne(
-        { _id: productId, "variants.size": size },
-        { $inc: { "variants.$.stock": quantity } }
+    } else {
+      await Order.updateOne(
+        {
+          orderId,
+          "products.product": productId,
+          "products.size": size
+        },
+        {
+          $inc: {
+            "products.$.quantity": -returnQuantity
+          },
+          $set: {
+            "products.$.status": returnStatus
+          }
+        }
       );
-
-      let refundAmount=productDetails.salePrice*quantity;
-      orderDetails.totalAmount-=refundAmount;
-      await orderDetails.save();
-
-      //Wallet updation/ refund logic
-
-      const walletDetails= await Wallet.findOne({userId:orderDetails.user});
-      if(!walletDetails){
-        let newWallet= new Wallet({
-          userId:orderDetails.user,
-          balance:refundAmount
-        })
-        await newWallet.save();
-      }else{
-        await Wallet.updateOne({userId:orderDetails.user},{$inc:{balance:refundAmount}});
-      }
-
-      const newTransaction= new Transaction({
-      userId:orderDetails.user,
-      transactionId:transactionId,
-      type:"credit",
-      method:"refund",
-      amount:refundAmount,
-      relatedOrderId:id,
-      description:"return message"
-    });
-    await newTransaction.save();
-
-    return res.status(200).json({
-        success: true,
-        message: "Product returned successfully"
-      });
     }
 
-    //partial return
-    await Order.updateOne(
-      {
-        orderId,
-        "products.product": productId,
-        "products.size": size
-      },
-      {
-        $inc: {
-          "products.$.quantity": -returnQuantity
-        },
-        $set: {
-          "products.$.status": "Partially returned",
-        }
-      }
-    );
-
+    // Update product stock
     await Product.updateOne(
       { _id: productId, "variants.size": size },
       { $inc: { "variants.$.stock": returnQuantity } }
     );
 
-    let refundAmount=productDetails.salePrice*returnQuantity;
-      orderDetails.totalAmount-=refundAmount;
-      await orderDetails.save();
+    // Calculate refund amount
+    let refundAmount=0;
+    if(orderDetails.products.length==1){
+      refundAmount=orderDetails.totalAmount;
+    }else{
+     refundAmount = salePrice * returnQuantity;
+     orderDetails.totalAmount -= refundAmount;
+    }
+    await orderDetails.save();
 
-      //Wallet updation/ refund logic
-
-      const walletDetails= await Wallet.findOne({userId:orderDetails.user});
-      if(!walletDetails){
-        let newWallet= new Wallet({
-          userId:orderDetails.user,
-          balance:refundAmount
-        })
-        await newWallet.save();
-      }else{
-        await Wallet.updateOne({userId:orderDetails.user},{$inc:{balance:refundAmount}});
-      }
-
-      const newTransaction= new Transaction({
-      userId:req.session.user,
-      transactionId:transactionId,
-      type:"credit",
-      method:"refund",
-      amount:refundAmount,
-      relatedOrderId:id,
-      description:"return message"
-    });
-    await newTransaction.save();
+    // Process wallet refund
+    await processWalletRefund(
+      orderDetails.user,
+      refundAmount,
+      transactionId,
+      orderId
+    );
 
     return res.status(200).json({
       success: true,
-      message: "Partial return processed successfully"
+      message: isFullReturn 
+        ? "Product returned successfully" 
+        : "Partial return processed successfully"
     });
 
   } catch (error) {
     console.error("Error while handling single return:", error);
     return res.status(500).json({
       success: false,
-      message: error.message
+      message: "An error occurred while processing the return"
     });
   }
+};
+
+// Helper function to handle wallet refund and transaction creation
+const processWalletRefund = async (userId, refundAmount, transactionId, orderId) => {
+  // Check if wallet exists
+  const walletDetails = await Wallet.findOne({ userId });
+
+  if (!walletDetails) {
+    // Create new wallet if it doesn't exist
+    const newWallet = new Wallet({
+      userId,
+      balance: refundAmount
+    });
+    await newWallet.save();
+  } else {
+    // Update existing wallet
+    await Wallet.updateOne(
+      { userId },
+      { $inc: { balance: refundAmount } }
+    );
+  }
+
+  // Create transaction record
+  const newTransaction = new Transaction({
+    userId,
+    transactionId,
+    type: "credit",
+    method: "refund",
+    amount: refundAmount,
+    relatedOrderId: orderId,
+    description: "Refund for returned product"
+  });
+  
+  await newTransaction.save();
 };
 
 const handleProductStatus = async (req, res) => {
@@ -538,6 +657,7 @@ function deriveTotalStatus(products) {
   if (activeItems.every(s => s === "Shipped")) return "Shipped";
   if (activeItems.every(s => s === "Out for delivery")) return "Out for delivery";
   if (activeItems.every(s => s === "Delivered")) return "Delivered";
+  if (activeItems.every(s => s === "Returned")) return "Returned";
 
   return "Processing";
 }

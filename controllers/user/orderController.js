@@ -272,7 +272,7 @@ const cancelOrder = async (req, res) => {
       });
     }
     const validProducts=order.products.filter((prod)=>prod.status=="Pending");
-    const refundAmount=validProducts.map((prod)=>prod.quantity*prod.product.salesPrice).reduce((acc,num)=>acc+num,0)-(Math.floor(order.discountValue/order.products.length));
+    const refundAmount=validProducts.map((prod)=>prod.quantity*prod.product.salesPrice).reduce((acc,num)=>acc+num,0)-(order.discountValue);
 
     order.products.forEach(prod => {
       if(!["Returned","Delivered","Cancelled","Return Processing","Shipped","Return rejected"].includes(prod.status)){
@@ -396,7 +396,7 @@ const displayOrder = async (req, res) => {
 
     //  Calculate subtotal
     const subTotal = order.products.reduce((acc, item) => {
-      return acc + (item.salePrice * item.quantity);
+      return acc + (item.salePrice??item.product.salesPrice * item.quantity);
     }, 0);
 
     //  Pricing (same logic as before)
@@ -590,7 +590,7 @@ const singleCancel = async (req, res) => {
     // 2. Prepare the update object
     const updateFields = value 
       ? { 
-          "products.$[elem].status": "Return processing(P)", 
+          "products.$[elem].status": "Return processing-P", 
           "products.$[elem].returnQuantity": value 
         }
       : { 
@@ -645,14 +645,21 @@ function deriveTotalStatus(products) {
   if (activeItems.every(s => s === "Out for delivery")) return "Out for delivery";
   if (activeItems.every(s => s === "Delivered")) return "Delivered";
   if (activeItems.every(s => s === "Returned")) return "Returned";
-  if (activeItems.every(s => s === "Return processing")) return "Processing return";
+  if (activeItems.every(s => s === "Return processing"||s === "Return processing(P)")) return "Processing return";
 
   return "Processing";
 }
 
 async function setDiscountvalue(){
     try {
-      await Order.updateMany(
+     const orderDetails= await Order.find({analyticsFieldsAdded:false}).populate("products.product");
+     for(let order of orderDetails){
+      for(let item of order.products){
+        item.salePrice=item.product.salesPrice;
+        item.discount=item.product.productOffer>item.product.categoryOffer?item.product.productOffer:item.product.categoryOffer||0;
+     }
+    await order.save();
+    await Order.updateMany(
     {analyticsFieldsAdded:false},
     [
         {
@@ -673,13 +680,6 @@ async function setDiscountvalue(){
         }
     ]
 );
-     const orderDetails= await Order.find({analyticsFieldsAdded:false}).populate("products.product");
-     for(let order of orderDetails){
-      for(let item of order.products){
-        item.salePrice=item.product.salesPrice;
-        item.discount=item.product.productOffer>item.product.categoryOffer?item.product.productOffer:item.product.categoryOffer||0;
-     }
-    await order.save();
    }
     } catch (error) {
         console.error("Setting discount value per product : ",error)

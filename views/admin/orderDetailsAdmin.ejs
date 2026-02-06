@@ -72,7 +72,7 @@
     <option value="Cancelled" <%= prod.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
     <option value="Partially cancelled" <%= prod.status === 'Partially cancelled' ? 'selected' : '' %>>Partially cancelled</option>
     <option value="Return processing" <%= prod.status === 'Return processing' ? 'selected' : '' %>>Return processing</option>
-    <option value="Return processing(P)" <%= prod.status === 'Return processing(p)' ? 'selected' : '' %>>Return processing(P)</option>
+    <option value="Return processing-P" <%= prod.status === 'Return processing-P' ? 'selected' : '' %>>Return processing-P</option>
     <option value="Returned" <%= prod.status === 'Returned' ? 'selected' : '' %>>Returned</option>
     <option value="Partially returned" <%= prod.status === 'Partially returned' ? 'selected' : '' %>>Partially returned</option>
     <option value="Return rejected" <%= prod.status === 'Return rejected' ? 'selected' : '' %>>Return rejected</option>
@@ -80,7 +80,7 @@
 </div>
 
                 </div>
-                <% if(prod.status==="Return processing") {%>
+                <% if(prod.status==="Return processing"||prod.status==="Return processing-P") {%>
                 <button class="btn btn-sm btn-outline-success"onclick="handleReturn('<%=prod.product._id%>','<%=prod.size%>',true)">Approve</button>
                 <button class="btn btn-sm btn-outline-danger me-1" onclick="handleReturn('<%=prod.product._id%>','<%=prod.size%>',false)" >Reject</button>
                 <% } %>

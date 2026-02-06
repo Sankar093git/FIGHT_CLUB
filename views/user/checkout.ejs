@@ -108,6 +108,10 @@
         <button type="button" class="btn btn-outline-primary" id="applyCouponBtn">
          <i class="bi bi-check-lg"></i> Apply
         </button>
+         <button type="button" class="btn btn-outline-danger d-none" id="clearCouponBtn">
+         <i class="bi bi-check-lg"></i> Clear
+        </button> 
+          
       </div>
       <div id="couponMessage" class="small mt-1"></div>
     </div>
@@ -505,7 +509,7 @@ function attachValidation(formId) {
 
 //Coupon logic
 
-document.getElementById('applyCouponBtn').addEventListener('click', async function() {
+document.getElementById('applyCouponBtn').addEventListener('click', async function(e) {
   const select = document.getElementById('couponSelect');
   const code = select.value;
   const messageDiv = document.getElementById('couponMessage');
@@ -528,6 +532,8 @@ document.getElementById('applyCouponBtn').addEventListener('click', async functi
       messageDiv.innerHTML = '<span class="text-success">Coupon applied!</span>';
       document.getElementById('totalAmount').textContent = '₹' + data.newTotal;
       document.getElementById('discountValue').textContent='-₹' + data.discount;
+      e.target.classList.add("d-none");
+      document.getElementById("clearCouponBtn").classList.remove("d-none");
     } else {
       messageDiv.innerHTML = '<span class="text-danger">' + data.message + '</span>';
     }
@@ -535,6 +541,50 @@ document.getElementById('applyCouponBtn').addEventListener('click', async functi
     messageDiv.innerHTML = '<span class="text-danger">Error applying coupon</span>';
   }
 });
+
+document.getElementById('clearCouponBtn').addEventListener("click", async function(e) {
+  try {
+    const select = document.getElementById('couponSelect');
+    const code=select.value;
+    select.value="";
+    const messageDiv = document.getElementById('couponMessage');
+    await fetch("/clear-coupon",{
+      method:"PATCH",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        code:code,
+        totalAmount:document.getElementById('totalAmount').textContent,
+        discount:document.getElementById('discountValue').textContent
+      })
+    }).then((res)=>res.json())
+    .then((data)=>{
+      if(data.success){
+        couponCode="";
+         document.getElementById('couponSelect').selectedIndex = 0;
+         messageDiv.innerHTML = '<span class="text-success"></span>';
+         document.getElementById("applyCouponBtn").classList.remove("d-none");
+         e.target.classList.add("d-none");
+         document.getElementById('totalAmount').textContent= '₹' + data.newTotal
+         document.getElementById('discountValue').textContent= '-₹' + data.discount;
+      }else{
+        Swal.fire({
+          title:"Oops",
+          text:data.message,
+          icon:"error"
+        })
+      }
+    }) 
+  } catch (error) {
+    console.error("Coupon Clear : ",error);
+    Swal.fire({
+      title:"Error",
+      text:"Something went wrong!",
+      icon:"error"
+    })
+  }
+})
 
 
 attachValidation("addressForm");

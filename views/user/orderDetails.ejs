@@ -235,7 +235,7 @@ function returnProduct(productId,size,quantity){
                 headers:{
                   "Content-Type":"application/json"
                 },
-                body:JSON.stringify({id,size,quantity})
+                body:JSON.stringify({id,size,value:quantity})
               }).then((res)=>res.json())
                 .then((data)=>{
                   if(data.success){
