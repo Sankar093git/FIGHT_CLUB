@@ -7,13 +7,15 @@ const Wallet=require("../../models/walletShema");
 const mongoose=require("mongoose");
 const paymentController=require("../../controllers/user/paymentController");
 const Transactions=require("../../models/transactionSchema");
+const Constants=require("../../models/constantSchema");
 
 
 const placeOrder = async (req, res) => {
   try {
     const userId = req.session.user;
-    const taxes=50;
-    const shipping=100;
+    const constants= await Constants.find({});
+    let shipping=constants[0].shipping;
+    let taxes=constants[0].taxes;;
     const {
       paymentMethod
       ,couponCode
@@ -168,7 +170,7 @@ const paymentFailure= async(req,res)=>{
 
 const updatePayment=async(req,res)=>{
   try {
-    console.log("payment updation is triggering!");
+    console.log("Payment updation is triggering!");
     const {razorpay_order_id,razorpay_payment_id,razorpay_signature}=req.body;
     const orderId=req.params.orderId;
     const orderDetails= await Order.findOne({orderId:orderId});
@@ -403,8 +405,9 @@ const displayOrder = async (req, res) => {
     }, 0);
 
     //  Pricing (same logic as before)
-    const shipping = 100;
-    const taxes = 50;
+    const constants= await Constants.find({});
+    let shipping=constants[0].shipping;
+    let taxes=constants[0].taxes;
     const discount = order.discountValue;
     const total = subTotal + shipping + taxes - discount;
 

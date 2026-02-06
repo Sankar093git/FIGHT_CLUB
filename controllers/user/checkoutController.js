@@ -1,5 +1,6 @@
 const User=require("../../models/userSchema");
 const Coupon=require("../../models/couponSchema");
+const Constants=require("../../models/constantSchema");
 const crypto=require("crypto");
 
 const validateCart= async(req,res)=>{
@@ -58,11 +59,13 @@ const loadCheckout= async(req,res)=>{
         });
 
         const coupons= await Coupon.find();
-
+        const constants= await Constants.find({});
+        let shipping=constants[0].shipping;
+        let taxes=constants[0].taxes;
 
         summary.subtotal=priceList.reduce((acc,num)=>acc+num,0);
-        summary.taxes=50;
-        summary.shipping=100;
+        summary.taxes=taxes;
+        summary.shipping=shipping;
         summary.total=(summary.subtotal+summary.taxes+summary.shipping);
         console.log(summary);
         const validCoupons=coupons.filter((coupon)=>coupon.minPurchase<=summary.total).map((coupon)=>coupon.code);
@@ -83,8 +86,9 @@ const loadCheckout= async(req,res)=>{
 
 const applyCoupon= async(req,res)=>{
   try {
-    const taxes=50;
-    const shipping=100;
+    const constants= await Constants.find({});
+    let shipping=constants[0].shipping;
+    let taxes=constants[0].taxes;
     const couponCode=req.body.couponCode;
     const userId=req.session.user;
     const couponDetails= await Coupon.findOne({code:couponCode});

@@ -4,6 +4,7 @@ const Order=require("../../models/orderSchema");
 const mongoose=require("mongoose");
 const Wallet=require("../../models/walletShema");
 const Transaction=require("../../models/transactionSchema");
+const Constants=require("../../models/constantSchema");
 const crypto=require("crypto");
 
 const getOrderList = async (req, res) => {
@@ -364,8 +365,9 @@ const handlingReturn = async (req, res) => {
       return acc + (item.salePrice * item.quantity);
     }, 0);
 
-    const shipping = 100;
-    const taxes = 50;
+    const constants= await Constants.find({});
+    let shipping=constants[0].shipping;
+    let taxes=constants[0].taxes;
     const discount=order.discountValue;
     const total = subTotal + shipping + taxes - discount;
 
@@ -523,11 +525,14 @@ const handlesingleReturn = async (req, res) => {
       { _id: productId, "variants.size": size },
       { $inc: { "variants.$.stock": returnQuantity } }
     );
-
+    const constants= await Constants.find({});
+    let shipping=constants[0].shipping;
+    let taxes=constants[0].taxes;
+    let constant= shipping+taxes;
     // Calculate refund amount
     let refundAmount=0;
     if(orderDetails.products.length==1){
-      refundAmount=orderDetails.totalAmount;
+      refundAmount=orderDetails.totalAmount-constant;
     }else{
      refundAmount = salePrice * returnQuantity;
      orderDetails.totalAmount -= refundAmount;
