@@ -8,6 +8,7 @@ const brandController=require("../../controllers/admin/brandController");
 const orderController=require("../../controllers/admin/orderController");
 const couponController=require("../../controllers/admin/couponController");
 const analyticsController=require("../../controllers/admin/analyticsController");
+const constantsController=require("../../controllers/admin/constantsController");
 const {adminAuth,adminAuth1}=require("../../middlewares/auth");
 const multer=require("multer");
 const uploads=require("../../helpers/multer");
@@ -69,6 +70,7 @@ router.patch("/update-product-status",adminAuth,orderController.handleProductSta
 
 //Sales report
 router.post("/generate-sales-report",adminAuth,analyticsController.loadSalesReport)
+router.post("/shipping-tax",adminAuth,constantsController.addConstants);
 
 
 

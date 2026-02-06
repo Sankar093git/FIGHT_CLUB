@@ -48,6 +48,9 @@ const placeOrder = async (req, res) => {
     return acc + (price * item.quantity)
   }, 0)+shipping+taxes;
    console.log(totalAmount);
+   if(paymentMethod=="COD"&&totalAmount>1000){
+    return res.status(400).json({success:false,message:"COD not possible, please select another payment method!"})
+   }
    let discountValue=0;
    if(couponCode){
       const couponDetails = await Coupon.findOne({code:couponCode});
