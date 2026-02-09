@@ -158,6 +158,233 @@ const loadSalesReport= async(req,res)=>{
     }
 }
 
+const loadChart= async(req,res)=>{
+    try {
+        const filter=req.query.filter;
+        let matchFilter={};
+        let groupFilter={};
+        let sort={sortDate:1};
+        let labels=[];
+        let values=[];
+        if(filter=="weekly"){
+            matchFilter= {
+             createdAt: { $gte: new Date(new Date() - 7 * 24 * 60 * 60 * 1000) }
+           }
+           groupFilter={
+            _id: { $dayOfWeek: "$createdAt" }, 
+            Totalamount: { $sum: "$totalAmount"},
+            sortDate: { $first: "$createdAt" } 
+          }
+        }else if(filter=="monthly"){
+            matchFilter={
+             createdAt: { $gte: new Date(new Date() - 30 * 24 * 60 * 60 * 1000) }
+            }
+
+            groupFilter={
+             _id: { $dateToString: { format: "%b %d", date: "$createdAt" } }, 
+             Totalamount: { $sum: "$totalAmount"},
+             sortDate: { $first: "$createdAt" }
+             }
+        }else if(filter=="yearly"){
+            matchFilter={
+             createdAt: { $gte: new Date(new Date() - 365 * 24 * 60 * 60 * 1000) }
+            }
+
+            groupFilter={
+             _id: { $dateToString: { format: "%b", date: "$createdAt" } }, 
+             Totalamount: { $sum: "$totalAmount"},
+             sortDate: { $first: "$createdAt" }
+             }
+        }else if(filter=="daily"){
+            matchFilter={
+             createdAt: { $gte: new Date(new Date() -  24 * 60 * 60 * 1000) }
+            }
+
+            groupFilter={
+             _id: { $dateToString: { format: "%H:00", date: "$createdAt" } }, 
+             Totalamount: { $sum: "$totalAmount"},
+             sortDate: { $first: "$createdAt" }
+             }
+        }
+
+        const arrayDetails= await Order.aggregate([
+            {
+                $match:matchFilter
+            },
+            {
+                $group:groupFilter
+            },{
+                $sort:sort
+            }
+        ]);
+
+        for(let item of arrayDetails){
+            labels.push(item._id);
+            values.push(item.Totalamount);
+        }
+
+        console.log(`labels : ${labels}\nvalues : ${values}`);
+        res.status(200).json({
+            success:true,
+            labels:labels,
+            values:values
+        });
+    } catch (error) {
+        console.error("Loading chart : ",error);
+        res.status(500).json({success:true,message:"Something went wrong!"})
+    }
+}
+
+const loadTopTens= async(req,res)=>{
+    try {
+        const productRankings = await Order.aggregate([
+    {
+        $match: {
+            paymentStatus: "PAID",
+            status: { $nin: ["Returned", "Cancelled"] }
+        }
+    },
+    { $unwind: "$products" },
+    {
+        $group: {
+            _id: "$products.product",
+            Count: { $sum: "$products.quantity" } 
+        }
+    },
+    { $sort: { Count: -1 } },
+    { $limit: 10 },
+    {
+        $lookup: {
+            from: "products",         
+            localField: "_id",        
+            foreignField: "_id",      
+            as: "details"
+        }
+    },
+    { $unwind: "$details" },
+    {
+        $project: {
+            _id: 0,
+            Name: "$details.productName", 
+            Count: 1
+        }
+    }
+]);
+
+    const categoryRankings = await Order.aggregate([
+    {
+        $match: {
+            paymentStatus: "PAID",
+            status: { $nin: ["Returned", "Cancelled"] }
+        }
+    },
+    {
+        $unwind:"$products"
+    },
+    {
+        $lookup:{
+            from:"products",
+            localField:"products.product",
+            foreignField:"_id",
+            as:"productDetails"
+        }
+    },
+    {
+        $unwind:"$productDetails"
+    },
+    {
+       $group:{
+        _id:"$productDetails.category",
+        Count:{$sum:"$products.quantity"},
+       }
+    },
+    {
+        $lookup:{
+            from:"categories",
+            localField:"_id",
+            foreignField:"_id",
+            as:"categoryDetails"
+        }
+    },
+    {
+        $unwind:"$categoryDetails"
+    },
+    {
+        $sort:{Count:-1}
+    },
+    {
+        $limit:10
+    },{
+        $project:{
+            _id:0,
+            Name:"$categoryDetails.name",
+            Count:1
+        }
+    }
+]);
+
+    const brandRankings = await Order.aggregate([
+    {
+        $match: {
+            paymentStatus: "PAID",
+            status: { $nin: ["Returned", "Cancelled"] }
+        }
+    },
+    {
+        $unwind:"$products"
+    },
+    {
+        $lookup:{
+            from:"products",
+            localField:"products.product",
+            foreignField:"_id",
+            as:"productDetails"
+        }
+    },
+    {
+        $unwind:"$productDetails"
+    },
+    {
+       $group:{
+        _id:"$productDetails.brand",
+        Count:{$sum:"$products.quantity"},
+       }
+    },
+    {
+        $lookup:{
+            from:"brands",
+            localField:"_id",
+            foreignField:"brandName",
+            as:"brandDetails"
+        }
+    },
+    {
+        $unwind:"$brandDetails"
+    },
+    {
+        $sort:{Count:-1}
+    },
+    {
+        $limit:10
+    },{
+        $project:{
+            _id:0,
+            Name:"$brandDetails.brandName",
+            Count:1
+        }
+    }
+]);
+
+    res.status(200).json({success:true,products:productRankings,categories:categoryRankings,brands:brandRankings})
+
+    } catch (error) {
+        console.error("Top ten error : ",error);
+        res.status(500).json({success:false,message:"Something went wrong"});
+    }
+}
+
 module.exports={
-    loadSalesReport
+    loadSalesReport,
+    loadChart,
+    loadTopTens
 }

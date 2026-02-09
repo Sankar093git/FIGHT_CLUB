@@ -71,6 +71,8 @@ router.patch("/update-product-status",adminAuth,orderController.handleProductSta
 //Sales report
 router.post("/generate-sales-report",adminAuth,analyticsController.loadSalesReport)
 router.post("/shipping-tax",adminAuth,constantsController.addConstants);
+router.get("/sales-chart",adminAuth,analyticsController.loadChart);
+router.get("/top-sellers",adminAuth,analyticsController.loadTopTens);
 
 
 
