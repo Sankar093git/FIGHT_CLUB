@@ -237,6 +237,7 @@ const loadChart= async(req,res)=>{
 
 const loadTopTens= async(req,res)=>{
     try {
+    //product rankings    
         const productRankings = await Order.aggregate([
     {
         $match: {
@@ -270,7 +271,7 @@ const loadTopTens= async(req,res)=>{
         }
     }
 ]);
-
+// category rankings
     const categoryRankings = await Order.aggregate([
     {
         $match: {
@@ -322,7 +323,7 @@ const loadTopTens= async(req,res)=>{
         }
     }
 ]);
-
+//brand rankings
     const brandRankings = await Order.aggregate([
     {
         $match: {

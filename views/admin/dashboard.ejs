@@ -890,7 +890,6 @@ async function loadTopLists() {
   try {
     const res = await fetch('/admin/top-sellers');
     const data = await res.json();
-    // Expects: { products: [{name, count}], categories: [{name, count}], brands: [{name, count}] }
 
     renderTopList('topProductsBody', data.products);
     renderTopList('topCategoriesBody', data.categories);
