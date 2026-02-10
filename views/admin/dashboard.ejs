@@ -459,11 +459,11 @@
       <div class="modal-body">
         <div class="mb-3">
           <label for="shippingRate" class="form-label fw-semibold">Shipping Rate (₹)</label>
-          <input type="number" class="form-control" id="shippingRate" min="0" step="0.01" placeholder="Enter shipping rate">
+          <input type="number" class="form-control" id="shippingRate" value="<%=shipping%>" min="0" step="0.01" placeholder="Enter shipping rate">
         </div>
         <div class="mb-3">
           <label for="taxRate" class="form-label fw-semibold">Tax Rate (%)</label>
-          <input type="number" class="form-control" id="taxRate" min="0" max="100" step="0.01" placeholder="Enter tax percentage">
+          <input type="number" class="form-control" id="taxRate" value="<%=taxes%>" min="0" max="100" step="0.01" placeholder="Enter tax percentage">
         </div>
       </div>
       <div class="modal-footer">
@@ -913,7 +913,6 @@ function renderTopList(tbodyId, items) {
     </tr>
   `).join('');
 }
-
   </script>
 </section>
 <%- include("../../views/admin/partials/footer") %>

@@ -1,6 +1,7 @@
 const User=require("../../models/userSchema");
 const bcrypt=require("bcrypt");
 const Order= require("../../models/orderSchema");
+const Contants=require("../../models/constantSchema");
 const loadLogin=async(req,res)=>{
     try {
         res.status(200).render("adminLogin",{message:null});
@@ -12,9 +13,13 @@ const loadLogin=async(req,res)=>{
 
 const loadDashboard=async(req,res)=>{
     try {
-        await setDiscountvalue();
-        await setproductDiscountPerOrder();
-        res.status(200).render("dashboard");
+        const constants= await Contants.find();
+        let shipping=constants[0].shipping;
+        let taxes=constants[0].taxes;
+        res.status(200).render("dashboard",{
+            shipping,
+            taxes
+        });
     } catch (error) {
         console.error("Error while loading dashboard",error);
         res.status(500).redirect("/adminerror");
