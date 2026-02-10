@@ -535,6 +535,7 @@ h4::after {
   function changeProfilePic(userId) {
   const input = document.getElementById("profileImageInput");
   const file = input.files[0];
+  console.log(file);
 
   if (!file) {
     console.warn("No file selected");
@@ -557,7 +558,11 @@ h4::after {
           //document.getElementById("profilePic").src = data.image + "?t=" + new Date().getTime();
        // }
       } else {
-        console.error(data.message || "Error updating profile picture");
+        Swal.fire({
+          title:"Error",
+          text:data.message,
+          icon:"error"
+        })
       }
     })
     .catch(err => console.error("Upload error:", err));
