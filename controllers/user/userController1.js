@@ -1,4 +1,6 @@
 const User=require("../../models/userSchema");
+const Order=require("../../models/orderSchema");
+const Product=require("../../models/productSchema");
 const bcrypt=require("bcrypt");
 const crypto=require("crypto");
 const session = require("express-session");
@@ -7,16 +9,56 @@ require("dotenv").config()
 
 const loadHome= async (req,res)=>{
     try {
-        if(req.session.user){
-            const findUser= await User.findById(req.session.user);
-            res.render("home",{
-                user:findUser.name,
-                image:req.session.image
-            });
-        }else{
-            res.status(200).render("home");
-        }
-        
+        const mostWanted= await Order.aggregate([
+            {
+                $match:{
+                    paymentStatus:"PAID",
+                    status:{$nin:["Returned","Cancelled"]}
+                }
+            },
+            {
+                $unwind:"$products"
+            },
+            {
+                $group:{
+                    _id:"$products.product",
+                    count:{$sum:"$products.quantity"}
+                }   
+            },
+            {
+                $lookup:{
+                    from:"products",
+                    localField:"_id",
+                    foreignField:"_id",
+                    as:"productDetails"
+                }
+            },
+            {
+                $unwind:"$productDetails"
+            },
+            {
+                $sort:{count:-1}
+            },
+            {
+                $limit:10
+            },
+            {
+                $project:{
+                    _id:1,
+                    name:"$productDetails.productName",
+                    image:{ $arrayElemAt: ["$productDetails.productImage", 0] },
+                    salePrice:"$productDetails.salesPrice",
+                    regularPrice:"$productDetails.regularPrice"
+                }
+            }
+        ]);
+
+        const latestProducts= await Product.find({isBlocked:false},{_id:1,productName:1,productImage:1,salesPrice:1,regularPrice:1}).sort({createdAt:-1}).limit(7);
+
+         res.status(200).render("home",{
+            mostWanted,
+            latestProducts
+    });
     } catch (error) {
         console.error("Error while loading homepage",error);
         res.status(500).redirect("/error");

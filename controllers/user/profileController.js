@@ -108,9 +108,8 @@ const changeProfilePicture=async(req,res)=>{
         const image=req.file.filename;
         const testText=image.split("").reverse().join("");
         console.log(testText);
-        const arr= testText.split(".");
+        let arr=testText.split(".")
         const ext=arr[0];
-        console.log(arr[0]);
         if(!["gpj","gnp"].includes(ext)){
            return res.status(400).json({success:false,message:"Please enter a valid image"});
         }

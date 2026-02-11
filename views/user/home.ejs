@@ -52,7 +52,7 @@
 
         .product-image {
             height: 200px;
-            object-fit: cover;
+            object-fit: contain;
         }
 
         .price {
@@ -77,14 +77,35 @@
         }
 
         .btn-primary {
-            background-color: var(--primary-red);
-            border-color: var(--primary-red);
+            background-color: #c82333;
+            border-color:  #c82333;
         }
 
-        .btn-primary:hover {
-            background-color: #c82333;
-            border-color: #c82333;
-        }
+    
+        #most-wanted,#whats-new {
+         display: flex;
+         flex-wrap: nowrap;      /* Prevents cards from dropping to the next line */
+         overflow-x: auto;       /* Enables horizontal scrolling */
+         overflow-y: hidden;     /* Prevents accidental vertical jitter */
+         padding-bottom: 15px;   /* Space for the scrollbar so it doesn't touch the cards */
+         scroll-snap-type: x mandatory; /* Makes cards "snap" into place */
+         -webkit-overflow-scrolling: touch; /* Smooth scrolling for mobile */
+      }
+
+        #most-wanted .col-lg-3,#whats-new .col-lg-3 {
+        flex: 0 0 auto;         /* Prevents columns from shrinking */
+        width: 280px;           /* Set a fixed width for your cards in the carousel */
+        scroll-snap-align: start; /* The point where the card snaps */
+      }
+
+     /* Optional: Hide scrollbar for a cleaner "Netflix-style" look */
+       #most-wanted::-webkit-scrollbar,#whats-new::-webkit-scrollbar {
+           display: none;
+       }
+       #most-wanted,#whats-new {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;     /* Firefox */
+     }
     </style>
     <!-- Hero Section -->
    <section class="hero-section">
@@ -109,13 +130,13 @@
   <!-- Carousel inner items -->
   <div class="carousel-inner ">
     <div class="carousel-item active">
-      <img src="/Images/example_banner_1.jpg" class="img-fluid w-100 object-fit cover" alt="Slide 1">
+      <img src="/Images/FightClub_Banner_1.webp" class="img-fluid w-100 object-fit cover" alt="Slide 1">
     </div>
     <div class="carousel-item">
-      <img src="/Images/example_banner_1.jpg" class="d-block w-100" alt="Slide 2">
+      <img src="/Images/FightClub_Banner_2.webp" class="d-block w-100" alt="Slide 2">
     </div>
     <div class="carousel-item">
-      <img src="/Images/example_banner_1.jpg" class="d-block w-100" alt="Slide 3">
+      <img src="/Images/FightClub_Banner-6.jpg" class="d-block w-100" alt="Slide 3">
     </div>
   </div>
 
@@ -134,51 +155,57 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-2 col-sm-4 col-6 mb-4">
-                    <div class="text-center">
+                    <div class="text-center position-relative">
                         <div class="category-icon">
                             <i class="fas fa-hand-rock"></i>
                         </div>
-                        <h6 class="fw-bold">KARATE</h6>
+                        <h6 class="fw-bold"><a href="/shop?cate=Karate" class="stretched-link text-decoration-none text-dark">KARATE</a>
+                        </h6>
                     </div>
                 </div>
                 <div class="col-md-2 col-sm-4 col-6 mb-4">
-                    <div class="text-center">
+                    <div class="text-center position-relative">
                         <div class="category-icon">
                             <i class="fas fa-fist-raised"></i>
                         </div>
-                        <h6 class="fw-bold">BOXING</h6>
+                        <h6 class="fw-bold"><a href="/shop?cate=Boxing" class="stretched-link text-decoration-none text-dark">BOXING</a>
+                        </h6>
                     </div>
                 </div>
                 <div class="col-md-2 col-sm-4 col-6 mb-4">
-                    <div class="text-center">
+                    <div class="text-center position-relative">
                         <div class="category-icon">
                             <i class="fas fa-running"></i>
                         </div>
-                        <h6 class="fw-bold">KICKBOXING</h6>
+                        <h6 class="fw-bold"><a href="/shop?cate=Kickboxing" class="stretched-link text-decoration-none text-dark">KICKBOXING</a>
+                        </h6>
                     </div>
                 </div>
                 <div class="col-md-2 col-sm-4 col-6 mb-4">
-                    <div class="text-center">
+                    <div class="text-center position-relative">
                         <div class="category-icon">
                             <i class="fas fa-user-ninja"></i>
                         </div>
-                        <h6 class="fw-bold">WRESTLING</h6>
+                        <h6 class="fw-bold"><a href="/shop?cate=Wrestling" class="stretched-link text-decoration-none text-dark">WRESTLING</a>
+                        </h6>
                     </div>
                 </div>
                 <div class="col-md-2 col-sm-4 col-6 mb-4">
-                    <div class="text-center">
+                    <div class="text-center position-relative">
                         <div class="category-icon">
                             <i class="fas fa-hand-paper"></i>
                         </div>
-                        <h6 class="fw-bold">MUAY THAI</h6>
+                        <h6 class="fw-bold"><a href="/shop?cate=MuayThai" class="stretched-link text-decoration-none text-dark">MUAY-THAI</a>
+                        </h6>
                     </div>
                 </div>
                 <div class="col-md-2 col-sm-4 col-6 mb-4">
-                    <div class="text-center">
+                    <div class="text-center position-relative">
                         <div class="category-icon">
                             <i class="fas fa-user-shield"></i>
                         </div>
-                        <h6 class="fw-bold">JIU-JITSU</h6>
+                        <h6 class="fw-bold"><a href="/shop?cate=JiuJitsu" class="stretched-link text-decoration-none text-dark">JIU-JITSU</a>
+                        </h6>
                     </div>
                 </div>
             </div>
@@ -189,12 +216,12 @@
     <section class="py-5 bg-light">
         <div class="container text-center">
             <h2 class="section-title">FIGHT CLUB</h2>
-            <p class="lead">Water & Sweat Proof | No Discoloration or Tarnishing</p>
-            <p class="lead">Hypoallergenic | No Green Skin</p>
+            <p class="lead">Tailor Made Equipments | Designed for Maximum Protection</p>
         </div>
     </section>
 
     <!-- Most Wanted Section -->
+     <% if(mostWanted){%>
     <section class="py-5">
         <div class="container">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -209,51 +236,28 @@
                 </div>
             </div>
             <div class="row" id="most-wanted">
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="card product-card">
-                        <img src="/placeholder.svg?height=200&width=300" class="card-img-top product-image" alt="Gi">
-                        <div class="card-body">
-                            <h6 class="card-title">Brazilian Jiu-Jitsu Gi Classic</h6>
-                            <p class="price">$89.99</p>
-                            <button class="btn btn-primary btn-sm">Add to Cart</button>
-                        </div>
-                    </div>
+                 <% for(let item of mostWanted){%>
+               <div class="col-lg-3 col-md-6 mb-4">
+                 <div class="card product-card position-relative"> 
+                   <img src="/uploads/re-image/<%=item.image%>" class="card-img-top product-image" alt="Gi">
+                     <div class="card-body">
+                       <h6 class="card-title">
+                          <a href="/product-details?id=<%=item._id%>" class="stretched-link text-decoration-none text-dark">
+                            <%=item.name%>
+                         </a>
+                      </h6>
+                     <p class="price text-success">₹<%=item.salePrice%></p>
+                  </div>
                 </div>
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="card product-card">
-                        <img src="/placeholder.svg?height=200&width=300" class="card-img-top product-image" alt="Headgear">
-                        <div class="card-body">
-                            <h6 class="card-title">Boxing Head Gear (Sparring)</h6>
-                            <p class="price">$79.99</p>
-                            <button class="btn btn-primary btn-sm">Add to Cart</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="card product-card">
-                        <img src="/placeholder.svg?height=200&width=300" class="card-img-top product-image" alt="Hand Wraps">
-                        <div class="card-body">
-                            <h6 class="card-title">Training Hand Wraps Classic</h6>
-                            <p class="price">$19.99</p>
-                            <button class="btn btn-primary btn-sm">Add to Cart</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="card product-card">
-                        <img src="/placeholder.svg?height=200&width=300" class="card-img-top product-image" alt="Boxing Helmet">
-                        <div class="card-body">
-                            <h6 class="card-title">Boxing Ring</h6>
-                            <p class="price">$99.99</p>
-                            <button class="btn btn-primary btn-sm">Add to Cart</button>
-                        </div>
-                    </div>
-                </div>
+             </div>
+                <%}%>
             </div>
         </div>
     </section>
+    <% }%>
 
     <!-- What's New Section -->
+     <% if(latestProducts){%>
     <section class="py-5 bg-light">
         <div class="container">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -268,49 +272,25 @@
                 </div>
             </div>
             <div class="row" id="whats-new">
+                <% for(let item of latestProducts) {%>
                 <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="card product-card">
-                        <img src="/placeholder.svg?height=200&width=300" class="card-img-top product-image" alt="Karate Gi">
-                        <div class="card-body">
-                            <h6 class="card-title">Karate Gi Kumite</h6>
-                            <p class="price">$69.99</p>
-                            <button class="btn btn-primary btn-sm">Add to Cart</button>
-                        </div>
-                    </div>
+                <div class="card product-card position-relative">
+                   <img src="/uploads/re-image/<%=item.productImage[0]%>" class="card-img-top product-image" alt="Karate Gi">
+                   <div class="card-body">
+                     <h6 class="card-title">
+                       <a href="/product-details?id=<%=item._id%>" class="stretched-link text-decoration-none text-dark">
+                        <%=item.productName%>
+                       </a>
+                    </h6>
+                   <p class="price text-success">₹<%=item.salesPrice%></p>
                 </div>
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="card product-card">
-                        <img src="/placeholder.svg?height=200&width=300" class="card-img-top product-image" alt="Ankle Support">
-                        <div class="card-body">
-                            <h6 class="card-title">Ankle Support</h6>
-                            <p class="price">$29.99</p>
-                            <button class="btn btn-primary btn-sm">Add to Cart</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="card product-card">
-                        <img src="/placeholder.svg?height=200&width=300" class="card-img-top product-image" alt="Head Guard">
-                        <div class="card-body">
-                            <h6 class="card-title">Club Headset</h6>
-                            <p class="price">$89.99</p>
-                            <button class="btn btn-primary btn-sm">Add to Cart</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="card product-card">
-                        <img src="/placeholder.svg?height=200&width=300" class="card-img-top product-image" alt="Muay Thai Shorts">
-                        <div class="card-body">
-                            <h6 class="card-title">Compact Ring</h6>
-                            <p class="price">$49.99</p>
-                            <button class="btn btn-primary btn-sm">Add to Cart</button>
-                        </div>
-                    </div>
-                </div>
+              </div>
+            </div>
+                <% } %>
             </div>
         </div>
     </section>
+    <% } %>
 
     <!-- Testimonials Section -->
     <section class="py-5">
@@ -404,9 +384,43 @@
             
             addToCartButtons.forEach(button => {
                 if (button.textContent.includes('Add to Cart')) {
+                    const id=button.getAttribute("data-id");
                     button.addEventListener('click', function() {
-                        // Add your cart logic here
-                        alert('Product added to cart!');
+                        try {
+                           fetch(`/add-to-cart/${id}`,{
+                            method:"POST",
+                            headers:{
+                                "Content-type":"application/json"
+                            }
+                        }).then((res)=>res.json())
+                        .then((data)=>{
+                            if(data.success){
+                                Swal.fire({
+                                    title:"Success",
+                                    text:data.message,
+                                    icon:"success"
+                                }).then(()=>{
+                                    let cText = document.querySelector(".cartCount").innerText; 
+                                    let match = cText.match(/\d+/); 
+                                    let count = match ? parseInt(match[0]) : 0; 
+                                    count++;
+                                    document.querySelector(".cartCount").innerText = `CART(${count})`;
+                                })
+                            }else{
+                                Swal.fire({
+                                    title:"Error",
+                                    text:data.message,
+                                    icon:"error"
+                                })
+                            }
+                        }) 
+                        } catch (error) {
+                            Swal.fire({
+                                title:"Error",
+                                text:"Please check if you have logged in or not!",
+                                icon:"error"
+                            })
+                        }
                     });
                 }
             });
