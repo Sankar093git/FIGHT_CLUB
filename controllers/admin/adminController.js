@@ -61,35 +61,6 @@ const logout=async(req,res)=>{
     }
 }
 
-async function setDiscountvalue(){
-    try {
-     const orderDetails= await Order.find({analyticsFieldsAdded:false}).populate("products.product");
-     for(let order of orderDetails){
-      for(let item of order.products){
-        item.salePrice=item.product.salesPrice;
-        item.discount=item.product.productOffer>item.product.categoryOffer?item.product.productOffer:item.product.categoryOffer||0;
-     }
-    await order.save();
-   }
-    } catch (error) {
-        console.error("Setting discount value per product : ",error)
-    }
-}
-
-async function setproductDiscountPerOrder(){
-    try {
-        const orderDetails= await Order.find({analyticsFieldsAdded:false});
-
-    for(let order of orderDetails){
-        let totalOffer= order.products.map((item)=>item.discount).reduce((acc,num)=>acc+num,0);
-        order.totalProductDiscount=totalOffer;
-        order.analyticsFieldsAdded=true;
-        await order.save();
-    }
-    } catch (error) {
-        console.error("setproductDiscountPerOrder : ",error);
-    }
-}
 
 module.exports={
     loadLogin,

@@ -1,5 +1,4 @@
 const Product=require("../../models/productSchema");
-const Variant=require("../../models/variantSchema");
 const Category=require("../../models/categorySchema");
 const Brand=require("../../models/brandSchema");
 const fs=require("fs");
@@ -8,53 +7,89 @@ const sharp=require("sharp");
 
 const loadProducts=async(req,res)=>{
     try {
+
         const search=req.query.search;
+
         const page=req.query.page;
+
         const limit=4;
+
         const skip=(page-1)*limit
-        const data= await Product.find({productName:{$regex:new RegExp(search,'i')}}).limit(limit).skip(skip).populate("category");
+
+        const data= await Product.find({productName:{$regex:new RegExp(search,'i')}})
+        .limit(limit)
+        .skip(skip)
+        .populate("category");
+
         const count= await Product.find({}).countDocuments();
+
         const totalPages=Math.ceil(count/limit);
-        res.status(200).render("products",{queryVal:req.query,data:data,totalPages:totalPages,currentPage:page});
+
+        res.status(200).render("products",{
+          queryVal:req.query,data:data,
+          totalPages:totalPages,currentPage:page
+        });
+
     } catch (error) {
+
         console.error("Error while loading the product list",error);
+
         res.status(500).redirect("/admin/error");
+
     }
 }
 
 const getAddProduct=async (req,res)=>{
     try {
+
         const brand= await Brand.find({isUnlisted:false});
-        const category=await Category.find({isListed:true})
-        res.status(200).render("product-add",{brand:brand,cat:category});
+
+        const category=await Category.find({isListed:true});
+
+        res.status(200).render("product-add",{
+          brand:brand,
+          cat:category
+        });
+
     } catch (error) {
+
         console.log("Error while loading edit product page",error);
+
         res.status(500).redirect("/admin/error");
+
     }
+
 }
 
 const addProducts = async (req, res) => {
   try {
-     
+
     const { productName } = req.body;
+
     const v = JSON.parse(req.body.variants);
-    console.log(req.body.variants);
+
     const quantity= v.map((v)=>parseInt(v.stock)).reduce((acc,num)=>acc+num,0);
     
     const productExists = await Product.findOne({ productName });
+
     if (productExists) {
+
       return res.status(400).json("Product already exists");
+
     }
-    console.log(req.body.color)
     
-    const uploadDir = path.join(__dirname, "public", "uploads", "re-image");
+    const uploadDir = path.join(process.cwd(), "public", "uploads", "re-image");
+
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
     const images = [];
+
     if (req.files && req.files.length > 0) {
+
       for (const file of req.files) {
+
         const originalImagePath = file.path;
         const resizedImagePath = path.join(uploadDir, file.filename);
 
@@ -63,13 +98,18 @@ const addProducts = async (req, res) => {
           .toFile(resizedImagePath);
 
         images.push(file.filename);
+
       }
+
     }
 
     
     const category = await Category.findOne({ name: req.body.category });
+
     if (!category) {
+
       return res.status(400).json("Invalid category name");
+
     }
 
     const newProduct = new Product({
@@ -90,53 +130,89 @@ const addProducts = async (req, res) => {
     });
 
     await newProduct.save();
-    return res.status(200).json({success:true});
+
+    return res.status(200).json({
+      success:true
+    });
+
   } catch (error) {
+
     console.error("Error while adding product:", error);
-    return res.status(500).json({success:false, message: "Internal Server Error" });
+
+    return res.status(500).json({
+      success:false, 
+      message: "Internal Server Error" 
+    });
+
   }
-};
+
+}
 
 
 const loadEditProduct= async(req,res)=>{
     try {
+
         const id=req.query.id;
+
         const brand=await Brand.find({isUnlisted:false});
+
         const category=await Category.find({isListed:true});
+
         const product=await Product.find({_id:id}).populate("category");
+
         res.status(200).render("edit-product",{
             product:product[0],
             variants:product[0].variants,
             cat:category,
             brand:brand
         });
+
     } catch (error) {
+
         console.error("Error while loading edit products",error)
+
         res.status(500).redirect("/admin/error");
+
     }
+
 }
 
 const editproduct = async (req, res) => {
   try {
     const images = [];
+
     const id = req.params.id;
-    const { productName, brand, description, regularPrice, salePrice, category,variants } = req.body;
-    console.log(salePrice);
+
+    const { productName,
+       brand,
+       description,
+       regularPrice,
+       salePrice,
+       category,
+       variants } = req.body;
+    
 
     let variant=JSON.parse(variants);
+
     let quantity=variant.map((n)=>n.stock).reduce((acc,n)=>acc+n,0);
   
 
     const cat = await Category.findOne({ name: category });
+
     const productExists = await Product.findOne({ _id: { $ne: id }, productName });
 
     if (productExists) {
-      console.log("Product already exists");
-      return res.status(400).json({success:false,message:"Product already exists"});
+
+      return res.status(400).json({
+        success:false,
+        message:"Product already exists"
+      });
+
     }
 
     // Process new uploaded images
     if (req.files && req.files.length > 0) {
+
       for (let i = 0; i < req.files.length; i++) {
 
         const originalImagePath = req.files[i].path;
@@ -152,8 +228,11 @@ const editproduct = async (req, res) => {
 
 
        images.push(newFileName);
+
       }
+
     }
+
     await Product.updateOne(
       { _id: id },
       {
@@ -170,34 +249,49 @@ const editproduct = async (req, res) => {
         $push:{
             productImage:{$each:images}
         }
-      }
-    );
+      });
 
-    res.status(200).json({success:true,message:"Product edited successfully"})
+    res.status(200).json({
+      success:true,
+      message:"Product edited successfully"
+    });
 
   } catch (error) {
+
     console.error("Error while editing product", error);
-    res.status(500).json({success:false,message:"Something went wrong!"});
+
+    res.status(500).json({
+      success:false,
+      message:"Something went wrong!"
+    });
+
   }
+
 }
 
 
 const deleteImages=async(req,res)=>{
     try {
         const imageId=req.params.id;
+
         const {productId}=req.body;
-        console.log(req.body);
+
         await Product.findByIdAndUpdate(productId,{$pull:{productImage:imageId}});
-        const imagePath=path.join(__dirname,"uploads","re-image",`${imageId}`);
+
+        const imagePath=path.join(process.cwd(),"uploads","re-image",`${imageId}`);
+
         if(fs.existsSync(imagePath)){
+
             await unlink(imagePath,(err)=>{
                 if(err){
                     console.error("Error while deleting image from storage",err)
                 }
-            })
+            });
 
             console.log(`${imageId} deleted successfully`);
+
         }else{
+
             console.log(`${imageId} deletion failed`);
         }
 
@@ -206,6 +300,7 @@ const deleteImages=async(req,res)=>{
         
     } catch (error) {
         console.log("Error while deleting image",error);
+
         res.status(500).redirect("/admin/error");
     }
 }
@@ -213,68 +308,131 @@ const deleteImages=async(req,res)=>{
 const blockOrUnblockproduct=async (req,res)=>{
   try {
     const productId=req.params.id;
+
     const prodDetails=await Product.findOne({_id:productId});
+
     if(prodDetails.isBlocked==true){
-      await Product.updateOne({_id:productId},{$set:{isBlocked:false}})
-      return res.status(200).json({success:true,message:"Product has been unblocked!"})
+
+      await Product.updateOne({_id:productId},{$set:{isBlocked:false}});
+
+      return res.status(200).json({
+        success:true,
+        message:"Product has been unblocked!"
+      });
+
     }else{
-      await Product.updateOne({_id:productId},{$set:{isBlocked:true}})
-      return res.status(200).json({success:true,message:"Product has been blocked!"})
+
+      await Product.updateOne({_id:productId},{$set:{isBlocked:true}});
+
+      return res.status(200).json({
+        success:true,
+        message:"Product has been blocked!"
+      });
+
     }
+
   } catch (error) {
+
     console.error("Error while blocking product");
-    res.status(500).json({success:false})
+
+    res.status(500).json({
+      success:false
+    });
+
   }
+
 }
 
 const addOffer= async(req,res)=>{
   try {
     const {percentage,productId}=req.body;
+
     const productDetails= await Product.findOne({_id:productId}).populate("category");
+
     const discount= productDetails.ogSalesPrice*(parseInt(percentage)/100);
-    if(productDetails.category.categoryOffer===0||productDetails.category.categoryOffer<percentage){;
+
+    if(productDetails.category.categoryOffer===0||productDetails.category.categoryOffer<percentage){
+
     productDetails.salesPrice=productDetails.ogSalesPrice-discount;
+
     productDetails.productDiscount=discount;
+
     productDetails.offer=parseInt(percentage);
+
     await productDetails.save();
-    return res.status(200).json({success:true,message:"Offer has been added!"})
+
+    return res.status(200).json({
+      success:true,
+      message:"Offer has been added!"
+    });
+
     }
-    res.status(400).json({success:false,message:"Please add an offer greater than category offer!"});
+
+    res.status(400).json({
+      success:false,
+      message:"Please add an offer greater than category offer!"
+    });
+
   } catch (error) {
+
     console.log("Product offer: ",error);
-    res.status(500).json({success:false,message:"Something went wrong"});
+
+    res.status(500).json({
+      success:false,
+      message:"Something went wrong"
+    });
+
   }
 }
 
 const removeOffer= async(req,res)=>{
   try {
     const {productId}=req.body;
+
     const productDetails= await Product.findOne({_id:productId}).populate("category");
+
     if(productDetails.offer===0){
-      return res.status(400).json({success:true,message:"Offer does not exist"});
+
+      return res.status(400).json({
+        success:true,
+        message:"Offer does not exist"
+      });
+
     } 
     productDetails.salesPrice=productDetails.ogSalesPrice;
+
     productDetails.offer=0;
+
     productDetails.productDiscount=0;
+
     if(productDetails.category.categoryOffer>0){
-      let discount=productDetails.ogSalesPrice*(productDetails.category.categoryOffer/100)
+
+      let discount=productDetails.ogSalesPrice*(productDetails.category.categoryOffer/100);
+
       productDetails.salesPrice= productDetails.ogSalesPrice-discount;
+
       productDetails.categoryDiscount=discount;
+
     }
+
     await productDetails.save();
-    res.status(200).json({success:true,message:"Offer has been removed"})   
+
+    res.status(200).json({
+      success:true,
+      message:"Offer has been removed"
+    })   
+
   } catch (error) {
+
     console.log("Remove offer error: ",error);
-    res.status(500).json({success:true,message:"Something went wrong"});
+
+    res.status(500).json({
+      success:true,
+      message:"Something went wrong"
+    });
+
   }
-}
-async function setOgsalesPrice(){
-  const products= await Product.find({});
- for(let product of products){
-  product.ogSalesPrice=product.salesPrice
-  await product.save();
- }
-  
+
 }
 module.exports={
     loadProducts,

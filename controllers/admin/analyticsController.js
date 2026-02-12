@@ -4,7 +4,7 @@ const Product=require("../../models/productSchema");
 
 const loadSalesReport= async(req,res)=>{
     try {
-        const {startDate,endDate,period}=req.body;
+        const {startDate,endDate}=req.body;
         let totalSalesCount=0;
         const start=new Date(startDate);
         const end=new Date(endDate);
@@ -46,7 +46,6 @@ const loadSalesReport= async(req,res)=>{
                 }
         )
 
-        console.log(ordersCheck.length);
 
         let [{totalOrderAmount}]= await Order.aggregate([
             {
@@ -68,7 +67,6 @@ const loadSalesReport= async(req,res)=>{
             }
            }
          ]);
-        console.log("Total revenue : ",totalOrderAmount);
 
         //Calculating total offer discount
         let [{totalOfferDiscount}]= await Order.aggregate([
@@ -94,7 +92,7 @@ const loadSalesReport= async(req,res)=>{
                 }
             }
         ]);
-        console.log("Total offer discount given : ",totalOfferDiscount);
+
         //Calculating total coupon discount
 
         let [{totalDiscount}]= await Order.aggregate([
@@ -118,7 +116,6 @@ const loadSalesReport= async(req,res)=>{
             }
         ]);
 
-        console.log("Total coupon discount given : ", totalDiscount);
 
         let [{ totalRefund } = { totalRefund: 0 }]= await Transactions.aggregate([
             {
@@ -142,19 +139,24 @@ const loadSalesReport= async(req,res)=>{
 
         
 
-        console.log("Total refunds given : ",totalRefund);
-
-        res.status(200).json({success:true,message:{
+        res.status(200).json({
+            success:true,
+            message:{
             totalSalesCount,
             totalOrderAmount,
             totalRefund:totalRefund||0,
             totalDiscount,
-        },orders:orderDetails});
+            },
+            orders:orderDetails
+        });
         
 
     } catch (error) {
         console.error("Sales report fetch: ",error);
-        res.status(500).json({success:false,message:"Something went wrong"});
+        res.status(500).json({
+            success:false,
+            message:"Something went wrong"
+        });
     }
 }
 
@@ -231,7 +233,10 @@ const loadChart= async(req,res)=>{
         });
     } catch (error) {
         console.error("Loading chart : ",error);
-        res.status(500).json({success:true,message:"Something went wrong!"})
+        res.status(500).json({
+            success:true,
+            message:"Something went wrong!"
+        });
     }
 }
 
@@ -323,7 +328,9 @@ const loadTopTens= async(req,res)=>{
         }
     }
 ]);
+
 //brand rankings
+
     const brandRankings = await Order.aggregate([
     {
         $match: {
@@ -376,11 +383,19 @@ const loadTopTens= async(req,res)=>{
     }
 ]);
 
-    res.status(200).json({success:true,products:productRankings,categories:categoryRankings,brands:brandRankings})
+    res.status(200).json({
+        success:true,
+        products:productRankings,
+        categories:categoryRankings,
+        brands:brandRankings
+    });
 
     } catch (error) {
         console.error("Top ten error : ",error);
-        res.status(500).json({success:false,message:"Something went wrong"});
+        res.status(500).json({
+            success:false,
+            message:"Something went wrong"
+        });
     }
 }
 
