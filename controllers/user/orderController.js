@@ -28,7 +28,7 @@ const placeOrder = async (req, res) => {
     if (!userData || userData.cart.length === 0) {
       return res.status(400).json({ success: false, message: "Cart is empty" });
     }
-//Stock validation
+    //Stock validation
     for(let x of userData.cart){
       const variant=x.product.variants.find(v=>v.size===x.size);
       if(!variant||variant.stock===0){
@@ -80,7 +80,7 @@ const placeOrder = async (req, res) => {
 
    const orderId = "ORD-" + crypto.randomBytes(4).toString("hex");
 
-   if(paymentMethod === "COD" || paymentMethod === "WALLET"){// Stock will be deducted only if the payment method is COD
+   if(paymentMethod === "COD" || paymentMethod === "WALLET"){
        for (let x of userData.cart) {
    const result=await Product.updateOne(
         { _id: x.product._id, "variants.size": x.size },
@@ -294,7 +294,7 @@ const cancelOrder = async (req, res) => {
     }
     order.reasonForCancellation=cancelMessage;
     await order.save(); 
-// Wallet-logic
+    // Wallet-logic
     const transactionId = "TRA-" + crypto.randomBytes(4).toString("hex");
      if(order.paymentStatus=="PAID" && refundAmount > 0){
       let newTransaction= new Transactions({

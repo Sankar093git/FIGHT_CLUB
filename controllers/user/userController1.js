@@ -3,7 +3,6 @@ const Order=require("../../models/orderSchema");
 const Product=require("../../models/productSchema");
 const bcrypt=require("bcrypt");
 const crypto=require("crypto");
-const session = require("express-session");
 const nodemailer=require("nodemailer");
 require("dotenv").config()
 

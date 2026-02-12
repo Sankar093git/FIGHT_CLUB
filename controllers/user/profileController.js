@@ -1,6 +1,5 @@
 const User=require("../../models/userSchema");
 const{sendVerificationMail,generateOTP,securePassword}=require("../../controllers/user/userController1");
-const Product=require("../../models/productSchema");
 const Orders=require("../../models/orderSchema");
 const Wallet=require("../../models/walletShema");
 const Transaction=require("../../models/transactionSchema");
