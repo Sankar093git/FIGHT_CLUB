@@ -521,6 +521,8 @@ const handlesingleReturn = async (req, res) => {
 
     const returnStatus = isFullReturn ? "Returned" : "Partially returned";
 
+    console.log(returnStatus);
+
     // Update order status
     if (isFullReturn) {
       await Order.updateOne(
@@ -584,7 +586,12 @@ const handlesingleReturn = async (req, res) => {
 
     }
 
+    matchedProduct.status = returnStatus;
+
+    orderDetails.status =  deriveTotalStatus(orderDetails.products);
+    
     await orderDetails.save();
+
 
     // Process wallet refund
 
@@ -715,7 +722,7 @@ const handleProductStatus = async (req, res) => {
 
     }
 
-    order.status = deriveTotalStatus(order.products);
+    order.status =  deriveTotalStatus(order.products);
 
     await order.save();
 
@@ -737,22 +744,19 @@ const handleProductStatus = async (req, res) => {
 
 }
 
-function deriveTotalStatus(products) {
+ function deriveTotalStatus(products) {
   const statuses = products.map(p => p.status);
 
   if (statuses.every(s => s === "Cancelled")) return "Cancelled";
-  
+  if (statuses.every(s => s === "Returned")) return "Returned"; 
+  if (statuses.every(s => s === "Cancelled" || s === "Returned")) return "Returned"; 
+
   const activeItems = statuses.filter(s => s !== "Cancelled" && s !== "Returned");
 
+  if (activeItems.length === 0) return "Returned"; 
   if (activeItems.some(s => s === "Pending")) return "Processing";
-
   if (activeItems.every(s => s === "Shipped")) return "Shipped";
-
-  if (activeItems.every(s => s === "Out for delivery")) return "Out for delivery";
-
   if (activeItems.every(s => s === "Delivered")) return "Delivered";
-  
-  if (activeItems.every(s => s === "Returned")) return "Returned";
 
   return "Processing";
 }

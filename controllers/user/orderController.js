@@ -580,6 +580,9 @@ const singleCancel = async (req, res) => {
     const { id, size, value } = req.body;
     const orderDetails=await Order.findOne({orderId:id});
 
+    const matchedProduct=orderDetails.products.find((item)=>item.product.equals(productId)&&item.size==size);
+    const rQuantity=matchedProduct.quantity;
+
     if(orderDetails.discountValue>0 && orderDetails.products.length>1){
       return res.status(400).json({success:false,message:"Single return not possilble on coupon applied orders!"});
     }
@@ -594,14 +597,18 @@ const singleCancel = async (req, res) => {
     console.log("Processing return for:", productName, "Size:", size);
 
     // 2. Prepare the update object
-    const updateFields = value 
-      ? { 
+    let updateFields={};
+    if(value==rQuantity){
+      updateFields={ 
+          "products.$[elem].status": "Return processing", 
+          "products.$[elem].returnQuantity": value 
+        }
+    }else if(value<rQuantity){
+      updateFields={ 
           "products.$[elem].status": "Return processing-P", 
           "products.$[elem].returnQuantity": value 
         }
-      : { 
-          "products.$[elem].status": "Return processing" 
-        };
+    }
 
     // 3. Perform the update using arrayFilters
     const result = await Order.updateOne(
@@ -639,7 +646,7 @@ const singleCancel = async (req, res) => {
 };
 
 function deriveTotalStatus(products) {
-  console.log("Function is working")
+  
   const statuses = products.map(p => p.status);
 
   if (statuses.every(s => s === "Cancelled")) return "Cancelled";
