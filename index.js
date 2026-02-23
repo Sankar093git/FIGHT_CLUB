@@ -9,6 +9,7 @@ const path=require("path");
 const passport=require("./config/passport");
 const navbarContext=require("./middlewares/navbarContext");
 const errorHandler=require("./middlewares/errorHandling");
+const MongoStore=require("mongo-connect");
 
 connectDB();
 
@@ -23,6 +24,10 @@ app.use(session({
     secret:process.env.SESSION_SECRET,
     resave:false,
     saveUninitialized:true,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGO_URI, // Your Atlas URI from .env
+        collectionName: 'sessions'
+    }),
     cookie:{
         secure:false,
         httpOnly:true,
