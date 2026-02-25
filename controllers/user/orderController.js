@@ -471,21 +471,24 @@ const editAddress= async(req,res)=>{
 const singleCancel = async (req, res) => {
   try {
     const productId = new mongoose.Types.ObjectId(req.params.productId);
+    console.log(productId);
     const { id, size, value, quantity } = req.body;
 
     const orderDetails=await Order.findOne({orderId:id});
-
+    
     if(orderDetails.discountValue>0 && orderDetails.products.length>1){
       return res.status(400).json({success:false,message:"Single cancel not possilble on coupon applied orders!"});
     }
 
     //Fetch product safely
     const product = await Product.findById(productId);
+
     if (!product) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    const productDetails= orderDetails.products.find((item)=>item.product===productId);
+    const productDetails= orderDetails.products.find((item)=>productId.equals(item.product)&&item.size==size);
+
     if (!productDetails) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
@@ -524,15 +527,16 @@ const singleCancel = async (req, res) => {
     );
     let refundAmount=0
     if(value){
-      refundAmount=productDetails.salePrice*value-Math.floor(orderDetails.discountValue/orderDetails.products.length);
+      refundAmount=productDetails.salePrice*value;
     }else{
-      refundAmount=productDetails.salePrice*quantity-Math.floor(orderDetails.discountValue/orderDetails.products.length)
+      refundAmount=productDetails.salePrice*quantity;
     }
-    const products=orderDetails.products;
+    const order= await Order.findOne({orderId:id});
+    const products=order.products;
     const totalStatus=deriveTotalStatus(products);
-    orderDetails.status= totalStatus
-    orderDetails.totalAmount-=refundAmount;
-    await orderDetails.save();
+    order.status= totalStatus
+    order.totalAmount-=refundAmount;
+    await order.save();
     //Refunding/wallet updation
     const transactionId = "TRA-" + crypto.randomBytes(4).toString("hex");
     
@@ -632,11 +636,11 @@ const singleCancel = async (req, res) => {
     const responseMsg = value 
       ? "Refund request has been submitted" 
       : "Your refund shall be processed";
-
-    const products=orderDetails.products;
+    const order= await Order.findOne({orderId:id});
+    const products=order.products;
     const totalStatus=deriveTotalStatus(products);
-    orderDetails.status= totalStatus
-    await orderDetails.save();
+    order.status= totalStatus
+    await order.save();
 
     return res.status(200).json({ success: true, message: responseMsg });
 
@@ -649,6 +653,7 @@ const singleCancel = async (req, res) => {
 function deriveTotalStatus(products) {
   
   const statuses = products.map(p => p.status);
+
 
   if (statuses.every(s => s === "Cancelled")) return "Cancelled";
   

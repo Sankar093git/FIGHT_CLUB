@@ -11,6 +11,12 @@ const loadProfile=async (req,res)=>{
         const skip=(orderPage-1)*orderLimit
         const id=req.session.user;
         const findUser=await User.findOne({_id:id,isBlocked:false}).populate("wishlist.product");
+        const addressDetails=findUser.address;
+        const addPage=parseInt(req.query.addPage)||1;
+        const addLimit=4;
+        const addskip=(addPage-1)*addLimit;
+        address=addressDetails.slice(addskip,addskip+addLimit);
+        console.log(address);
         //fetching order details and order pagination
         const orderDetails=await Orders.find({user:id}).sort({ createdAt: -1 }).skip(skip).limit(orderLimit);
         const totalOrders=await Orders.countDocuments({ user: id });
@@ -27,11 +33,14 @@ const loadProfile=async (req,res)=>{
         const totalTpages=Math.ceil(totalTrancastions/transactionLimit);
         res.status(200).render('profile',{
             userData:findUser,
+            address:address,
             user:req.session.userName||username,
             image:image,
             orders:orderDetails,
             totalOrderPages:totalOrderPages,
+            totalAddPages:Math.ceil(addressDetails.length/addLimit),
             currentOrderPage:orderPage,
+            currentAddPage:addPage,
             wallet:walletDetails,
             transactions:transactions,
             totalTpages:totalTpages,
