@@ -401,8 +401,9 @@ const displayOrder = async (req, res) => {
 
     //  Calculate subtotal
     const subTotal = order.products.reduce((acc, item) => {
-      return acc + (item.salePrice??item.product.salesPrice * item.quantity);
-    }, 0);
+    const price = item.salePrice ?? item.product.salesPrice;
+    return acc + (price * item.quantity);
+   }, 0);
 
     //  Pricing (same logic as before)
     const constants= await Constants.find({});
