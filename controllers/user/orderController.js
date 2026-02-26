@@ -15,7 +15,7 @@ const placeOrder = async (req, res) => {
     const userId = req.session.user;
     const constants= await Constants.find({});
     let shipping=constants[0].shipping;
-    let taxes=constants[0].taxes;;
+    let taxes=constants[0].taxes;
     const {
       paymentMethod
       ,couponCode
@@ -28,6 +28,7 @@ const placeOrder = async (req, res) => {
     if (!userData || userData.cart.length === 0) {
       return res.status(400).json({ success: false, message: "Cart is empty" });
     }
+
     //Stock validation
     for(let x of userData.cart){
       const variant=x.product.variants.find(v=>v.size===x.size);
@@ -40,7 +41,8 @@ const placeOrder = async (req, res) => {
     }
 
 
-    const validCartItems=userData.cart.filter(item=>item.product.isBlocked===false)
+    const validCartItems=userData.cart.filter(item=>item.product.isBlocked===false);
+
     if(validCartItems.length===0){
       return res.status(403).json({success:false,message:"One or more product is no longer available"});
     }
@@ -68,7 +70,6 @@ const placeOrder = async (req, res) => {
         totalAmount=totalAmount-discountValue;
       }
     }
-    console.log(totalAmount);
     const addressId = req.body.addressId;
     const selectedAddress = userData.address.find(
       addr => addr._id.toString() === addressId

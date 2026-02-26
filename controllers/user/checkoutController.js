@@ -1,5 +1,6 @@
 const User=require("../../models/userSchema");
 const Coupon=require("../../models/couponSchema");
+const Wallet=require("../../models/walletShema");
 const Constants=require("../../models/constantSchema");
 
 
@@ -63,6 +64,9 @@ const loadCheckout= async(req,res)=>{
         let shipping=constants[0].shipping;
         let taxes=constants[0].taxes;
 
+        const wallet= await Wallet.findOne({userId:req.session.user});
+        const walletBalance=wallet.balance;
+
         summary.subtotal=priceList.reduce((acc,num)=>acc+num,0);
         summary.taxes=taxes;
         summary.shipping=shipping;
@@ -76,7 +80,8 @@ const loadCheckout= async(req,res)=>{
             cartItems:validCartItems,
             summary:summary,
             stockError:stockError,
-            coupons:validCoupons
+            coupons:validCoupons,
+            balance:walletBalance||0
            })
     } catch (error) {
         console.error("Error while loading checkout page",error);
