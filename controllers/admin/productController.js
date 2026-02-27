@@ -8,26 +8,40 @@ const sharp=require("sharp");
 const loadProducts=async(req,res)=>{
     try {
 
-        const search=req.query.search;
+        const prod=req.query.prod||"";
+        const cate=req.query.cate||"";
+        const brand=req.query.brand||"";
+        const page=req.query.page||1;
 
-        const page=req.query.page;
-
+        const category=await Category.find({name:{$regex:new RegExp(cate,'i')}});
+        const catIds=category.map((item)=>item._id);
         const limit=4;
 
-        const skip=(page-1)*limit
+        const skip=(page-1)*limit;
 
-        const data= await Product.find({productName:{$regex:new RegExp(search,'i')}})
+        const data = await Product.find({
+
+          productName:{$regex:new RegExp(prod,'i')},
+          category:{$in:catIds},
+          brand:{$regex:new RegExp(brand,'i')}
+        })
         .limit(limit)
         .skip(skip)
         .populate("category");
 
-        const count= await Product.find({}).countDocuments();
+        const count= await Product.find({}).countDocuments({
+          productName:{$regex:new RegExp(prod,'i')},
+          category:{$in:catIds},
+          brand:{$regex:new RegExp(brand,'i')}
+        });
 
         const totalPages=Math.ceil(count/limit);
 
         res.status(200).render("products",{
-          queryVal:req.query,data:data,
-          totalPages:totalPages,currentPage:page
+          queryVal:req.query,
+          data:data,
+          totalPages:totalPages,
+          currentPage:page
         });
 
     } catch (error) {

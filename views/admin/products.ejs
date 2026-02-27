@@ -440,17 +440,39 @@
         <!-- Main Content Card -->
         <div class="content-card">
             <!-- Search Header -->
+        <form action="" method="get">
             <div class="card-header-section">
-                <form action="" method="get" class="search-wrapper">
+                <div class="search-wrapper">
                     <i class="fa fa-search"></i>
-                    <input type="text" value="<%=queryVal.search%>" class="search-input" placeholder="Search products or brands..." name="search">
-                    <% if(queryVal.search) {%>
-                        <button class="clear-btn" onclick="clearFilters()">Clear</button>
+                    <input type="text" value="<%=queryVal.prod%>" id="prod" class="search-input" placeholder="Search products..." name="prod">
+                    <% if(queryVal.prod) {%>
+                        <button class="clear-btn" onclick="clearFilters('product')">Clear</button>
                         <% }else{ %>
                     <button class="search-btn" type="submit">Search</button>
                     <% } %>
-                </form>
+                </div>
+
+                <div class="search-wrapper">
+                    <i class="fa fa-search"></i>
+                    <input type="text" value="<%=queryVal.cate%>" id="cate" class="search-input" placeholder="Search category..." name="cate">
+                    <% if(queryVal.cate) {%>
+                        <button class="clear-btn" onclick="clearFilters('category')">Clear</button>
+                        <% }else{ %>
+                    <button class="search-btn" type="submit">Search</button>
+                    <% } %>
+                </div>
+
+                <div class="search-wrapper">
+                    <i class="fa fa-search"></i>
+                    <input type="text" value="<%=queryVal.brand%>" id="brand" class="search-input" placeholder="Search brands..." name="brand">
+                    <% if(queryVal.brand) {%>
+                        <button class="clear-btn" onclick="clearFilters('brand')">Clear</button>
+                        <% }else{ %>
+                    <button class="search-btn" type="submit">Search</button>
+                    <% } %>
+                </div>
             </div>
+            </form>
 
             <!-- Products Table -->
             <table class="products-table">
@@ -531,7 +553,7 @@
             <!-- Pagination -->
             <div class="pagination-wrapper">
                 <% for (let i = 1; i <= totalPages; i++) { %>
-                    <a class="page-btn <%= (i === currentPage) ? 'active' : '' %>" href="?page=<%= i %>"><%= i %></a>
+                    <a class="page-btn <%= (i === currentPage) ? 'active' : '' %>" href="/admin/products?page=<%= i %>&prod=<%= queryVal.prod || '' %>&cate=<%= queryVal.cate || '' %>&brand=<%= queryVal.brand || '' %>"><%= i %></a>
                 <% } %>
             </div>
         </div>
@@ -670,10 +692,19 @@
         }
     }
 
-    function clearFilters(){
+    function clearFilters(filter){
         try {
+            let prod=document.getElementById("prod").value;
+            let cate=document.getElementById("cate").value;
+            let brand=document.getElementById("brand").value;
             event.preventDefault();
-            window.location.href="/admin/products"
+            if(filter=="product"){
+                window.location.href=`/admin/products?prod=&cate=${cate}&brand=${brand}`
+            }else if(filter=="category"){
+                window.location.href=`/admin/products?prod=${prod}&cate=&brand=${brand}`
+            }else if(filter=="brand"){
+                window.location.href=`/admin/products?prod=${prod}&cate=${cate}&brand=`
+            }
         } catch (error) {
             console.error("error while clearing filter",error);
         }
