@@ -397,6 +397,30 @@ for(let item of referalCodes){
 }
 }
 
+const applyReferalCode= async (req,res)=>{
+    try {
+        const {code}=req.body;
+        const referee= await User.findOne({referalCode:code},{_id:1,email:1});
+        const user= await User.findOne({_id:req.session.user});
+
+        if(!referee){
+            res.status(400).json({success:false,message:"Invalid referal code!"});
+        }
+
+        if(user.referedBy){
+            res.status(400).json({success:false,message:"Your have been refered already!"});
+        }
+
+        user.referedBy=referee.email;
+        await user.save();
+
+        res.status(200).json({success:true});
+    } catch (error) {
+        console.error("Referal code : ", error);
+        res.status(500).json({success:false,message:"Something went wrong!"});
+    }
+}
+
 module.exports={
     loadSignUp,
     signUp,
@@ -415,5 +439,6 @@ module.exports={
     loadVerifyPassOtp,
     sendVerificationMail,
     generateOTP,
-    securePassword
+    securePassword,
+    applyReferalCode
 }

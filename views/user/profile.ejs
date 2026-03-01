@@ -156,6 +156,16 @@ h4::after {
   border-radius: 2px;
 }
 
+.referral-link {
+  text-decoration: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.referral-link:hover {
+  text-decoration: underline;
+}
+
 </style>
 
 <main class="container py-5">
@@ -164,7 +174,10 @@ h4::after {
     <div class="col-lg-9 all-contents">
       <!-- User Details -->
       <div class="card dashboard-card p-4 mb-4">
-        <h4>User Profile</h4>
+        <div class="d-flex justify-content-between">
+          <h4>User Profile</h4>
+          <a href='#' class="referral-link" data-bs-toggle="modal" data-bs-target="#referralModal">Do you have a referal code?</a>
+        </div>
         <div class="d-flex align-items-center">
           <div class="profile-pic-wrapper position-relative d-inline-block">
   <% if (userData.userImage) { %>
@@ -509,6 +522,25 @@ h4::after {
     </div>
   </div>
 </div>
+
+<div class="modal fade" id="referralModal" tabindex="-1" aria-labelledby="referralModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="referralModalLabel">Enter Referral Code</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>If you were referred by a friend, enter their code below.</p>
+        <input type="text" class="form-control" placeholder="Example: FRIEND20" id="ref" aria-label="Referral Code">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="applyReferalCode()">Apply Code</button>
+      </div>
+    </div>
+  </div>
+</div>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
   document.getElementById("addressForm").addEventListener("submit", function (e) {
@@ -620,7 +652,7 @@ function cancelOrder(orderId) {
       fetch(`/cancel-order/${orderId}`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type" : "application/json",
         },
         body:JSON.stringify({message:result.value})
       })
@@ -811,7 +843,40 @@ async function  retryPayment(orderId){
   }finally{
     btn.disabled=false
   }
+}
 
+function applyReferalCode(){
+  try {
+    let code=document.getElementById("ref").value;
+    fetch("/referal",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+      },
+      body:JSON.stringify({code:code})
+    }).then((res)=>res.json())
+    .then((data)=>{
+      if(data.success){
+        Swal.fire({
+          title:"Success",
+          text:"On your first online payment reward will be credited to the referee!",
+          icon:"success"
+        }).then(()=>{
+        const modalElement = document.getElementById('referralModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalElement); 
+        
+        modalInstance.hide();
+        })
+      }
+    })
+  } catch (error) {
+    console.error("Referal code : ",error);
+    Swal.fire({
+      title:"Error",
+      text:"Something went wrong!",
+      icon:"error"
+    })
+  }
 }
 </script>
 

@@ -1,6 +1,7 @@
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const User = require("../models/userSchema");
+const sendVerificationMail=require("../controllers/user/userController1");
 require("dotenv").config();
 
 passport.use(
@@ -17,18 +18,21 @@ passport.use(
         
         let user = await User.findOne({ googleId: profile.id });
 
-        
         if (user) {
           return done(null, user);
         }
 
-        
+        const referalCode = "REF-" + crypto.randomBytes(4).toString("hex");
+
+        await sendVerificationMail("",referalCode,profile.emails?.[0]?.value);
+
         user = await User.create({
           name: profile.displayName,
           email: profile.emails?.[0]?.value || null,
           googleId: profile.id,
           phone: null,          
-          password: null,       
+          password: null,
+          referalCode:referalCode,      
           userImage: profile.photos?.[0]?.value || null,
         });
 

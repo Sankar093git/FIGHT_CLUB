@@ -30,7 +30,7 @@ router.get("/auth/google",passport.authenticate('google',{scope:["profile","emai
 router.get("/auth/google/callback",passport.authenticate("google",{failureRedirect:"/signup"}),(req,res)=>{
     req.session.user=req.user._id;
     req.session.google=true;
- res.redirect("/")
+ res.redirect("/");
 })
 
 //forgot password
@@ -66,6 +66,7 @@ router.patch("/change-profile-pic/:id",userAuth,uploads.single("profileImageInpu
 router.post("/edit-profile",userAuth,profileController.editProfile);
 router.get("/otp-verification",userAuth,profileController.loadVerifyOtp);
 router.post("/otp-verification",userAuth,profileController.verifyOtp);
+router.post("/referal",userAuth,userController.applyReferalCode);
 
 //page not found
 router.get("/error",generalController.pageNotFound);
