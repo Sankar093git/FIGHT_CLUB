@@ -372,7 +372,7 @@
                 <% } %>
               <td>
                 <div class="d-flex gap-2">
-                  <button class="btn btn-action btn-edit" onclick="openEditModal('<%=item.code%>', '<%=item.discountValue%>', '<%=item.discountType%>', '<%=item.maxDiscount%>', '<%=item.usageLimit%>','<%=item.startDate%>' ,'<%=item.expiryDate%>','<%=item._id%>')">
+                  <button class="btn btn-action btn-edit" onclick="openEditModal('<%=item.code%>', '<%=item.discountValue%>', '<%=item.discountType%>','<%=item.minPurchase%>', '<%=item.maxDiscount%>', '<%=item.usageLimit%>','<%=item.startDate%>' ,'<%=item.expiryDate%>','<%=item._id%>')">
                     <i class="bi bi-pencil"></i>
                   </button>
                   <button class="btn btn-action btn-delete" onclick="deleteCoupon('<%=item.code%>','<%=item._id%>')">
@@ -495,7 +495,7 @@
       document.getElementById('couponCode').removeAttribute('readonly');
     }
 
-    function openEditModal(code, value, type, minPurchase, limit, startDate, endDate, id) {
+    function openEditModal(code, value, type, minPurchase, maxDiscount ,limit, startDate, endDate, id) {
       isEditMode = true;
       editingId = id;
       document.getElementById('couponModalLabel').innerHTML = '<i class="bi bi-pencil me-2 text-primary"></i>Edit Coupon';
@@ -505,6 +505,7 @@
       document.getElementById('discountType').value = type;
       document.getElementById('discountValue').value = value;
       document.getElementById('minPurchase').value = minPurchase;
+      document.getElementById('maxDiscount').value= parseInt(maxDiscount)
       document.getElementById('usageLimit').value = limit;
       document.getElementById('startDate').value = formatForDateInput(startDate);;
       document.getElementById('endDate').value = formatForDateInput(endDate);

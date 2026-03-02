@@ -9,6 +9,7 @@ const path=require("path");
 const passport=require("./config/passport");
 const navbarContext=require("./middlewares/navbarContext");
 const errorHandler=require("./middlewares/errorHandling");
+const {initCleanupJob} = require("./services/orderCleanup");
 const MongoStore = require("connect-mongo").default;
 
 connectDB();
@@ -43,11 +44,15 @@ app.use((req,res,next)=>{
     res.set("cache-control","no-store");
     next();
 })
+
+initCleanupJob();
+
 app.use("/",navbarContext);
 app.use("/",userRouter);
 app.use("/admin",adminRouter);
 
 app.use(errorHandler);
+
 
 
 

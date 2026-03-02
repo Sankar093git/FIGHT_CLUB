@@ -96,7 +96,11 @@ const orderSchema = new mongoose.Schema({
    },
    paymentStatus:{
     type:String,
-    required:true
+    enum:[
+      "PAID",
+      "PENDING"
+    ],
+    default:"PENDING"
    },
    razorpay: {
         orderId:{

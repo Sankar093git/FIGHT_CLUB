@@ -38,6 +38,7 @@ const loadCheckout= async(req,res)=>{
         let summary={};
         let priceList=[];
         const userData =await User.findOne({_id:req.session.user}).populate("cart.product").exec();
+        await deriveCouponStatus();
         for (const item of userData.cart) {
         const variant = item.product.variants.find(
         v => v.size === item.size
@@ -59,7 +60,7 @@ const loadCheckout= async(req,res)=>{
             priceList.push(num.product.salesPrice*num.quantity);
         });
 
-        const coupons= await Coupon.find();
+        const coupons= await Coupon.find({status:"Active"});
         const constants= await Constants.find({});
         let shipping=constants[0].shipping;
         let taxes=constants[0].taxes;
@@ -132,7 +133,10 @@ const applyCoupon= async(req,res)=>{
   if(couponDetails.discountType=="fixed"){
     discountValue=couponDetails.discountValue;
     totalAmount=totalAmount-discountValue;
+
     await User.updateOne({_id:userId},{$push:{redeemedCoupons:couponCode}});
+    await Coupon.updateOne({code:couponCode},{$inc:{redemptions:1}});
+    
     return res.status(200).json({success:true,newTotal:totalAmount,discount:discountValue});
   }else if(couponDetails.discountType=="percentage"){
     discountValue=totalAmount*(couponDetails.discountValue/100);
@@ -140,7 +144,11 @@ const applyCoupon= async(req,res)=>{
         discountValue=couponDetails.maxDiscount;
     }
     totalAmount=totalAmount-discountValue;
+
      await User.updateOne({_id:userId},{$push:{redeemedCoupons:couponCode}});
+
+     await Coupon.updateOne({code:couponCode},{$inc:{redemptions:1}});
+
     return res.status(200).json({success:true,newTotal:totalAmount,discount:discountValue});
   }
   } catch (error) {
@@ -157,6 +165,7 @@ const removeCoupon= async(req,res)=>{
         const newTotal= totalAmount+discount;
         console.log(newTotal)
         await User.updateOne({_id:req.session.user},{$pull:{redeemedCoupons:code}});
+        await Coupon.findOne({code:couponCode},{$inc:{redemptions:-1}});
         res.status(200).json({success:true,message:"Coupon removed successfully",newTotal:newTotal,discount:0})
     } catch (error) {
         console.error("Remove coupon : ",error);
@@ -198,6 +207,28 @@ const editAddress= async(req,res)=>{
     }
 }
 
+async function deriveCouponStatus(req, res) {
+  try {
+    const now = new Date();
+
+    const result = await Coupon.updateMany(
+      {
+        status: "Active",
+        $or: [
+          { $expr: { $gte: ["$redemptions", "$usageLimit"] } }, 
+          { expiryDate: { $lte: now } }                         
+        ]
+      },
+      { $set: { status: "Expired" } }
+    );
+
+    console.log(`${result.modifiedCount} coupons updated to Expired.`);
+    return true;
+  } catch (error) {
+    console.error("Coupon status management error: ", error);
+    return false;
+  }
+}
 
 module.exports={
     loadCheckout,

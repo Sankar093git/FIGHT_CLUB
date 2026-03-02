@@ -3,9 +3,8 @@ const Coupon=require("../../models/couponSchema");
 const loadCouponManagement= async (req,res)=>{
     try {
          const filter = {};
-
+         await deriveCouponStatus();
          const { search, status } = req.query;
-
     
         if (search && search.trim() !== "") {
 
@@ -265,6 +264,29 @@ const deleteCoupon=async(req,res)=>{
 
     }
     
+}
+
+async function deriveCouponStatus(req, res) {
+  try {
+    const now = new Date();
+
+    const result = await Coupon.updateMany(
+      {
+        status: "Active",
+        $or: [
+          { $expr: { $gte: ["$redemptions", "$usageLimit"] } }, 
+          { expiryDate: { $lte: now } }                         
+        ]
+      },
+      { $set: { status: "Expired" } }
+    );
+
+    console.log(`${result.modifiedCount} coupons updated to Expired.`);
+    return true;
+  } catch (error) {
+    console.error("Coupon status management error: ", error);
+    return false;
+  }
 }
 
 module.exports={
