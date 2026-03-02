@@ -619,6 +619,11 @@
               icon:"success"
             }).then(()=>{
              updateCouponRow(editingId,formData);
+             const modalEl = document.getElementById('couponModal');
+             const modalInstance = bootstrap.Modal.getInstance(modalEl);
+              if (modalInstance) {
+                modalInstance.hide();
+              }
             })
           }else{
             Swal.fire({
