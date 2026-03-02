@@ -20,9 +20,11 @@ const loadProfile=async (req,res)=>{
         //fetching order details and order pagination
         const orderDetails=await Orders.find({user:id}).sort({ createdAt: -1 }).skip(skip).limit(orderLimit);
         const totalOrders=await Orders.countDocuments({ user: id });
-        const paidOrders= await Orders.countDocuments({paymentStatus:"PAID"});
+        const paidOrders= await Orders.countDocuments({user:id,paymentStatus:"PAID"});
+        const refereby= await User.findOne({_id:id})
+        let referee=refereby.referedBy||null
         let newbee
-        if(paidOrders==0){
+        if(paidOrders==0&&referee==null){
              newbee=true;
         }
         const totalOrderPages=Math.ceil(totalOrders/orderLimit);
@@ -145,7 +147,7 @@ const editProfile = async (req,res)=>{
         req.session.password=password;
         const otp = await generateOTP();
         console.log("The otp is: ",otp);
-        const sendMail= await sendVerificationMail(otp,req.session.email);
+        const sendMail= await sendVerificationMail(otp,null,req.session.email);
         req.session.otp=otp;
         if( sendMail){
             res.status(200).json({result:true});

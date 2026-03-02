@@ -64,7 +64,19 @@ const loadCheckout= async(req,res)=>{
         let shipping=constants[0].shipping;
         let taxes=constants[0].taxes;
 
-        const wallet= await Wallet.findOne({userId:req.session.user});
+        let wallet= await Wallet.findOne({userId:req.session.user});
+
+        if(!wallet){
+            const newWallet=new Wallet({
+                userId:req.session.user,
+                balance:0
+            })
+
+            await newWallet.save();
+
+            wallet= await Wallet.findOne({userId:req.session.user});
+        }
+        
         const walletBalance=wallet.balance;
 
         summary.subtotal=priceList.reduce((acc,num)=>acc+num,0);
@@ -81,7 +93,7 @@ const loadCheckout= async(req,res)=>{
             summary:summary,
             stockError:stockError,
             coupons:validCoupons,
-            balance:walletBalance||0
+            balance:walletBalance
            })
     } catch (error) {
         console.error("Error while loading checkout page",error);

@@ -1,8 +1,9 @@
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const User = require("../models/userSchema");
-const sendVerificationMail=require("../controllers/user/userController1");
+const {sendVerificationMail}=require("../controllers/user/userController1");
 require("dotenv").config();
+const crypto=require("crypto");
 
 passport.use(
   new GoogleStrategy(
@@ -24,7 +25,7 @@ passport.use(
 
         const referalCode = "REF-" + crypto.randomBytes(4).toString("hex");
 
-        await sendVerificationMail("",referalCode,profile.emails?.[0]?.value);
+        await sendVerificationMail(null,referalCode,profile.emails?.[0]?.value);
 
         user = await User.create({
           name: profile.displayName,
