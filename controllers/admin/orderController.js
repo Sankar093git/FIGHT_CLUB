@@ -4,6 +4,7 @@ const mongoose=require("mongoose");
 const Wallet=require("../../models/walletShema");
 const Transaction=require("../../models/transactionSchema");
 const Constants=require("../../models/constantSchema");
+const User=require("../../models/userSchema");
 const crypto=require("crypto");
 
 const getOrderList = async (req, res) => {
@@ -184,6 +185,42 @@ const changeOrderStatus = async (req, res) => {
     }
 
     await order.save();
+
+    if( order.paymentMethod==="COD" && status=="Delivered"){  
+      const transactionDetails= await Transaction.findOne({relatedOrderId:orderId, amount:200, method:"promo"});
+      if(!transactionDetails){    
+    const orderCount= await Order.countDocuments({user:order.user,paymentStatus:"PAID"});
+    const userData=await User.findOne({_id:order.user},{_id:0,referedBy:1});
+    if(orderCount===1 && userData.referedBy){
+      const refereeDetails= await User.findOne({email:userData.referedBy});
+      const refWallet=await Wallet.findOne({userId:refereeDetails._id});
+
+       if(!refWallet){
+        let newWallet= new Wallet({
+          userId:refereeDetails._id,
+          balance:200
+        })
+        await newWallet.save();
+       }else{
+        await Wallet.updateOne({userId:refereeDetails._id},{$inc:{balance:200}});
+       }
+
+      const refTraId = "TRA-" + crypto.randomBytes(4).toString("hex");
+      const newRefTransaction= new Transaction({
+        userId:refereeDetails._id,
+        transactionId:refTraId,
+        type:"credit",
+        method:"promo",
+        amount:200,
+        relatedOrderId:orderId,
+        description:"Referal reward"
+      })
+      await newRefTransaction.save()
+    }
+
+   }
+
+  }
 
 
     res.status(200).json({

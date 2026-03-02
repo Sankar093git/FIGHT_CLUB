@@ -20,6 +20,11 @@ const loadProfile=async (req,res)=>{
         //fetching order details and order pagination
         const orderDetails=await Orders.find({user:id}).sort({ createdAt: -1 }).skip(skip).limit(orderLimit);
         const totalOrders=await Orders.countDocuments({ user: id });
+        const paidOrders= await Orders.countDocuments({paymentStatus:"PAID"});
+        let newbee
+        if(paidOrders==0){
+             newbee=true;
+        }
         const totalOrderPages=Math.ceil(totalOrders/orderLimit);
         const image=findUser.userImage;
         const username=findUser.name;
@@ -45,6 +50,7 @@ const loadProfile=async (req,res)=>{
             transactions:transactions,
             totalTpages:totalTpages,
             currentTpage:tpage,
+            newbee
         })
     } catch (error) {
         console.log("Error while loading profilepage",error);
