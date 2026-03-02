@@ -346,6 +346,10 @@ const handlingReturn = async (req, res) => {
       // Determine final order status
       const allReturned = order.products.every(item => item.status === "Returned");
 
+      const someDelivered=order.products.some(item=>item.status==="Delivered");
+
+     // order.status=someDelivered?"Partially delivered":"Partially returned";
+
       order.status = allReturned ? "Returned" : "Partially returned";
       
       await order.save();

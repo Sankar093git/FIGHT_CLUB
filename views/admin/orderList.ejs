@@ -149,6 +149,8 @@
                     <option value="Cancelled" <%= order.status === "Cancelled" ? "selected" : "" %>>Cancelled</option>
                     <option value="Returned" <%= order.status === "Returned" ? "selected" : "" %>>Returned</option>
                     <option value="Processing" <%= order.status === "Processing" ? "selected" : "" %>>Processing</option>
+                    <option value="Partially returned" <%= order.status === "Partially returned" ? "selected" : "" %>>Partially returned</option>
+                    <option value="Partially delivered" <%= order.status === "Partially delivered" ? "selected" : "" %>>Partially delivered</option>
                   </select>
                 </td>
                 <td>

@@ -78,6 +78,8 @@ const orderSchema = new mongoose.Schema({
       "Cancelled",
       "Processing return",
       "Return rejected",
+      "Partially returned",
+      "Partially delivered",
       "Returned"
     ],
     default: "Pending"
