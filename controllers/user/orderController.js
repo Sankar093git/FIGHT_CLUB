@@ -16,10 +16,9 @@ const placeOrder = async (req, res) => {
     const constants= await Constants.find({});
     let shipping=constants[0].shipping;
     let taxes=constants[0].taxes;
-    const {
-      paymentMethod
-      ,couponCode
-    } = req.body;
+
+    const paymentMethod=req.body.paymentMethod;
+    const couponCode=req.body.couponCode||req.session.coupon;
 
     console.log(couponCode);
 
@@ -133,6 +132,10 @@ const placeOrder = async (req, res) => {
     await newOrder.save();
 
     await User.updateOne({ _id: userId },{ $set: { cart: [] } }); //Emptying cart after order placement.
+
+    req.session.coupon=null;
+    req.session.discount=null;
+    req.session.newTotal=null;
 
     res.status(201).json({success: true, orderId: orderId});
 

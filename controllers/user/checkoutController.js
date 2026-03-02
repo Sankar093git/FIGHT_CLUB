@@ -83,9 +83,10 @@ const loadCheckout= async(req,res)=>{
         summary.subtotal=priceList.reduce((acc,num)=>acc+num,0);
         summary.taxes=taxes;
         summary.shipping=shipping;
-        summary.total=(summary.subtotal+summary.taxes+summary.shipping);
-        console.log(summary);
+        summary.total=req.session.newTotal?req.session.newTotal:(summary.subtotal+summary.taxes+summary.shipping);
+        
         const validCoupons=coupons.filter((coupon)=>coupon.minPurchase<=summary.total).map((coupon)=>coupon.code);
+
         res.status(200).render("checkout",{
             user:req.session.userName||userName,
             image:null,
@@ -94,7 +95,10 @@ const loadCheckout= async(req,res)=>{
             summary:summary,
             stockError:stockError,
             coupons:validCoupons,
-            balance:walletBalance
+            balance:walletBalance,
+            currentCoupon:req.session.coupon||null,
+            newTotal:req.session.newTotal||null,
+            currentDiscount:req.session.discount||null
            })
     } catch (error) {
         console.error("Error while loading checkout page",error);
@@ -108,6 +112,7 @@ const applyCoupon= async(req,res)=>{
     let shipping=constants[0].shipping;
     let taxes=constants[0].taxes;
     const couponCode=req.body.couponCode;
+    req.session.coupon=couponCode;
     const userId=req.session.user;
     const couponDetails= await Coupon.findOne({code:couponCode});
     const userDetails= await User.findOne({_id:userId}).populate("cart.product");
@@ -136,7 +141,8 @@ const applyCoupon= async(req,res)=>{
 
     await User.updateOne({_id:userId},{$push:{redeemedCoupons:couponCode}});
     await Coupon.updateOne({code:couponCode},{$inc:{redemptions:1}});
-    
+    req.session.newTotal=totalAmount;
+    req.session.discount=discountValue;
     return res.status(200).json({success:true,newTotal:totalAmount,discount:discountValue});
   }else if(couponDetails.discountType=="percentage"){
     discountValue=totalAmount*(couponDetails.discountValue/100);
@@ -160,12 +166,15 @@ const applyCoupon= async(req,res)=>{
 const removeCoupon= async(req,res)=>{
     try {
         let {code,totalAmount,discount}=req.body
+        req.session.coupon=null;
+        req.session.newTotal=null;
+        req.session.discount=null;
         totalAmount=Number(totalAmount.replace(/[^\d.]/g, ''));
         discount=Number(discount.replace(/[^\d.]/g, ''))
         const newTotal= totalAmount+discount;
         console.log(newTotal)
         await User.updateOne({_id:req.session.user},{$pull:{redeemedCoupons:code}});
-        await Coupon.findOne({code:couponCode},{$inc:{redemptions:-1}});
+        await Coupon.updateOne({code:code},{$inc:{redemptions:-1}});
         res.status(200).json({success:true,message:"Coupon removed successfully",newTotal:newTotal,discount:0})
     } catch (error) {
         console.error("Remove coupon : ",error);
