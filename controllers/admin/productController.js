@@ -105,13 +105,13 @@ const addProducts = async (req, res) => {
       for (const file of req.files) {
 
         const originalImagePath = file.path;
-        const resizedImagePath = path.join(uploadDir, file.filename);
+        const resizedImagePath = path.join(uploadDir, "R"+file.filename);
 
         await sharp(originalImagePath)
           .resize({ width: 400, height: 440 })
           .toFile(resizedImagePath);
 
-        images.push(file.filename);
+        images.push("R"+file.filename);
 
       }
 
@@ -132,7 +132,7 @@ const addProducts = async (req, res) => {
       brand: req.body.brand,
       category: category._id,
       regularPrice: req.body.regularPrice,
-      ogSalesPrice:req.body.salesPrice,
+      ogSalesPrice:req.body.salePrice,
       salesPrice: req.body.salePrice,
       quantity:quantity, 
       createdOn: new Date(),
