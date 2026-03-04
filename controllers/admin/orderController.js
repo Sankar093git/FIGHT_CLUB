@@ -370,7 +370,7 @@ const handlingReturn = async (req, res) => {
       }
 
       order.status = "Return rejected";
-
+      console.log(order.status);
       await order.save();
 
       return res.status(200).json({
