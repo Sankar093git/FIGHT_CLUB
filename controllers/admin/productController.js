@@ -326,11 +326,12 @@ const blockOrUnblockproduct=async (req,res)=>{
     const prodDetails=await Product.findOne({_id:productId});
 
     if(prodDetails.isBlocked==true){
-
+       
       await Product.updateOne({_id:productId},{$set:{isBlocked:false}});
 
       return res.status(200).json({
         success:true,
+        isBlocked:false,
         message:"Product has been unblocked!"
       });
 
@@ -340,6 +341,7 @@ const blockOrUnblockproduct=async (req,res)=>{
 
       return res.status(200).json({
         success:true,
+        isBlocked:true,
         message:"Product has been blocked!"
       });
 
@@ -377,6 +379,7 @@ const addOffer= async(req,res)=>{
 
     return res.status(200).json({
       success:true,
+      price:productDetails.ogSalesPrice-discount,
       message:"Offer has been added!"
     });
 
@@ -415,6 +418,8 @@ const removeOffer= async(req,res)=>{
     } 
     productDetails.salesPrice=productDetails.ogSalesPrice;
 
+    let price=productDetails.ogSalesPrice;
+
     productDetails.offer=0;
 
     productDetails.productDiscount=0;
@@ -433,6 +438,7 @@ const removeOffer= async(req,res)=>{
 
     res.status(200).json({
       success:true,
+      price,
       message:"Offer has been removed"
     })   
 

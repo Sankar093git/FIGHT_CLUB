@@ -458,7 +458,7 @@
                     <i class="fa fa-user-check"></i>
                 </div>
                 <div class="stat-info">
-                    <h3><%= totalData.filter(d => !d.isBlocked).length %></h3>
+                    <h3 id="activeUsers"><%= totalData.filter(d => !d.isBlocked).length %></h3>
                     <p>Active Users</p>
                 </div>
             </div>
@@ -467,7 +467,7 @@
                     <i class="fa fa-user-slash"></i>
                 </div>
                 <div class="stat-info">
-                    <h3><%= totalData.filter(d => d.isBlocked).length %></h3>
+                    <h3 id="blockedUsers"><%= totalData.filter(d => d.isBlocked).length %></h3>
                     <p>Blocked Users</p>
                 </div>
             </div>
@@ -524,11 +524,11 @@
                         </td>
                         <td>
                             <% if(data[i].isBlocked === false) { %>
-                                <button class="btn-action btn-block" onclick="blockOrUnblockUser('<%= data[i]._id %>', '<%= data[i].name %>')">
+                                <button id ="actnBtn<%=data[i]._id%>" class="btn-action btn-block" onclick="blockOrUnblockUser('<%= data[i]._id %>', '<%= data[i].name %>')">
                                     <i class="fa fa-ban"></i> Block
                                 </button>
                             <% } else { %>
-                                <button class="btn-action btn-unblock" onclick="blockOrUnblockUser('<%= data[i]._id %>', '<%= data[i].name %>')">
+                                <button id ="actnBtn<%=data[i]._id%>" class="btn-action btn-unblock" onclick="blockOrUnblockUser('<%= data[i]._id %>', '<%= data[i].name %>')">
                                     <i class="fa fa-check-circle"></i> Unblock
                                 </button>
                             <% } %>
@@ -600,7 +600,16 @@ function blockOrUnblockUser(userId, userName) {
                                     icon: "success",
                                     timer: 1500,
                                     showConfirmButton: false
-                                }).then(() => { window.location.href = "/admin/users" });
+                                }).then(() => {
+                                      let btn=document.getElementById(`actnBtn${userId}`);
+                                      let blockedUsers=document.getElementById("blockedUsers");
+                                      let activeUsers=document.getElementById("activeUsers");
+                                      blockedUsers.innerText=response.blockedUsers;
+                                      activeUsers.innerText=response.activeUsers;
+                                      btn.innerHTML=`<i class="fa fa-ban"></i> Block`
+                                      btn.classList.remove("btn-unblock");
+                                      btn.classList.add("btn-block"); 
+                                    });
                             } else if (response.status === "blocked") {
                                 Swal.fire({
                                     title: "Blocked!",
@@ -608,7 +617,16 @@ function blockOrUnblockUser(userId, userName) {
                                     icon: "success",
                                     timer: 1500,
                                     showConfirmButton: false
-                                }).then(() => { window.location.href = "/admin/users" });
+                                }).then(() => {
+                                      let btn=document.getElementById(`actnBtn${userId}`);
+                                      let blockedUsers=document.getElementById("blockedUsers");
+                                      let activeUsers=document.getElementById("activeUsers");
+                                      blockedUsers.innerText=response.blockedUsers;
+                                      activeUsers.innerText=response.activeUsers;
+                                      btn.innerHTML=`<i class="fa fa-check-circle"></i> Unblock`
+                                      btn.classList.remove("btn-block");
+                                      btn.classList.add("btn-unblock");
+                                    });
                             }
                         }
                     },

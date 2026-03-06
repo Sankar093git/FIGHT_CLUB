@@ -501,25 +501,25 @@
                             </span>
                         </td>
                         <td>
-                            <span class="price-tag">₹<%= data[i].salesPrice %></span>
+                            <span id="priceTag<%= data[i]._id %>" class="price-tag">₹<%= data[i].salesPrice %></span>
                         </td>
                         <td>
                             <% if(data[i].offer > 0) { %>
-                                <span class="offer-badge">
+                                <span id="offerBadge<%= data[i]._id %>" class="offer-badge">
                                     <%= data[i].offer %>
                                     <i class="fa fa-percent"></i>
                                 </span>
                             <% } else { %>
-                                <span class="offer-badge no-offer">No Offer</span>
+                                <span id="offerBadge<%= data[i]._id %>" class="offer-badge no-offer">No Offer</span>
                             <% } %>
                         </td>
                         <td>
                             <% if(data[i].offer === 0) { %>
-                                <button class="btn-action btn-offer-add" onclick="return addOffer('<%= data[i]._id %>')">
+                                <button id="offerBtn<%= data[i]._id %>" class="btn-action btn-offer-add" onclick="addOffer('<%= data[i]._id %>')">
                                     <i class="fa fa-plus"></i> Add Offer
                                 </button>
                             <% } else { %>
-                                <button class="btn-action btn-offer-remove" onclick="return removeOffer('<%= data[i]._id %>')">
+                                <button id="offerBtn<%= data[i]._id %>" class="btn-action btn-offer-remove" onclick="removeOffer('<%= data[i]._id %>')">
                                     <i class="fa fa-times"></i> Remove
                                 </button>
                             <% } %>
@@ -531,11 +531,11 @@
                         </td>
                         <td>
                             <% if(data[i].isBlocked==false) { %>
-                                <button class="btn-action btn-block" onclick="blockProducts('<%= data[i]._id %>')">
+                                <button id="btn-action<%=data[i]._id%>" class="btn-action btn-block" onclick="blockProducts('<%= data[i]._id %>')">
                                     <i class="fa fa-ban"></i> Block
                                 </button>
                             <% } else { %>
-                                <button class="btn-action btn-unblock" onclick="blockProducts('<%= data[i]._id %>')">
+                                <button id="btn-action<%=data[i]._id%>" class="btn-action btn-unblock" onclick="blockProducts('<%= data[i]._id %>')">
                                     <i class="fa fa-check"></i> Unblock
                                 </button>
                             <% } %>
@@ -563,6 +563,8 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script>
+
+
     async function addOffer(productId) {
     const { value: amount } = await Swal.fire({
         title: 'Offer in percentage',
@@ -590,7 +592,18 @@
                     title: "Success",
                     text: data.message,
                     icon: "success"
-                }).then(() => window.location.reload());
+                }).then(() =>{
+                    let tag=document.getElementById(`priceTag${productId}`)
+                    let badge=document.getElementById(`offerBadge${productId}`);
+                    let btn=document.getElementById(`offerBtn${productId}`);
+                    badge.innerHTML=`${amount}<i class="fa fa-percent"></i>`;
+                    badge.classList.remove("no-offer");
+                    btn.innerHTML=`<i class="fa fa-times"></i> Remove`;
+                    btn.onclick=()=>removeOffer(`${productId}`);
+                    btn.classList.remove("btn-offer-add");
+                    btn.classList.add("btn-offer-remove");
+                    tag.innerText=`₹${data.price}`
+                });
             } else {
                 Swal.fire({
                     title: "Error",
@@ -636,7 +649,16 @@
                                     text:response.message,
                                     icon:"success"
                                 }).then(()=>{
-                                    window.location.reload();
+                                    let tag=document.getElementById(`priceTag${productId}`);
+                                    let badge=document.getElementById(`offerBadge${productId}`);
+                                    let btn=document.getElementById(`offerBtn${productId}`);
+                                    badge.innerHTML=`No offer`;
+                                    badge.classList.add("no-offer");
+                                    btn.innerHTML=`<i class="fa fa-plus"></i> Add Offer`;
+                                    btn.onclick=()=>addOffer(`${productId}`);
+                                    btn.classList.remove("btn-offer-remove");
+                                    btn.classList.add("btn-offer-add");
+                                    tag.innerText=`₹${response.price}`
                                 })
                             } else if (response.status === false) {
                                 Swal.fire({
@@ -677,7 +699,19 @@
                         icon: "success",
                         title: "Success",
                         text: `${response.message}`,
-                       }).then(()=>location.reload())
+                       }).then(()=>{
+                        let btn=document.getElementById(`btn-action${productId}`);
+                        if(!response.isBlocked){
+                            btn.innerHTML=`<i class="fa fa-ban"></i> Block`
+                            btn.classList.remove("btn-unblock");
+                            btn.classList.add("btn-block");
+                        }else{
+                            btn.innerHTML=`<i class="fa fa-check"></i> Unblock`
+                            btn.classList.remove("btn-block");
+                            btn.classList.add("btn-unblock");
+                        }
+                        
+                       })
                     } else if (response.status === false) {
                         Swal.fire("Failed", "Please try again", "error");
                     }

@@ -12,7 +12,7 @@ const loadCategory = async (req, res) => {
     const search = req.query.search || "";
 
     const categoryData = await Category.find({name: { $regex: new RegExp(search, 'i') },isDeleted:false})
-      .sort({ createdAt: -1 })
+      .sort({ _id: -1 })
       .skip(skip)
       .limit(limit);
 
@@ -65,7 +65,10 @@ const addCategory = async (req, res) => {
 
     await newCategory.save();
 
+    const categoryDetails= await Category.findOne({name:formattedName});
+
     return res.status(201).json({
+       category:categoryDetails,
        message: "Category added successfully" 
       });
 
@@ -186,7 +189,7 @@ const removeOffer = async (req, res) => {
     }  
 
     res.status(200).json({
-       status: true, 
+       success: true, 
        message:"Offer has been removed"
       });
 
@@ -195,7 +198,7 @@ const removeOffer = async (req, res) => {
     console.error("Backend error while removing offer:", error);
 
     res.status(500).json({
-       status: false, 
+       success: false, 
        message: "Internal Server Error" 
       });
 
@@ -216,6 +219,7 @@ const listOrUnlist= async (req,res)=>{
 
        return res.status(200).json({
         success:true,
+        unlisted:true,
         message:"Category unlisted"
       })
 
@@ -225,6 +229,7 @@ const listOrUnlist= async (req,res)=>{
 
         return res.status(200).json({
           success:true,
+          unlisted:false,
           message:"Category listed"
         });
 

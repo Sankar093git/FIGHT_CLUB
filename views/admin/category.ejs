@@ -575,9 +575,9 @@
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="tBody">
               <% cat.reverse().forEach((category, index) => { %>
-              <tr>
+              <tr id="row<%=category._id%>">
                 <td>
                   <span class="category-name"><%= category.name %></span>
                 </td>
@@ -586,22 +586,22 @@
                 </td>
                 <td>
                   <% if(category.categoryOffer){ %>
-                    <span class="offer-badge has-offer">
+                    <span id="offerBadge<%=category._id%>" class="offer-badge has-offer">
                       <i class="fa fa-tag"></i> <%= category.categoryOffer %>%
                     </span>
                   <% } else { %>
-                    <span class="offer-badge no-offer">
+                    <span id="offerBadge<%=category._id%>" class="offer-badge no-offer">
                       <i class="fa fa-tag"></i> 0%
                     </span>
                   <% } %>
                 </td>
                 <td>
                   <% if(category.isListed){ %>
-                    <span class="status-badge listed">
+                    <span id="listStatus<%=category._id%>"class="status-badge listed">
                       <span class="status-dot"></span> Listed
                     </span>
                   <% } else { %>
-                    <span class="status-badge unlisted">
+                    <span id="listStatus<%=category._id%>" class="status-badge unlisted">
                       <span class="status-dot"></span> Unlisted
                     </span>
                   <% } %>
@@ -609,19 +609,19 @@
                 <td>
                   <div class="action-buttons">
                     <% if(category.categoryOffer === 0){ %>
-                      <a href="#" class="action-btn action-btn-offer" onclick="addOffer('<%=category._id%>')">
+                      <a href="#" id="offerBtn<%=category._id%>" class="action-btn action-btn-offer" onclick="addOffer('<%=category._id%>')">
                         <i class="fa fa-percent"></i> Add Offer
                       </a>
                     <% } else { %>
-                      <a href="#" class="action-btn action-btn-offer" onclick="removeOffer('<%=category._id%>')">
+                      <a href="#" id="offerBtn<%=category._id%>" class="action-btn action-btn-offer" onclick="removeOffer('<%=category._id%>')">
                         <i class="fa fa-times"></i> Remove
                       </a>
                     <% } %>
                     
                     <% if(category.isListed){ %>
-                      <button class="action-btn action-btn-unlist" onclick="unlistlistCategory('<%=category._id%>')"><i class="fa fa-eye"></i>Unlist</button>
+                      <button id="changeStatus<%=category._id%>"class="action-btn action-btn-unlist" onclick="unlistlistCategory('<%=category._id%>')"><i class="fa fa-eye"></i>Unlist</button>
                     <% } else { %>
-                       <button class="action-btn action-btn-list" onclick="unlistlistCategory('<%=category._id%>')"><i class="fa fa-eye"></i>List</button>
+                       <button id="changeStatus<%=category._id%>" class="action-btn action-btn-list" onclick="unlistlistCategory('<%=category._id%>')"><i class="fa fa-eye"></i>List</button>
                     <% } %>
                     
                     <a href="/admin/edit-category?id=<%= category._id %>" class="action-btn action-btn-edit">
@@ -705,7 +705,43 @@
         title: "Category added!",
         text: data.message
       }).then(() => {
-        location.reload();
+        const c = data.category;
+    const offerHTML = c.categoryOffer
+        ? `<span id="offerBadge${c._id}" class="offer-badge has-offer"><i class="fa fa-tag"></i> ${c.categoryOffer}%</span>`
+        : `<span id="offerBadge${c._id}" class="offer-badge no-offer"><i class="fa fa-tag"></i> 0%</span>`;
+
+    const statusHTML = c.isListed
+        ? `<span id="listStatus${c._id}" class="status-badge listed"><span class="status-dot"></span> Listed</span>`
+        : `<span id="listStatus${c._id}" class="status-badge unlisted"><span class="status-dot"></span> Unlisted</span>`;
+
+    const newRow = `
+    <tr id="row${c._id}">
+        <td><span class="category-name">${c.name}</span></td>
+        <td><span class="category-desc" title="${c.description}">${c.description}</span></td>
+        <td>${offerHTML}</td>
+        <td>${statusHTML}</td>
+        <td>
+            <div class="action-buttons">
+                <a href="#" id="offerBtn${c._id}" class="action-btn action-btn-offer" onclick="addOffer('${c._id}')">
+                    <i class="fa fa-percent"></i> Add Offer
+                </a>
+                <button id="changeStatus${c._id}" class="action-btn action-btn-unlist" onclick="unlistlistCategory('${c._id}')">
+                    <i class="fa fa-eye"></i> Unlist
+                </button>
+                <a href="/admin/edit-category?id=${c._id}" class="action-btn action-btn-edit">
+                    <i class="fa fa-pen"></i> Edit
+                </a>
+                <a href="#" onclick="deleteCategory('${c._id}')" class="action-btn action-btn-delete">
+                    <i class="fa fa-trash"></i> Delete
+                </a>
+            </div>
+        </td>
+    </tr>`;
+
+    document.getElementById("tBody").insertAdjacentHTML("afterbegin", newRow);
+
+    document.getElementById("product_name").value="";
+    document.getElementById("descriptionId").value="";
       });
     })
     .catch(error => {
@@ -785,7 +821,13 @@
             "Offer has been added",
             "success" 
           ).then(() => {
-            location.reload();
+            let badge=document.getElementById(`offerBadge${categoryId}`);
+            let btn=document.getElementById(`offerBtn${categoryId}`);
+            btn.onclick = () => removeOffer(categoryId);
+            btn.innerHTML=`<i class="fa fa-times"></i> Remove`;
+            badge.innerHTML=`<i class="fa fa-tag"></i> ${amount}%`
+            badge.classList.remove("no-offer");
+            badge.classList.add("has-offer");
           });
         } else {
           Swal.fire("Failed", data.message || "Adding offer failed", "error");
@@ -817,7 +859,13 @@
           icon:"success"
         }
         ).then(() => {
-          location.reload();
+          let badge=document.getElementById(`offerBadge${categoryId}`);
+            let btn=document.getElementById(`offerBtn${categoryId}`);
+            btn.onclick = () => addOffer(categoryId);
+            btn.innerHTML=`<i class="fa fa-percent"></i> Add Offer`;
+            badge.innerHTML=`<i class="fa fa-tag"></i> 0%`
+            badge.classList.remove("has-offer");
+            badge.classList.add("no-offer");
         });
       } else {
         Swal.fire("Failed", data.message || "Removing offer failed", "error");
@@ -855,7 +903,8 @@
                   text: "Category deleted successfully!",
                   showConfirmButton: true
                 }).then(() => {
-                  window.location.reload();
+                  let row= document.getElementById(`row${catId}`);
+                  row.remove();
                 });
               }
             },
@@ -899,7 +948,26 @@
               title:"Success",
               text:data.message,
               icon:"success"
-            }).then(()=>window.location.reload());
+            }).then(()=>{
+              let badge=document.getElementById(`listStatus${catId}`);
+              let btn=document.getElementById(`changeStatus${catId}`);
+              if(data.unlisted){
+                badge.innerHTML=`<span class="status-dot"></span> Unlisted`;
+                badge.classList.remove("listed");
+                badge.classList.add("unlisted");
+                btn.innerHTML=`<i class="fa fa-eye"></i>List`
+                btn.classList.remove("action-btn-unlist");
+                btn.classList.add("action-btn-list");
+              }else{
+                badge.innerHTML=`<span class="status-dot"></span> Listed`;
+                badge.classList.remove("unlisted");
+                badge.classList.add("listed");
+                btn.innerHTML=`<i class="fa fa-eye"></i>Unlist`
+                btn.classList.remove("action-btn-list");
+                btn.classList.add("action-btn-unlist");
+              }
+
+            });
           }else{
             Swal.fire({
               title:"Error",

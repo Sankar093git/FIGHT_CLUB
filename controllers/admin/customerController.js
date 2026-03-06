@@ -52,21 +52,39 @@ const blockOrUnblockCustomer=async(req,res)=>{
 
         const userData=await User.findById(id);
 
+        let blockedUsers;
+        let activeUsers;
+
         if(userData.isBlocked){
 
             await User.updateOne({_id:id},{$set:{isBlocked:false}});
 
+            blockedUsers=await User.countDocuments({isBlocked:true});
+
+            activeUsers= await User.countDocuments({isBlocked:false});
+
             res.status(200).json({
                 success:true,
                 status:"unblocked",
+                blockedUsers,
+                activeUsers,
                 message:`${userData.name} has been unblocked`
             });
+
         }else{
 
             await User.updateOne({_id:id},{$set:{isBlocked:true}});
+
+            blockedUsers=await User.countDocuments({isBlocked:true});
+
+            activeUsers= await User.countDocuments({isBlocked:false});
+
+
             res.status(200).json({
                 success:true,
                 status:"blocked",
+                blockedUsers,
+                activeUsers,
                 message:`${userData.name} has been blocked`
             });
 
