@@ -54,3 +54,6 @@ coverage/
 
 # Local test & debug config
 jest-local.config.js
+
+#Log details
+access.log

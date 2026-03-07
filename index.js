@@ -5,12 +5,14 @@ const app=express();
 const env=require("dotenv").config();
 const userRouter=require("./routers/user/userRoutes");
 const adminRouter=require("./routers/admin/adminRoutes");
+const fs=require("fs");
 const path=require("path");
 const passport=require("./config/passport");
 const navbarContext=require("./middlewares/navbarContext");
 const errorHandler=require("./middlewares/errorHandling");
 const {initCleanupJob} = require("./services/orderCleanup");
 const MongoStore = require("connect-mongo").default;
+const morgan=require("morgan");
 
 connectDB();
 
@@ -46,6 +48,14 @@ app.use((req,res,next)=>{
 })
 
 initCleanupJob();
+
+const accessLogStream = fs.createWriteStream(
+    path.join(__dirname, 'access.log'), 
+    { flags: 'a' } 
+);
+
+app.use(morgan("dev"));
+app.use(morgan('combined', { stream: accessLogStream }));
 
 app.use("/",navbarContext);
 app.use("/",userRouter);
