@@ -1,6 +1,7 @@
 const razorpay = require("../../config/razorpay");
 const Order=require("../../models/orderSchema");
 const crypto = require("crypto");
+const STATUS_CODES=require("../../utils/statusCode");
 
 const createRazorpayOrder = async (req, res) => {
   try {
@@ -10,13 +11,13 @@ const createRazorpayOrder = async (req, res) => {
     if(orderId){
       const orderDetails= await Order.findOne({orderId:orderId});
       if (orderDetails.paymentStatus === "PAID") {
-        return res.status(400).json({ success: false, message: "Order is already paid." });
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Order is already paid." });
       }
       
       totalAmount=orderDetails.totalAmount;
 
     }else{
-      return res.status(400).json({success:false,message:"Order does not exist"})
+      return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Order does not exist"})
     }
     const options = {
       amount: totalAmount * 100,
@@ -26,13 +27,13 @@ const createRazorpayOrder = async (req, res) => {
 
     const order = await razorpay.orders.create(options);
 
-    res.status(200).json({
+    res.status(STATUS_CODES.OK).json({
       success: true,
       order
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Order creation failed"
     });

@@ -5,6 +5,7 @@ const bcrypt=require("bcrypt");
 const crypto=require("crypto");
 const nodemailer=require("nodemailer");
 require("dotenv").config()
+const STATUS_CODES=require("../../utils/statusCode");
 
 const loadHome= async (req,res)=>{
     try {
@@ -54,23 +55,23 @@ const loadHome= async (req,res)=>{
 
         const latestProducts= await Product.find({isBlocked:false},{_id:1,productName:1,productImage:1,salesPrice:1,regularPrice:1}).sort({createdAt:-1}).limit(7);
 
-         res.status(200).render("home",{
+         res.status(STATUS_CODES.OK).render("home",{
             mostWanted,
             latestProducts
     });
     } catch (error) {
         console.error("Error while loading homepage",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
+
 const loadSignUp=async(req,res)=>{
     try {
-
-        res.status(200).render("signUp",{message:null});
+        res.status(STATUS_CODES.OK).render("signUp",{message:null});
         
     } catch (error) {
         console.log('Error while loading page',error);
-        res.status(500).redirect("/pageNotFound");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/pageNotFound");
     }
 }
 
@@ -89,7 +90,6 @@ const generateOTP=async()=>{
          return otp;
     } catch (error) {
         console.error("Error while generating OTP",error);
-
     }
 }
 
@@ -132,10 +132,9 @@ const sendVerificationMail=async(OTP,referalCode,email)=>{
     } catch (error) {
         console.error("Error while sendin verification mail",error);
         return false
-
+    }
 }
 
-}
 const signUp=async (req,res)=>{
     try {
         const {name,email,phone,referedCode,password}=req.body;
@@ -179,30 +178,31 @@ const signUp=async (req,res)=>{
         console.log(`Your referal code is ${referalCode}`);
         const mailSent= await sendVerificationMail(OTP,null,email);
         if(mailSent){
-            res.status(200).redirect("/verify-otp");
+            res.status(STATUS_CODES.OK).redirect("/verify-otp");
         }else{
             console.log("Email verification failed")
         }
     }else{
-       res.status(400).render("signup",{message:"User already exists!"});
+       res.status(STATUS_CODES.BAD_REQUEST).render("signup",{message:"User already exists!"});
     }
         
     } catch (error) {
         console.error("Error while creating account", error);
-        res.status(500).redirect("/pageNotFound");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/pageNotFound");
     }
 }
 
 const loadLogin=async(req,res)=>{
     try {
-       res.status(200).render("login",{
+       res.status(STATUS_CODES.OK).render("login",{
         message:""
        });
     } catch (error) {
         console.error("Error while loading login page",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
+
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -210,7 +210,7 @@ const login = async (req, res) => {
     const findUser = await User.findOne({ email: email });
 
     if (!findUser) {
-      return res.status(400).json({ message: "User not found" });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ message: "User not found" });
     }
 
     const isPasswordMatch = await bcrypt.compare(password, findUser.password);
@@ -220,33 +220,33 @@ const login = async (req, res) => {
       req.session.userName=findUser.name;
       req.session.image=findUser.userImage
       req.session.email=email;
-      res.status(200).redirect("/");
+      res.status(STATUS_CODES.OK).redirect("/");
     } else {
-      res.status(400).render("login",{
+      res.status(STATUS_CODES.BAD_REQUEST).render("login",{
         message:"Enter valid credentials"
       })
     }
   } catch (error) {
     console.error("Error while logging in", error);
-    res.status(500).redirect("/error");
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
   }
 }
 
 const loadVerifyOtp=async(req,res)=>{
     try {
-        res.status(200).render("verify-otp");
+        res.status(STATUS_CODES.OK).render("verify-otp");
     } catch (error) {
         console.error("Error while loading verify otp page",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
 
 const loadVerifyPassOtp=async(req,res)=>{
     try {
-        res.status(200).render("verifypassOtp");
+        res.status(STATUS_CODES.OK).render("verifypassOtp");
     } catch (error) {
         console.error("Error while loading verify otp page",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
 
@@ -258,13 +258,13 @@ const resendOtp = async (req, res) => {
     const sentMail = await sendVerificationMail(OTP, req.session.email); 
 
     if (sentMail) {
-      res.status(200).json({ success: true });
+      res.status(STATUS_CODES.OK).json({ success: true });
     } else {
-      res.status(500).json({ success: false, message: "Failed to send email" });
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: "Failed to send email" });
     }
   } catch (error) {
     console.log("Error while resending OTP:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
   }
 };
 
@@ -277,24 +277,25 @@ const verifyOtp=async(req,res)=>{
             const referalCode=req.session.referalCode;
             const sentMail= await sendVerificationMail(null,referalCode,req.session.email);
          if(sentMail){
-             res.status(200).json({success:true,message:"OTP verified succcesfully, your referal code has been sent!"});
+             res.status(STATUS_CODES.OK).json({success:true,message:"OTP verified succcesfully, your referal code has been sent!"});
          }else{
-            res.status(503).json({success:false,message:"Unable to referal code!"});
+            res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({success:false,message:"Unable to send referal code!"});  // ✅ 503 → 500
          }
         }else{
-            res.status(400).json({success:false,message:"Invalid OTP"});
+            res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Invalid OTP"});
         }
     } catch (error) {
         console.log("Error while otp verification",error);
-        res.status(500).json({success:false,message:"Something went wrong!"});
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({success:false,message:"Something went wrong!"});
     }
 }
+
 const loadForgotPassword=async(req,res)=>{
     try {
-        res.status(200).render("forgot-password");
+        res.status(STATUS_CODES.OK).render("forgot-password");
     } catch (error) {
         console.error("Error while loading forgot password",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
 
@@ -309,25 +310,25 @@ const emailVerification=async(req,res)=>{
          console.log(OTP);
          const sentMail= await sendVerificationMail(OTP,null,email);
          if(sentMail){
-            res.status(200).json({success:true,message:"OTP has been send to your mail!"});
+            res.status(STATUS_CODES.OK).json({success:true,message:"OTP has been send to your mail!"});
          }else{
-            res.status(503).json({success:false,message:"Unable to send email!"});
+            res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({success:false,message:"Unable to send email!"});  // ✅ 503 → 500
          }
         }else{
-            res.status(400).json({success:false,message:"Email does not exist!"})
+            res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Email does not exist!"})
         }
     } catch (error) {
         console.error("Error while verifying email Id",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
 
 const loadResetPassword=async(req,res)=>{
     try {
-        res.status(200).render("reset-password");
+        res.status(STATUS_CODES.OK).render("reset-password");
     } catch (error) {
         console.error("Error while loading the page",error);
-        res.status(400).redirect("/error")
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error")  // ✅ 400 → 500
     }
 }
 
@@ -346,41 +347,39 @@ const resetPassword = async (req, res) => {
           console.error("Session destruction error:", err);
           return res.redirect("/error");
         }
-        return res.status(200).json({success:true,redirectUrl:"/login"});
+        return res.status(STATUS_CODES.OK).json({success:true,redirectUrl:"/login"});
       });
     } else {
-      return res.status(400).json({success:false});
+      return res.status(STATUS_CODES.BAD_REQUEST).json({success:false});
     }
 
   } catch (error) {
     console.error("Error while resetting password:", error);
-    return res.status(500).json({success:false});
+    return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({success:false});
   }
 };
-
 
 const verifyPassOtp=async(req,res)=>{
     try {
         const {otp}=req.body;
         if(otp===req.session.otp){
-            res.status(200).json({success:true,message:"OTP successfully verified!"});
+            res.status(STATUS_CODES.OK).json({success:true,message:"OTP successfully verified!"});
         }else{
-            res.status(400).json({success:true,message:"Incorrect OTP"});
+            res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Incorrect OTP"});  // ✅ success:true → success:false
         }
     } catch (error) {
         console.error("Error while verifying otp",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
-
 
 const logout=async(req,res)=>{
     try {
         req.session.destroy();
-        res.status(200).redirect("/");
+        res.status(STATUS_CODES.OK).redirect("/");
     } catch (error) {
         console.error("Error while logging out",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
 
@@ -404,20 +403,20 @@ const applyReferalCode= async (req,res)=>{
         const user= await User.findOne({_id:req.session.user});
 
         if(!referee){
-            res.status(400).json({success:false,message:"Invalid referal code!"});
+            res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Invalid referal code!"});
         }
 
         if(user.referedBy){
-            res.status(400).json({success:false,message:"Your have been refered already!"});
+            res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Your have been refered already!"});
         }
 
         user.referedBy=referee.email;
         await user.save();
 
-        res.status(200).json({success:true});
+        res.status(STATUS_CODES.OK).json({success:true});
     } catch (error) {
         console.error("Referal code : ", error);
-        res.status(500).json({success:false,message:"Something went wrong!"});
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({success:false,message:"Something went wrong!"});
     }
 }
 

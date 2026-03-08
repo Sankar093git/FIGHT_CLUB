@@ -1,4 +1,5 @@
 const User=require("../../models/userSchema");
+const STATUS_CODES=require("../../utils/statusCode");
 
 const loadCart=async (req,res)=>{
     try {
@@ -30,7 +31,7 @@ const loadCart=async (req,res)=>{
                             quantity: item.quantity
                           }));
         await User.updateOne({ _id: user }, { $set: { cart: dbCartUpdate } })                 
-        res.status(200).render("cart",{
+        res.status(STATUS_CODES.OK).render("cart",{
             userData:userData,
             cart:validCartItems,
             user:userData.name,
@@ -38,7 +39,7 @@ const loadCart=async (req,res)=>{
         });
     } catch (error) {
         console.error("Error while loading cart-page",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
 
@@ -57,31 +58,31 @@ const changeQuantity= async (req,res)=>{
           }
           if (action === 'increment') {
             if (cartItem.quantity >= variant.stock) {
-               return res.status(400).json({success:false,message:"Out of stock"});
+               return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Out of stock"});
             } else if (cartItem.quantity >= 5) {
-               return res.status(400).json({success:false,message:"Limit exceeded"});
+               return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Limit exceeded"});
             } else {
               await User.updateOne(
               { _id: req.session.user, "cart.product": pId },
               { $inc: { "cart.$.quantity": 1 } }
              );
-             return res.status(200).json({success:true});
+             return res.status(STATUS_CODES.OK).json({success:true});
           }
         }else if(action==="decrement"){
           if(cartItem.quantity<=1){
-            return res.status(400).json({success:false,message:"Click trash icon to remove the product"});
+            return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Click trash icon to remove the product"});
           }else{
           await User.updateOne(
               { _id: req.session.user, "cart.product": pId },
               { $inc: { "cart.$.quantity": -1 } }
              );
             }
-            return res.status(200).json({success:true});
+            return res.status(STATUS_CODES.OK).json({success:true});
         } 
         
     } catch (error) {
         console.error("Error while changing quantity",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
 
@@ -92,10 +93,10 @@ const removeItem = async (req, res) => {
       { _id: req.session.user },    
       { $pull: { cart: { product: pId } } } 
     );
-   res.status(200).json({success:true});
+   res.status(STATUS_CODES.OK).json({success:true});
   } catch (error) {
     console.error("Error while removing item", error);
-    res.staatus(500).redirect("/error");
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error"); 
   }
 };
 

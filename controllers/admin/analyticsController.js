@@ -1,6 +1,8 @@
 const Order=require("../../models/orderSchema");
 const Transactions=require("../../models/transactionSchema");
 const Product=require("../../models/productSchema");
+const STATUS_CODES=require("../../utils/statusCode");
+
 
 const loadSalesReport= async(req,res)=>{
     try {
@@ -13,7 +15,7 @@ const loadSalesReport= async(req,res)=>{
         console.log("Sample order : ",orderDetails.length);
 
         if(orderDetails.length===0){
-           return res.status(400).json({success:false,message:"No orders have been made yet!"});
+           return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"No orders have been made yet!"});
         }
 
         //calculating total sales count
@@ -26,7 +28,7 @@ const loadSalesReport= async(req,res)=>{
                 });
 
         if(totalSalesCount===0){
-            res.status(200).json({success:true,message:{
+            res.status(STATUS_CODES.OK).json({success:true,message:{
                 totalSalesCount:0,
                 totalOrderAmount:0,
                 totalRefund:0,
@@ -139,7 +141,7 @@ const loadSalesReport= async(req,res)=>{
 
         
 
-        res.status(200).json({
+        res.status(STATUS_CODES.OK).json({
             success:true,
             message:{
             totalSalesCount,
@@ -153,7 +155,7 @@ const loadSalesReport= async(req,res)=>{
 
     } catch (error) {
         console.error("Sales report fetch: ",error);
-        res.status(500).json({
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
             success:false,
             message:"Something went wrong"
         });
@@ -226,15 +228,15 @@ const loadChart= async(req,res)=>{
         }
 
         console.log(`labels : ${labels}\nvalues : ${values}`);
-        res.status(200).json({
+        res.status(STATUS_CODES.OK).json({
             success:true,
             labels:labels,
             values:values
         });
     } catch (error) {
         console.error("Loading chart : ",error);
-        res.status(500).json({
-            success:true,
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+            success:false,
             message:"Something went wrong!"
         });
     }
@@ -383,7 +385,7 @@ const loadTopTens= async(req,res)=>{
     }
 ]);
 
-    res.status(200).json({
+    res.status(STATUS_CODES.OK).json({
         success:true,
         products:productRankings,
         categories:categoryRankings,
@@ -392,7 +394,7 @@ const loadTopTens= async(req,res)=>{
 
     } catch (error) {
         console.error("Top ten error : ",error);
-        res.status(500).json({
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
             success:false,
             message:"Something went wrong"
         });

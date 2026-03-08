@@ -1,5 +1,7 @@
 const User=require("../../models/userSchema");
 const bcrypt=require("bcrypt");
+const STATUS_CODES=require("../../utils/statusCode");
+
 
 const loadCustomer= async(req,res)=>{
     try {
@@ -26,7 +28,7 @@ const loadCustomer= async(req,res)=>{
 
         const totalPages=Math.ceil(count/limit);
 
-        res.status(200).render("customer",{
+        res.status(STATUS_CODES.OK).render("customer",{
             queryVal:req.query,
             totalData:totalData,
             data:userData||null,
@@ -39,7 +41,7 @@ const loadCustomer= async(req,res)=>{
 
         console.error("Error while loading customerlist",error);
 
-        res.status(500).redirect("/admin/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
 
     }
 
@@ -63,7 +65,7 @@ const blockOrUnblockCustomer=async(req,res)=>{
 
             activeUsers= await User.countDocuments({isBlocked:false});
 
-            res.status(200).json({
+            res.status(STATUS_CODES.OK).json({
                 success:true,
                 status:"unblocked",
                 blockedUsers,
@@ -79,8 +81,7 @@ const blockOrUnblockCustomer=async(req,res)=>{
 
             activeUsers= await User.countDocuments({isBlocked:false});
 
-
-            res.status(200).json({
+            res.status(STATUS_CODES.OK).json({
                 success:true,
                 status:"blocked",
                 blockedUsers,
@@ -94,7 +95,7 @@ const blockOrUnblockCustomer=async(req,res)=>{
 
         console.error("Error while blocking customer",error);
 
-        res.status(500).json({
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
             success:false,
             message:"Something went wrong, please try again."
         });

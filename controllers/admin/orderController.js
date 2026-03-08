@@ -6,6 +6,8 @@ const Transaction=require("../../models/transactionSchema");
 const Constants=require("../../models/constantSchema");
 const User=require("../../models/userSchema");
 const crypto=require("crypto");
+const STATUS_CODES=require("../../utils/statusCode");
+
 
 const getOrderList = async (req, res) => {
   try {
@@ -99,7 +101,7 @@ const getOrderList = async (req, res) => {
 
     const totalPages = Math.ceil(totalOrders / limit);
 
-    res.render("orderList", {
+    res.status(STATUS_CODES.OK).render("orderList", {
       queryValues: req.query,
       orderDetails: orders,
       currentPage: page,
@@ -130,7 +132,7 @@ const changeOrderStatus = async (req, res) => {
 
     if (!order) {
 
-      return res.status(404).json({
+      return res.status(STATUS_CODES.NOT_FOUND).json({
         success: false,
         message: "Order not found"
       });
@@ -139,7 +141,7 @@ const changeOrderStatus = async (req, res) => {
 
     if(order.status==="Cancelled"||order.status==="Returned"){
 
-      return res.status(404).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: "Status cannot be updated"
       });
@@ -148,7 +150,7 @@ const changeOrderStatus = async (req, res) => {
 
     if(status==="Processing return"||status==="Returned"||status==="Return rejected"){
 
-      return res.status(404).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: "Forbiden action"
       });
@@ -223,7 +225,7 @@ const changeOrderStatus = async (req, res) => {
   }
 
 
-    res.status(200).json({
+    res.status(STATUS_CODES.OK).json({
        success: true 
       });
 
@@ -231,7 +233,7 @@ const changeOrderStatus = async (req, res) => {
 
     console.error("Error while changing order status:", error);
 
-    res.status(500).json({
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: error.message
     });
@@ -252,7 +254,7 @@ const handlingReturn = async (req, res) => {
 
     if (!order) {
 
-      return res.status(404).json({
+      return res.status(STATUS_CODES.NOT_FOUND).json({
         success: false,
         message: "Order not found"
       });
@@ -261,7 +263,7 @@ const handlingReturn = async (req, res) => {
 
     if (order.status !== "Processing return") {
 
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: "Invalid return state"
       });
@@ -274,7 +276,7 @@ const handlingReturn = async (req, res) => {
       
       if (validProducts.length === 0) {
 
-        return res.status(400).json({
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
           success: false,
           message: "No products found with return processing status"
         });
@@ -354,7 +356,7 @@ const handlingReturn = async (req, res) => {
       
       await order.save();
 
-      return res.json({
+      return res.status(STATUS_CODES.OK).json({
         success: true,
         message: "Return approved successfully",
         refundAmount: refundAmount
@@ -373,7 +375,7 @@ const handlingReturn = async (req, res) => {
       console.log(order.status);
       await order.save();
 
-      return res.status(200).json({
+      return res.status(STATUS_CODES.OK).json({
         success: true,
         message: "Return rejected successfully"
       });
@@ -384,7 +386,7 @@ const handlingReturn = async (req, res) => {
 
     console.error("Error while handling return:", error);
 
-    return res.status(500).json({
+    return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "An error occurred while processing the return"
     });
@@ -424,7 +426,7 @@ const handlingReturn = async (req, res) => {
 
     const total = subTotal + shipping + taxes - discount;
 
-    res.status(200).render("orderDetailsAdmin", {
+    res.status(STATUS_CODES.OK).render("orderDetailsAdmin", {
       Product: order.products,
       addr: order.address,
       subtotal: subTotal,
@@ -443,7 +445,7 @@ const handlingReturn = async (req, res) => {
 
     console.error("Error while displaying admin order:", error);
 
-    res.status(500).redirect("/error");
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
 
   }
 
@@ -458,7 +460,7 @@ const handlesingleReturn = async (req, res) => {
     // Validate required fields
     if (!orderId || !size) {
 
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: "Order ID and size are required"
       });
@@ -483,14 +485,14 @@ const handlesingleReturn = async (req, res) => {
 
       if (rejectResult.matchedCount === 0) {
 
-        return res.status(404).json({
+        return res.status(STATUS_CODES.NOT_FOUND).json({
           success: false,
           message: "Order or product not found"
         });
 
       }
 
-      return res.status(200).json({
+      return res.status(STATUS_CODES.OK).json({
         success: true,
         message: "Return request rejected successfully"
       });
@@ -502,7 +504,7 @@ const handlesingleReturn = async (req, res) => {
 
     if (!orderDetails) {
 
-      return res.status(404).json({
+      return res.status(STATUS_CODES.NOT_FOUND).json({
         success: false,
         message: "Order not found"
       });
@@ -512,7 +514,7 @@ const handlesingleReturn = async (req, res) => {
     // Check if order has discount/coupon applied
     if (orderDetails.discountValue&&orderDetails.products.length>1) {
 
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: "Return not possible due to coupon in order"
       });
@@ -526,7 +528,7 @@ const handlesingleReturn = async (req, res) => {
 
     if (!matchedProduct) {
 
-      return res.status(404).json({
+      return res.status(STATUS_CODES.NOT_FOUND).json({
         success: false,
         message: "Matching product not found in order"
       });
@@ -538,7 +540,7 @@ const handlesingleReturn = async (req, res) => {
     // Validate return quantity
     if (returnQuantity < 0 || returnQuantity > quantity) {
 
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: "Invalid return quantity"
       });
@@ -547,7 +549,7 @@ const handlesingleReturn = async (req, res) => {
 
     if (returnQuantity === 0) {
 
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: "Return quantity cannot be zero"
       });
@@ -643,7 +645,7 @@ const handlesingleReturn = async (req, res) => {
       orderId
     );
 
-    return res.status(200).json({
+    return res.status(STATUS_CODES.OK).json({
       success: true,
       message: isFullReturn 
         ? "Product returned successfully" 
@@ -654,7 +656,7 @@ const handlesingleReturn = async (req, res) => {
 
     console.error("Error while handling single return:", error);
 
-    return res.status(500).json({
+    return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "An error occurred while processing the return"
     });
@@ -715,7 +717,7 @@ const handleProductStatus = async (req, res) => {
 
     if (!order) {
 
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: "Order not found" });
 
     }
 
@@ -724,7 +726,7 @@ const handleProductStatus = async (req, res) => {
     );
 
     if (!productItem) {
-      return res.status(404).json({
+      return res.status(STATUS_CODES.NOT_FOUND).json({
          success: false, 
          message: "Product not found in order" 
         });
@@ -734,7 +736,7 @@ const handleProductStatus = async (req, res) => {
     const lockedStatuses = ["Cancelled", "Returned", "Return processing","Partially returned","Delivered"];
     if (lockedStatuses.includes(productItem.status)) {
 
-      return res.status(403).json({ 
+      return res.status(STATUS_CODES.FORBIDDEN).json({ 
         success: false, 
         message: "Cannot update a cancelled or returned item" 
       });
@@ -752,7 +754,7 @@ const handleProductStatus = async (req, res) => {
 
     }else if (["Returned", "Return processing", "Return rejected"].includes(status)) {
 
-      return res.status(403).json({ 
+      return res.status(STATUS_CODES.FORBIDDEN).json({ 
         success: false, 
         message: "Return updates must go through the return portal" 
       });
@@ -767,7 +769,7 @@ const handleProductStatus = async (req, res) => {
 
     await order.save();
 
-    return res.status(200).json({
+    return res.status(STATUS_CODES.OK).json({
       success: true,
       message: `Product status updated to ${status}, Order is now ${order.status}`,
       orderStatus: order.status
@@ -776,7 +778,7 @@ const handleProductStatus = async (req, res) => {
   } catch (error) {
     console.error("Update Error:", error);
 
-    res.status(500).json({ 
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ 
       success: false,
       message: "Internal server error" 
     });

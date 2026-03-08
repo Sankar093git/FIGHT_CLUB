@@ -1,5 +1,5 @@
 const Constants=require("../../models/constantSchema");
-
+const STATUS_CODES=require("../../utils/statusCode");
 
 const addConstants = async (req,res) =>{
     try {
@@ -26,7 +26,7 @@ const addConstants = async (req,res) =>{
 
         }
 
-        res.status(200).json({
+        res.status(STATUS_CODES.OK).json({
             success:true,
             message:"Constants added successfully!"
         });
@@ -34,7 +34,7 @@ const addConstants = async (req,res) =>{
 
         console.error("Constant creation : ",error);
 
-        res.status(500).json({
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
             success:false,
             message:"Something went wrong!"
         });

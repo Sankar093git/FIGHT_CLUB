@@ -1,4 +1,5 @@
 const Coupon=require("../../models/couponSchema");
+const STATUS_CODES=require("../../utils/statusCode");
 
 const loadCouponManagement= async (req,res)=>{
     try {
@@ -37,7 +38,7 @@ const loadCouponManagement= async (req,res)=>{
 
         const totalRedemptions= coupons.map((r)=>r.redemptions).reduce((acc,num)=>acc+num,0);
 
-        res.status(200).render("coupon",{
+        res.status(STATUS_CODES.OK).render("coupon",{
             coupon:couponDetails,
             totalPages:totalPages,
             currentPage:page,
@@ -53,7 +54,7 @@ const loadCouponManagement= async (req,res)=>{
 
         console.error("Coupon page load:",error);
 
-        res.status(500).redirect("/admin/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
 
     }
 
@@ -79,7 +80,7 @@ const addcoupon= async(req,res)=>{
 
         if(couponChecklist.includes(code.replace(/ /g, ""))){
 
-          return res.status(400).json({success:false,message:"Coupon name already exists!"});
+          return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Coupon name already exists!"});
 
         }
 
@@ -97,7 +98,7 @@ const addcoupon= async(req,res)=>{
 
         await newCoupon.save();
 
-        res.status(201).json({
+        res.status(STATUS_CODES.CREATED).json({
           success:true,
           message:"Coupon added successfully"
         });
@@ -106,7 +107,7 @@ const addcoupon= async(req,res)=>{
 
         console.error("Add Coupon:",error);
 
-        res.status(500).json({
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
           success:false,
           message:"Something went wrong!"
         });
@@ -122,7 +123,7 @@ const editCoupon = async (req, res) => {
 
     if (!couponId) {
 
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: "Coupon ID is required"
       });
@@ -133,7 +134,7 @@ const editCoupon = async (req, res) => {
 
     if (!coupon) {
 
-      return res.status(404).json({
+      return res.status(STATUS_CODES.NOT_FOUND).json({
         success: false,
         message: "Coupon not found"
       });
@@ -162,7 +163,7 @@ const editCoupon = async (req, res) => {
 
       if (existing) {
 
-        return res.status(400).json({
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
           success: false,
           message: "Coupon code already exists"
         });
@@ -209,7 +210,7 @@ const editCoupon = async (req, res) => {
 
     await coupon.save();
 
-    return res.status(200).json({
+    return res.status(STATUS_CODES.OK).json({
       success: true,
       message: "Coupon updated successfully",
       coupon
@@ -219,7 +220,7 @@ const editCoupon = async (req, res) => {
 
     console.error("Edit coupon:", error);
 
-    res.status(500).json({
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Something went wrong!"
     });
@@ -237,7 +238,7 @@ const deleteCoupon=async(req,res)=>{
 
         if(!exists){
 
-            return res.status(400).json({
+            return res.status(STATUS_CODES.NOT_FOUND).json({
               success:false,
               message:"Coupon does not exist"
             });
@@ -246,7 +247,7 @@ const deleteCoupon=async(req,res)=>{
 
             await Coupon.deleteOne({_id:couponId});
 
-            return res.status(200).json({
+            return res.status(STATUS_CODES.OK).json({
               success:true,
               message:"Coupon deleted successfully!"
             });
@@ -257,7 +258,7 @@ const deleteCoupon=async(req,res)=>{
 
         console.error("Delete coupon:",error);
 
-        res.status(500).json({
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
             success:false,
             message:"Something went wrong!"
         })

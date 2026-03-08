@@ -4,6 +4,8 @@ const Brand=require("../../models/brandSchema");
 const fs=require("fs");
 const path=require("path");
 const sharp=require("sharp");
+const STATUS_CODES=require("../../utils/statusCode");
+
 
 const loadProducts=async(req,res)=>{
     try {
@@ -37,7 +39,7 @@ const loadProducts=async(req,res)=>{
 
         const totalPages=Math.ceil(count/limit);
 
-        res.status(200).render("products",{
+        res.status(STATUS_CODES.OK).render("products",{
           queryVal:req.query,
           data:data,
           totalPages:totalPages,
@@ -48,7 +50,7 @@ const loadProducts=async(req,res)=>{
 
         console.error("Error while loading the product list",error);
 
-        res.status(500).redirect("/admin/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
 
     }
 }
@@ -60,7 +62,7 @@ const getAddProduct=async (req,res)=>{
 
         const category=await Category.find({isListed:true});
 
-        res.status(200).render("product-add",{
+        res.status(STATUS_CODES.OK).render("product-add",{
           brand:brand,
           cat:category
         });
@@ -69,7 +71,7 @@ const getAddProduct=async (req,res)=>{
 
         console.log("Error while loading edit product page",error);
 
-        res.status(500).redirect("/admin/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
 
     }
 
@@ -88,7 +90,7 @@ const addProducts = async (req, res) => {
 
     if (productExists) {
 
-      return res.status(400).json("Product already exists");
+      return res.status(STATUS_CODES.BAD_REQUEST).json("Product already exists");
 
     }
     
@@ -122,7 +124,7 @@ const addProducts = async (req, res) => {
 
     if (!category) {
 
-      return res.status(400).json("Invalid category name");
+      return res.status(STATUS_CODES.BAD_REQUEST).json("Invalid category name");
 
     }
 
@@ -145,7 +147,7 @@ const addProducts = async (req, res) => {
 
     await newProduct.save();
 
-    return res.status(200).json({
+    return res.status(STATUS_CODES.CREATED).json({
       success:true
     });
 
@@ -153,7 +155,7 @@ const addProducts = async (req, res) => {
 
     console.error("Error while adding product:", error);
 
-    return res.status(500).json({
+    return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success:false, 
       message: "Internal Server Error" 
     });
@@ -174,7 +176,7 @@ const loadEditProduct= async(req,res)=>{
 
         const product=await Product.find({_id:id}).populate("category");
 
-        res.status(200).render("edit-product",{
+        res.status(STATUS_CODES.OK).render("edit-product",{
             product:product[0],
             variants:product[0].variants,
             cat:category,
@@ -185,7 +187,7 @@ const loadEditProduct= async(req,res)=>{
 
         console.error("Error while loading edit products",error)
 
-        res.status(500).redirect("/admin/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
 
     }
 
@@ -217,7 +219,7 @@ const editproduct = async (req, res) => {
 
     if (productExists) {
 
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success:false,
         message:"Product already exists"
       });
@@ -265,7 +267,7 @@ const editproduct = async (req, res) => {
         }
       });
 
-    res.status(200).json({
+    res.status(STATUS_CODES.OK).json({
       success:true,
       message:"Product edited successfully"
     });
@@ -274,7 +276,7 @@ const editproduct = async (req, res) => {
 
     console.error("Error while editing product", error);
 
-    res.status(500).json({
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success:false,
       message:"Something went wrong!"
     });
@@ -309,13 +311,13 @@ const deleteImages=async(req,res)=>{
             console.log(`${imageId} deletion failed`);
         }
 
-        res.status(200).json({success:true});
+        res.status(STATUS_CODES.OK).json({success:true});
 
         
     } catch (error) {
         console.log("Error while deleting image",error);
 
-        res.status(500).redirect("/admin/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
     }
 }
 
@@ -329,7 +331,7 @@ const blockOrUnblockproduct=async (req,res)=>{
        
       await Product.updateOne({_id:productId},{$set:{isBlocked:false}});
 
-      return res.status(200).json({
+      return res.status(STATUS_CODES.OK).json({
         success:true,
         isBlocked:false,
         message:"Product has been unblocked!"
@@ -339,7 +341,7 @@ const blockOrUnblockproduct=async (req,res)=>{
 
       await Product.updateOne({_id:productId},{$set:{isBlocked:true}});
 
-      return res.status(200).json({
+      return res.status(STATUS_CODES.OK).json({
         success:true,
         isBlocked:true,
         message:"Product has been blocked!"
@@ -351,7 +353,7 @@ const blockOrUnblockproduct=async (req,res)=>{
 
     console.error("Error while blocking product");
 
-    res.status(500).json({
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success:false
     });
 
@@ -377,7 +379,7 @@ const addOffer= async(req,res)=>{
 
     await productDetails.save();
 
-    return res.status(200).json({
+    return res.status(STATUS_CODES.OK).json({
       success:true,
       price:productDetails.ogSalesPrice-discount,
       message:"Offer has been added!"
@@ -385,7 +387,7 @@ const addOffer= async(req,res)=>{
 
     }
 
-    res.status(400).json({
+    res.status(STATUS_CODES.BAD_REQUEST).json({
       success:false,
       message:"Please add an offer greater than category offer!"
     });
@@ -394,7 +396,7 @@ const addOffer= async(req,res)=>{
 
     console.log("Product offer: ",error);
 
-    res.status(500).json({
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success:false,
       message:"Something went wrong"
     });
@@ -410,8 +412,8 @@ const removeOffer= async(req,res)=>{
 
     if(productDetails.offer===0){
 
-      return res.status(400).json({
-        success:true,
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success:false,
         message:"Offer does not exist"
       });
 
@@ -436,7 +438,7 @@ const removeOffer= async(req,res)=>{
 
     await productDetails.save();
 
-    res.status(200).json({
+    res.status(STATUS_CODES.OK).json({
       success:true,
       price,
       message:"Offer has been removed"
@@ -446,8 +448,8 @@ const removeOffer= async(req,res)=>{
 
     console.log("Remove offer error: ",error);
 
-    res.status(500).json({
-      success:true,
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      success:false,
       message:"Something went wrong"
     });
 

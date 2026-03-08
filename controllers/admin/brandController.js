@@ -1,4 +1,6 @@
 const Brand=require("../../models/brandSchema");
+const STATUS_CODES=require("../../utils/statusCode");
+
 
 const getBrandList=async(req,res)=>{
     try {
@@ -14,7 +16,7 @@ const getBrandList=async(req,res)=>{
 
         const totalpages=Math.ceil(totalDocuments/limit);
 
-        res.status(200).render("brand",{
+        res.status(STATUS_CODES.OK).render("brand",{
             count:totalDocuments,
             data:data,
             totalPages:totalpages,
@@ -25,7 +27,7 @@ const getBrandList=async(req,res)=>{
 
         console.error("Error while loading brands",error);
 
-        res.status(500).redirect("/admin/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
     }
 }
 
@@ -40,7 +42,7 @@ const addBrand=async (req,res)=>{
 
             await Brand.updateOne({brandName:name},{$set:{brandName:name,logo:image}});
 
-            return res.status(200).json({
+            return res.status(STATUS_CODES.OK).json({
                 success: true, 
                 message: "Brand edited successfully!" 
             });
@@ -49,7 +51,7 @@ const addBrand=async (req,res)=>{
 
             await Brand.updateOne({brandName:name},{$set:{brandName:name}});
 
-            return res.status(200).json({
+            return res.status(STATUS_CODES.OK).json({
                 success: true,
                 message: "Brand edited successfully!" 
             });
@@ -66,7 +68,7 @@ const addBrand=async (req,res)=>{
 
        const brand= await Brand.findOne({brandName:name});
 
-       return res.status(200).json({ 
+       return res.status(STATUS_CODES.CREATED).json({ 
         success: true, 
         message: "Brand added successfully!",
         brand:brand
@@ -75,7 +77,7 @@ const addBrand=async (req,res)=>{
     }  
     } catch (error) {
         console.error("Error while adding brand",error);
-        res.status(500).json({ 
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ 
             success: false, 
             message: "Error adding brand" 
         });
@@ -88,7 +90,7 @@ const deleteBrand=async (req,res)=>{
 
         await Brand.deleteOne({_id:id});
 
-        res.status(200).json({
+        res.status(STATUS_CODES.OK).json({
             success:true,
             message:"Brand deletion complete!"
         });
@@ -97,7 +99,7 @@ const deleteBrand=async (req,res)=>{
 
         console.error("Error while deleting brand",error);
 
-        res.status(500).json({
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
             success:false,
             message:"Something went wrong, please try again"
         });
@@ -114,7 +116,7 @@ const blockORunblockBrand= async (req,res)=>{
 
             await Brand.updateOne({_id:id},{$set:{isBlocked:false}});
 
-            return res.status(200).json({
+            return res.status(STATUS_CODES.OK).json({
                 success:true,
                 message:"Unblocked"
             }); 
@@ -123,7 +125,7 @@ const blockORunblockBrand= async (req,res)=>{
 
            await Brand.updateOne({_id:id},{$set:{isBlocked:true}}); 
 
-           return res.status(200).json({
+           return res.status(STATUS_CODES.OK).json({
             success:true,
             message:"Blocked"
         }); 
@@ -133,7 +135,7 @@ const blockORunblockBrand= async (req,res)=>{
 
         console.error("Error while blocking a brand",error);
 
-        res.status(500).json({
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
             success:false,
             message:"Something went wrong!"
         });

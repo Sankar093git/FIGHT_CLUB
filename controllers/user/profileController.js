@@ -3,6 +3,7 @@ const{sendVerificationMail,generateOTP,securePassword}=require("../../controller
 const Orders=require("../../models/orderSchema");
 const Wallet=require("../../models/walletShema");
 const Transaction=require("../../models/transactionSchema");
+const STATUS_CODES=require("../../utils/statusCode");
 
 const loadProfile=async (req,res)=>{
     try {
@@ -17,7 +18,6 @@ const loadProfile=async (req,res)=>{
         const addskip=(addPage-1)*addLimit;
         address=addressDetails.slice(addskip,addskip+addLimit);
         console.log(address);
-        //fetching order details and order pagination
         const orderDetails=await Orders.find({user:id}).sort({ createdAt: -1 }).skip(skip).limit(orderLimit);
         const totalOrders=await Orders.countDocuments({ user: id });
         const paidOrders= await Orders.countDocuments({user:id,paymentStatus:"PAID"});
@@ -30,7 +30,6 @@ const loadProfile=async (req,res)=>{
         const totalOrderPages=Math.ceil(totalOrders/orderLimit);
         const image=findUser.userImage;
         const username=findUser.name;
-        //fetching wallet/transaction details and respective pagination
         const walletDetails= await Wallet.findOne({userId:req.session.user});
         const tpage=req.query.tpage||1;
         const transactionLimit=5;
@@ -38,7 +37,7 @@ const loadProfile=async (req,res)=>{
         const transactions= await Transaction.find({userId:req.session.user}).sort({createdAt:-1}).skip(transSkip).limit(transactionLimit);
         const totalTrancastions= await Transaction.countDocuments({userId:req.session.user});
         const totalTpages=Math.ceil(totalTrancastions/transactionLimit);
-        res.status(200).render('profile',{
+        res.status(STATUS_CODES.OK).render('profile',{
             userData:findUser,
             address:address,
             user:req.session.userName||username,
@@ -56,18 +55,18 @@ const loadProfile=async (req,res)=>{
         })
     } catch (error) {
         console.log("Error while loading profilepage",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
 
 const addAddress= async (req,res)=>{
     try {
         await User.updateOne({_id:req.session.user},{$addToSet:{address:req.body}});
-        res.status(200).redirect("/profile");
+        res.status(STATUS_CODES.OK).redirect("/profile");
 
     } catch (error) {
         console.error("Error while adding address",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
 
@@ -87,21 +86,22 @@ const editAddress= async (req,res)=>{
              "address.$.isDefault":isDefault
         }});
 
-        res.status(200).redirect("/profile");
+        res.status(STATUS_CODES.OK).redirect("/profile");
         
     } catch (error) {
         console.error("Addess edit error,",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
+
 const deleteAddress= async (req,res)=>{
     try {
         const id=req.params.id;
         await User.updateOne({_id:req.session.user},{$pull:{address:{_id:id}}})
-        res.status(200).redirect("/profile")
+        res.status(STATUS_CODES.OK).redirect("/profile")
     } catch (error) {
         console.error("Error while deleting address",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
 
@@ -109,12 +109,12 @@ const loadEditProfile= async (req,res)=>{
     try {
 
         const userData= await User.findOne({_id:req.session.user});
-        res.status(200).render("edit-profile",{
+        res.status(STATUS_CODES.OK).render("edit-profile",{
            userData:userData
         })
     } catch (error) {
         console.error("Error while loading edit profile page",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
 
@@ -127,15 +127,15 @@ const changeProfilePicture=async(req,res)=>{
         let arr=testText.split(".")
         const ext=arr[0];
         if(!["gpj","gnp"].includes(ext)){
-           return res.status(400).json({success:false,message:"Please enter a valid image"});
+           return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Please enter a valid image"});
         }
         await User.updateOne({_id:id},{$set:{userImage:image}});
-        res.status(200).json({success:true,
+        res.status(STATUS_CODES.OK).json({success:true,
             image:"/uploads/profiles/"+image
         });
     } catch (error) {
         console.error("Error while changing the profile picture", error);
-        res.status(500).json({message:"Somthing went wrong"});
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({message:"Somthing went wrong"});
     }
 }
 
@@ -150,20 +150,20 @@ const editProfile = async (req,res)=>{
         const sendMail= await sendVerificationMail(otp,null,req.session.email);
         req.session.otp=otp;
         if( sendMail){
-            res.status(200).json({result:true});
+            res.status(STATUS_CODES.OK).json({result:true});
         }else{
-            res.status(500).json({result:false});
+            res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({result:false});
         }
 
     } catch (error) {
         console.log("Error while editing the user profile",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
 
 const loadVerifyOtp=async(req,res)=>{
     try {
-        res.status(200).render("verify-otp-editProfile");
+        res.status(STATUS_CODES.OK).render("verify-otp-editProfile");
     } catch (error) {
         console.error("Error while loading otp page",error);
     }
@@ -174,8 +174,8 @@ const verifyOtp=async(req,res)=>{
         const {otp} =req.body;
         console.log(req.session.otp);
         if (!req.session.otp) {
-          return res.status(400).json({ success: false, message: "Session expired. Please try again." });
-              }
+          return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Session expired. Please try again." });
+        }
         if(otp==req.session.otp){
             const newEmail=req.session.email;
             delete req.session.email;
@@ -188,17 +188,17 @@ const verifyOtp=async(req,res)=>{
             if(userData.email==newEmail&&newPass){
                 const newPassword = await securePassword(newPass);
                 await User.updateOne({_id:req.session.user},{$set:{phone:newPhone,password:newPassword}});
-                return res.status(200).json({success:true, message:"OTP verified successfully"});
+                return res.status(STATUS_CODES.OK).json({success:true, message:"OTP verified successfully"});
             }else{
                  await User.updateOne({_id:req.session.user},{$set:{email:newEmail,phone:newPhone}});
-                return res.status(200).json({success:true, message:"Email Id changed succesfully"});
+                return res.status(STATUS_CODES.OK).json({success:true, message:"Email Id changed succesfully"});
             }
         }else{
-            res.status(403).json({success:false, message:"Invalid OTP!"});
+            res.status(STATUS_CODES.BAD_REQUEST).json({success:false, message:"Invalid OTP!"});  // ✅ changed from 403 to 400
         }
     } catch (error) {
         console.error("Error occured while verifying otp",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
 

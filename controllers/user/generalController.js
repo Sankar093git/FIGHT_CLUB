@@ -1,7 +1,9 @@
 
+const STATUS_CODES=require("../../utils/statusCode");
+
 const pageNotFound=async(req,res)=>{
     try {
-         res.status(404).render("page-not-found")
+         res.status(STATUS_CODES.NOT_FOUND).render("page-not-found")
     } catch (error) {
        console.error(error);
     }

@@ -2,6 +2,7 @@ const Product = require("../../models/productSchema");
 const Brand = require("../../models/brandSchema");
 const Category = require("../../models/categorySchema");
 const User=require("../../models/userSchema");
+const STATUS_CODES=require("../../utils/statusCode");
 
 const loadShopPage = async (req, res) => {
   try {
@@ -67,7 +68,7 @@ const loadShopPage = async (req, res) => {
     const count = await Product.countDocuments(filter);
     const totalPages = Math.ceil(count / limit);
 
-    res.render("shop", {
+    res.status(STATUS_CODES.OK).render("shop", {
       user: req.session.userName||userName,
       image:req.session.image,
       product: data,
@@ -97,7 +98,7 @@ const loadProductDetails=async (req,res)=>{
         const data=await Product.findOne({_id:id,isBlocked:false}).populate("category");
         const catId=data.category._id;
         const relatedProducts= await Product.find({category:catId});
-        res.status(200).render("productDetails",{
+        res.status(STATUS_CODES.OK).render("productDetails",{
             product:data,
             relatedProducts:relatedProducts,
             user:user,
@@ -105,7 +106,7 @@ const loadProductDetails=async (req,res)=>{
         });
     } catch (error) {
         console.log(error);
-        res.status(500).redirect("/admin/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
     }
 }
 
@@ -121,15 +122,15 @@ const addToCart = async (req, res) => {
     let prod=cartData.find(v=>v.product._id==id);
     const item=productDetails.variants.find(v=>v.size===size);
     if(item.stock<1){
-      return res.status(403).json({success:false,message:"Item out of stock!"});
+      return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Item out of stock!"});
     }
 
     if(prod){
       if(prod.quantity==item.stock){
-        return res.status(403).json({success:false,message:"Item out of stock!"});
+        return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Item out of stock!"});
       }
       if(prod.product.isBlocked){
-        return res.status(403).json({success:false,message:"Item out of stock!"});
+        return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Item out of stock!"});
       }
     }
     
@@ -144,10 +145,10 @@ const addToCart = async (req, res) => {
         { $push: { cart: { product: id,size:size, quantity: 1 } } }
       );
     }  
-    res.status(200).redirect(`/product/${id}`);
+    res.status(STATUS_CODES.OK).redirect(`/product/${id}`);
   } catch (error) {
     console.error("Error while adding to cart:", error);
-    res.status(500).redirect("/error");
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
   }
 };
 
@@ -159,14 +160,14 @@ const addTowishlist=async(req,res)=>{
     const wishlist=userData.wishlist;
     const prodExists=wishlist.find((prod)=>prod.product==prodId);
     if(prodExists){
-      return res.status(403).json({success:true,message:"Product already in wishlist"})
+      return res.status(STATUS_CODES.CONFLICT).json({success:true,message:"Product already in wishlist"})
     }else{
       await User.updateOne({_id:userId},{$push:{wishlist:{product:prodId}}});
-      return res.status(200).json({success:true,message:"Product added to wishlist"})
+      return res.status(STATUS_CODES.OK).json({success:true,message:"Product added to wishlist"})
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({success:false,message:"Something went wrong!"});
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({success:false,message:"Something went wrong!"});
   }
 }
 
@@ -174,10 +175,10 @@ const removeFromWishlist=async(req,res)=>{
   try {
     const productId=req.params.id;
     await User.updateOne({_id:req.session.user},{ $pull: { wishlist: { product: productId } } });
-    res.status(200).json({success:true});
+    res.status(STATUS_CODES.OK).json({success:true});
   } catch (error) {
     console.error("Error while removing item from wishlist",error);
-    res.status(500).json({success:false,message:"Something went wrong, please try again!"});
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({success:false,message:"Something went wrong, please try again!"});
   }
 }
 

@@ -2,7 +2,7 @@ const User=require("../../models/userSchema");
 const Coupon=require("../../models/couponSchema");
 const Wallet=require("../../models/walletShema");
 const Constants=require("../../models/constantSchema");
-
+const STATUS_CODES=require("../../utils/statusCode");
 
 const validateCart= async(req,res)=>{
     try {
@@ -15,18 +15,19 @@ const validateCart= async(req,res)=>{
 
         if (!variant || variant.stock < item.quantity) {
           
-           return res.status(400).json({success:false,message:`${item.product.productName} (${item.size}) is out of stock`})
+           return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:`${item.product.productName} (${item.size}) is out of stock`})
           
          }
         } 
         
-        res.status(200).json({success:true});
+        res.status(STATUS_CODES.OK).json({success:true});
 
     } catch (error) {
         console.error("Validate cart: ",error);
-        res.staatus(500).json({success:false,message:"Something went wrong"})
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({success:false,message:"Something went wrong"}) // ✅ fixed typo: staatus → status
     }
 }
+
 const loadCheckout= async(req,res)=>{
     try {
         let stockError=null;
@@ -87,7 +88,7 @@ const loadCheckout= async(req,res)=>{
         
         const validCoupons=coupons.filter((coupon)=>coupon.minPurchase<=summary.total).map((coupon)=>coupon.code);
 
-        res.status(200).render("checkout",{
+        res.status(STATUS_CODES.OK).render("checkout",{
             user:req.session.userName||userName,
             image:null,
             addresses:userData.address,
@@ -102,7 +103,7 @@ const loadCheckout= async(req,res)=>{
            })
     } catch (error) {
         console.error("Error while loading checkout page",error);
-        res.status(500).redirect("/error")
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error")
     }
 }
 
@@ -123,11 +124,11 @@ const applyCoupon= async(req,res)=>{
     
     const validCartItems=cartDetails.filter(item=>item.product.isBlocked===false)
     if(validCartItems.length===0){
-      return res.status(403).json({success:false,message:"One or more product is no longer available"});
+      return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"One or more product is no longer available"});
     }
 
     if(redeemedCoupons.includes(couponCode)){
-        return res.status(400).json({success:false,message:"This coupon is used up"})
+        return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"This coupon is used up"})
     }
 
     let totalAmount = validCartItems.reduce((acc, item) => {
@@ -143,7 +144,7 @@ const applyCoupon= async(req,res)=>{
     await Coupon.updateOne({code:couponCode},{$inc:{redemptions:1}});
     req.session.newTotal=totalAmount;
     req.session.discount=discountValue;
-    return res.status(200).json({success:true,newTotal:totalAmount,discount:discountValue});
+    return res.status(STATUS_CODES.OK).json({success:true,newTotal:totalAmount,discount:discountValue});
   }else if(couponDetails.discountType=="percentage"){
     discountValue=totalAmount*(couponDetails.discountValue/100);
     if(discountValue>couponDetails.maxDiscount){
@@ -155,11 +156,11 @@ const applyCoupon= async(req,res)=>{
 
      await Coupon.updateOne({code:couponCode},{$inc:{redemptions:1}});
 
-    return res.status(200).json({success:true,newTotal:totalAmount,discount:discountValue});
+    return res.status(STATUS_CODES.OK).json({success:true,newTotal:totalAmount,discount:discountValue});
   }
   } catch (error) {
     console.error(" Apply coupon:",error);
-    res.status(500).json({success:false,message:"Something went wrong!"});
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({success:false,message:"Something went wrong!"});
   }
 }
 
@@ -175,10 +176,10 @@ const removeCoupon= async(req,res)=>{
         console.log(newTotal)
         await User.updateOne({_id:req.session.user},{$pull:{redeemedCoupons:code}});
         await Coupon.updateOne({code:code},{$inc:{redemptions:-1}});
-        res.status(200).json({success:true,message:"Coupon removed successfully",newTotal:newTotal,discount:0})
+        res.status(STATUS_CODES.OK).json({success:true,message:"Coupon removed successfully",newTotal:newTotal,discount:0})
     } catch (error) {
         console.error("Remove coupon : ",error);
-        res.status(500).json({success:false,message:"Something went wrong!"});
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({success:false,message:"Something went wrong!"});
     }
 }
 
@@ -186,11 +187,11 @@ const removeCoupon= async(req,res)=>{
 const addAddress= async (req,res)=>{
     try {
         await User.updateOne({_id:req.session.user},{$addToSet:{address:req.body}});
-        res.status(200).redirect("/checkout");
+        res.status(STATUS_CODES.OK).redirect("/checkout");
 
     } catch (error) {
         console.error("Error while adding address",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
 
@@ -209,10 +210,10 @@ const editAddress= async(req,res)=>{
             "address.$.phone": phone,
             "address.$.isDefault":isDefault
         }});
-        res.status(200).redirect("/checkout");
+        res.status(STATUS_CODES.OK).redirect("/checkout");
     } catch (error) {
         console.error("Error while editing address : ",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
 

@@ -1,5 +1,6 @@
 const Category=require("../../models/categorySchema");
 const Product= require("../../models/productSchema");
+const STATUS_CODES=require("../../utils/statusCode");
 
 const loadCategory = async (req, res) => {
   try {
@@ -20,7 +21,7 @@ const loadCategory = async (req, res) => {
 
     const totalPages = Math.ceil(totalCategories / limit);
 
-    res.status(200).render("category", {
+    res.status(STATUS_CODES.OK).render("category", {
       cat: categoryData,
       currentPage: page,
       totalPages,
@@ -32,7 +33,7 @@ const loadCategory = async (req, res) => {
 
     console.error("Error loading categories:", error);
 
-    res.status(500).redirect("/admin/error");
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
   }
 
 };
@@ -49,7 +50,7 @@ const addCategory = async (req, res) => {
 
     if (isExists) {
 
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
          error: "Category already exists" 
         });
 
@@ -67,7 +68,7 @@ const addCategory = async (req, res) => {
 
     const categoryDetails= await Category.findOne({name:formattedName});
 
-    return res.status(201).json({
+    return res.status(STATUS_CODES.CREATED).json({
        category:categoryDetails,
        message: "Category added successfully" 
       });
@@ -76,7 +77,7 @@ const addCategory = async (req, res) => {
 
     console.log(error);
 
-    return res.status(500).json({ 
+    return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ 
       error: "Something went wrong, please try again" 
     });
 
@@ -93,7 +94,7 @@ const addOffer = async (req, res) => {
 
     if(percentage>99||percentage<0||isNaN(percentage)){
 
-        return res.status(400).json({
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
           status:false,
           message:"Forbidden input"
         });
@@ -104,7 +105,7 @@ const addOffer = async (req, res) => {
 
     if (!category) {
 
-      return res.status(404).json({
+      return res.status(STATUS_CODES.NOT_FOUND).json({
          status: false, 
          message: "Category not found" 
         });
@@ -131,7 +132,7 @@ const addOffer = async (req, res) => {
 
     }  
 
-    res.status(200).json({
+    res.status(STATUS_CODES.OK).json({
        status: true, 
        message:"Offer has been added!" 
       });
@@ -140,7 +141,7 @@ const addOffer = async (req, res) => {
 
     console.log("Category offer : ", error);
 
-    res.status(500).json({
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
        status: false, 
        message: "Internal Server Error" 
       });
@@ -157,7 +158,7 @@ const removeOffer = async (req, res) => {
 
     if (!category) {
 
-      return res.status(404).json({ 
+      return res.status(STATUS_CODES.NOT_FOUND).json({ 
         status: false, 
         message: "Category not found" 
       });
@@ -188,7 +189,7 @@ const removeOffer = async (req, res) => {
 
     }  
 
-    res.status(200).json({
+    res.status(STATUS_CODES.OK).json({
        success: true, 
        message:"Offer has been removed"
       });
@@ -197,7 +198,7 @@ const removeOffer = async (req, res) => {
 
     console.error("Backend error while removing offer:", error);
 
-    res.status(500).json({
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
        success: false, 
        message: "Internal Server Error" 
       });
@@ -217,7 +218,7 @@ const listOrUnlist= async (req,res)=>{
 
        await Category.updateOne({_id:id},{$set:{isListed:false}}); 
 
-       return res.status(200).json({
+       return res.status(STATUS_CODES.OK).json({
         success:true,
         unlisted:true,
         message:"Category unlisted"
@@ -227,7 +228,7 @@ const listOrUnlist= async (req,res)=>{
 
         await Category.updateOne({_id:id},{$set:{isListed:true}});
 
-        return res.status(200).json({
+        return res.status(STATUS_CODES.OK).json({
           success:true,
           unlisted:false,
           message:"Category listed"
@@ -239,7 +240,7 @@ const listOrUnlist= async (req,res)=>{
 
     console.error("Error while handling category listing",error);
 
-    res.status(500).json({
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success:false,
       message:"Something went wrong!"
     });
@@ -255,13 +256,13 @@ const loadEditCategory=async (req,res)=>{
 
     const category=await Category.findOne({_id:id});
 
-    res.render("edit-category",{category:category});
+    res.status(STATUS_CODES.OK).render("edit-category",{category:category});
 
   } catch (error) {
 
     console.log("edit category error",error);
 
-    res.status(500).redirect("/pageerror");
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/pageerror");
 
   }
 
@@ -278,7 +279,7 @@ const editCategory=async(req,res)=>{
 
     if(existingCategory){
 
-     return res.status(400).json({
+     return res.status(STATUS_CODES.BAD_REQUEST).json({
       error:"Category exits please choose another name"
     });
 
@@ -292,7 +293,7 @@ const editCategory=async(req,res)=>{
 
     console.log(error)
 
-    res.status(500).json({
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       error:"Internal server error"
     });
 
@@ -307,7 +308,7 @@ const deleteCategory=async(req,res)=>{
 
         await Category.findByIdAndUpdate(id,{isDeleted:true});
 
-        res.status(200).json({
+        res.status(STATUS_CODES.OK).json({
           success:true
         });
         
@@ -315,7 +316,7 @@ const deleteCategory=async(req,res)=>{
 
         console.error("Error while deleting category",error);
 
-        res.status(500).json({
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
           success:false
         });
 

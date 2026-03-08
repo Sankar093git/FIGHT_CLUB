@@ -8,7 +8,7 @@ const mongoose=require("mongoose");
 const paymentController=require("../../controllers/user/paymentController");
 const Transactions=require("../../models/transactionSchema");
 const Constants=require("../../models/constantSchema");
-
+const STATUS_CODES=require("../../utils/statusCode");
 
 const placeOrder = async (req, res) => {
   try {
@@ -25,17 +25,17 @@ const placeOrder = async (req, res) => {
     const userData = await User.findById(userId).populate("cart.product");
 
     if (!userData || userData.cart.length === 0) {
-      return res.status(400).json({ success: false, message: "Cart is empty" });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Cart is empty" });
     }
 
     //Stock validation
     for(let x of userData.cart){
       const variant=x.product.variants.find(v=>v.size===x.size);
       if(!variant||variant.stock===0){
-        return res.status(400).json({success:false,message:`Variant not found for ${x.product.productName}/Out of stock`})
+        return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:`Variant not found for ${x.product.productName}/Out of stock`})
       }
       if(x.quantity>variant.stock){
-        return res.status(400).json({success:false,message:`Only ${variant.stock} units left for${x.product.productName}`})
+        return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:`Only ${variant.stock} units left for${x.product.productName}`})
       }
     }
 
@@ -43,7 +43,7 @@ const placeOrder = async (req, res) => {
     const validCartItems=userData.cart.filter(item=>item.product.isBlocked===false);
 
     if(validCartItems.length===0){
-      return res.status(403).json({success:false,message:"One or more product is no longer available"});
+      return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"One or more product is no longer available"});
     }
 
     let totalAmount = validCartItems.reduce((acc, item) => {
@@ -52,7 +52,7 @@ const placeOrder = async (req, res) => {
   }, 0)+shipping+taxes;
    console.log(totalAmount);
    if(paymentMethod=="COD"&&totalAmount>1000){
-    return res.status(400).json({success:false,message:"COD not possible, please select another payment method!"})
+    return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"COD not possible, please select another payment method!"})
    }
    let discountValue=0;
    if(couponCode){
@@ -75,7 +75,7 @@ const placeOrder = async (req, res) => {
     );
 
     if (!selectedAddress) {
-      return res.status(400).json({ success: false, message: "Invalid address" });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Invalid address" });
     }
 
    const orderId = "ORD-" + crypto.randomBytes(4).toString("hex");
@@ -88,7 +88,7 @@ const placeOrder = async (req, res) => {
     );
 
     if (result.modifiedCount === 0) {
-     return res.status(400).json({
+     return res.status(STATUS_CODES.BAD_REQUEST).json({
      success: false,
      message: "Stock changed. Please try again."
     });
@@ -99,9 +99,9 @@ const placeOrder = async (req, res) => {
    if(paymentMethod==="WALLET"){
     const walletDetails= await Wallet.findOne({userId:req.session.user});
     if(!walletDetails){
-      res.status(400).json({success:false, message:"Your wallet has not been initialised"});
+      res.status(STATUS_CODES.BAD_REQUEST).json({success:false, message:"Your wallet has not been initialised"});
     }else if(walletDetails.balance===0||walletDetails.balance<totalAmount){
-      red.status(400).json({success:false,message:"Insufficient balance!"});
+      red.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Insufficient balance!"});
     }else{
       const transactionId = "TRA-" + crypto.randomBytes(4).toString("hex");
       await Wallet.updateOne({userId:req.session.user},{$inc:{balance:-totalAmount}});
@@ -131,17 +131,17 @@ const placeOrder = async (req, res) => {
   
     await newOrder.save();
 
-    await User.updateOne({ _id: userId },{ $set: { cart: [] } }); //Emptying cart after order placement.
+    await User.updateOne({ _id: userId },{ $set: { cart: [] } });
 
     req.session.coupon=null;
     req.session.discount=null;
     req.session.newTotal=null;
 
-    res.status(201).json({success: true, orderId: orderId});
+    res.status(STATUS_CODES.CREATED).json({success: true, orderId: orderId});
 
   } catch (error) {
     console.error("Error while placing order:", error);
-    res.status(500).json({success: false,message: "Failed to place order"});
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({success: false,message: "Failed to place order"});
   }
 };
 
@@ -150,10 +150,10 @@ const orderSuccess= async (req,res)=>{
     try {
       await setDiscountvalue();
       await setproductDiscountPerOrder();
-        res.status(200).render("orderPlaced");
+        res.status(STATUS_CODES.OK).render("orderPlaced");
     } catch (error) {
         console.error("Error while loading success page :",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
 
@@ -162,13 +162,13 @@ const paymentFailure= async(req,res)=>{
     const orderId=req.query.orderId;
     const userDetails= await User.findOne({_id:req.session.user});
     await Order.updateOne({orderId:orderId},{$inc:{retryCount:1}});
-    res.status(400).render("orderFailed",{
+    res.status(STATUS_CODES.OK).render("orderFailed",{
       orderId:orderId,
       user:userDetails
     });
   } catch (error) {
     console.error("Payment failure page:",error);
-    res.status(500).redirect("/error")
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error")
   }
 }
 
@@ -179,10 +179,10 @@ const updatePayment=async(req,res)=>{
     const orderId=req.params.orderId;
     const orderDetails= await Order.findOne({orderId:orderId});
     if(!orderDetails){
-     return res.status(400).json({success:false,message:"Order not found"});
+     return res.status(STATUS_CODES.NOT_FOUND).json({success:false,message:"Order not found"});
     }
     if(orderDetails.paymentStatus=="PAID"){
-      return res.status(400).json({success:false,message:"Payment already done"})
+      return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Payment already done"})
     }
     let isPaid = await paymentController.verifyPayment({
                          razorpay_order_id,
@@ -190,7 +190,7 @@ const updatePayment=async(req,res)=>{
                          razorpay_signature: razorpay_signature
                         });
     if (!isPaid) {
-      return res.status(400).json({ success: false, message: "Payment verification failed" });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Payment verification failed" });
      }
     
      orderDetails.paymentStatus=isPaid==true?"PAID":"PENDING"
@@ -238,14 +238,14 @@ const updatePayment=async(req,res)=>{
       }
     }
     //referal reward logic ends here
-     return res.status(200).json({
+     return res.status(STATUS_CODES.OK).json({
       success: true,
       message: "Payment verified and stock updated",
       orderId: orderDetails.orderId
      });
   } catch (error) {
     console.error("Payment updation:",error);
-    res.status(500).json({success:false, message:'Something went wrong!'});
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({success:false, message:'Something went wrong!'});
   }
 }
 
@@ -261,21 +261,21 @@ const cancelOrder = async (req, res) => {
     }).populate("products.product")
 
     if (!order) {
-      return res.status(404).json({
+      return res.status(STATUS_CODES.NOT_FOUND).json({
         success: false,
         message: "Order not found"
       });
     }
 
     if (order.status === "Delivered") {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: "Delivered orders cannot be cancelled"
       });
     }
 
     if (["Cancelled", "Partially cancelled"].includes(order.status)) {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: "Order is already cancelled"
       });
@@ -332,11 +332,11 @@ const cancelOrder = async (req, res) => {
       );
     }
 
-    res.json({ success: true });
+    res.status(STATUS_CODES.OK).json({ success: true });
 
   } catch (error) {
     console.error("Error while cancelling order:", error);
-    res.status(500).json({ success: false });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false });
   }
 };
 
@@ -352,14 +352,14 @@ const returnOrder = async (req, res) => {
     });
 
     if (!order) {
-      return res.status(404).json({
+      return res.status(STATUS_CODES.NOT_FOUND).json({
         success: false,
         message: "Order not found"
       });
     }
 
     if (order.status !== "Delivered") {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: "Only delivered orders can be returned"
       });
@@ -376,7 +376,7 @@ const returnOrder = async (req, res) => {
     
     await order.save();
 
-    res.status(200).json({
+    res.status(STATUS_CODES.OK).json({
       success: true,
       message: "Return request submitted",
       reason: returnMessage
@@ -384,7 +384,7 @@ const returnOrder = async (req, res) => {
 
   } catch (error) {
     console.error("Error while returning order:", error);
-    res.status(500).json({ success: false });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false });
   }
 };
 
@@ -393,7 +393,6 @@ const displayOrder = async (req, res) => {
     const userId = req.session.user;
     const orderId = req.query.id;
 
-    //  Find order belonging to the logged-in user
     const order = await Order.findOne({
       orderId: orderId,
       user: userId
@@ -403,21 +402,18 @@ const displayOrder = async (req, res) => {
       return res.redirect("/error");
     }
 
-    //  Calculate subtotal
     const subTotal = order.products.reduce((acc, item) => {
     const price = item.salePrice ?? item.product.salesPrice;
     return acc + (price * item.quantity);
    }, 0);
 
-    //  Pricing (same logic as before)
     const constants= await Constants.find({});
     let shipping=constants[0].shipping;
     let taxes=constants[0].taxes;
     const discount = order.discountValue;
     const total = subTotal + shipping + taxes - discount;
 
-    //  Render order details page
-    res.status(200).render("orderDetails", {
+    res.status(STATUS_CODES.OK).render("orderDetails", {
       Product: order.products,
       addr: order.address,
       subtotal: subTotal,
@@ -432,21 +428,19 @@ const displayOrder = async (req, res) => {
 
   } catch (error) {
     console.error("Error while displaying order:", error);
-    res.status(500).redirect("/error");
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
   }
 };
-
-
 
 
 const addAddress= async (req,res)=>{
     try {
         await User.updateOne({_id:req.session.user},{$addToSet:{address:req.body}});
-        res.status(200).redirect("/checkout");
+        res.status(STATUS_CODES.OK).redirect("/checkout");
 
     } catch (error) {
         console.error("Error while adding address",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
 
@@ -465,10 +459,10 @@ const editAddress= async(req,res)=>{
             "address.$.phone": phone,
             "address.$.isDefault":isDefault
         }});
-        res.status(200).redirect("/checkout");
+        res.status(STATUS_CODES.OK).redirect("/checkout");
     } catch (error) {
         console.error("Error while editing address : ",error);
-        res.status(500).redirect("/error");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
 }
 
@@ -481,42 +475,37 @@ const singleCancel = async (req, res) => {
     const orderDetails=await Order.findOne({orderId:id});
     
     if(orderDetails.discountValue>0 && orderDetails.products.length>1){
-      return res.status(400).json({success:false,message:"Single cancel not possilble on coupon applied orders!"});
+      return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Single cancel not possilble on coupon applied orders!"});
     }
 
-    //Fetch product safely
     const product = await Product.findById(productId);
 
     if (!product) {
-      return res.status(404).json({ success: false, message: "Product not found" });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: "Product not found" });
     }
 
     const productDetails= orderDetails.products.find((item)=>productId.equals(item.product)&&item.size==size);
 
     if (!productDetails) {
-      return res.status(404).json({ success: false, message: "Product not found" });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: "Product not found" });
     }
 
-    //Prepare update logic
     let orderUpdate;
     let stockToRestore;
 
     if (value) {
-      //Partial Cancellation
       orderUpdate = {
         $inc: { "products.$[item].quantity": -value },
         $set: { "products.$[item].status": "Partially cancelled" }
       };
       stockToRestore = value;
     } else {
-      //Full Cancellation
       orderUpdate = {
         $set: { "products.$[item].status": "Cancelled" }
       };
       stockToRestore = quantity;
     }
 
-    //Update Order using arrayFilters 
     const orderResult = await Order.updateOne(
       { orderId: id }, 
       orderUpdate,
@@ -541,7 +530,7 @@ const singleCancel = async (req, res) => {
     order.status= totalStatus
     order.totalAmount-=refundAmount;
     await order.save();
-    //Refunding/wallet updation
+
     const transactionId = "TRA-" + crypto.randomBytes(4).toString("hex");
     
     const walletDetails= await Wallet.findOne({userId:req.session.user});
@@ -564,22 +553,20 @@ const singleCancel = async (req, res) => {
       description:"Cancel message"
     });
     await newTransaction.save();
-    //Refunding/wallet updation ends here
     
-    //Update Product Stock
     await Product.updateOne(
       { _id: productId, "variants.size": size },
       { $inc: { "variants.$.stock": stockToRestore } }
     );
 
-    return res.status(200).json({ 
+    return res.status(STATUS_CODES.OK).json({ 
       success: true, 
       message: `Cancellation for ${product.productName} processed.` 
     });
 
   } catch (error) {
     console.error("Error while canceling product:", error.message);
-    res.status(500).json({ success: false, message: "Something went wrong!" });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: "Something went wrong!" });
   }
 };
 
@@ -593,19 +580,17 @@ const singleCancel = async (req, res) => {
     const rQuantity=matchedProduct.quantity;
 
     if(orderDetails.discountValue>0 && orderDetails.products.length>1){
-      return res.status(400).json({success:false,message:"Single return not possilble on coupon applied orders!"});
+      return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Single return not possilble on coupon applied orders!"});
     }
 
-    // 1. Fetch product safely to get the name for the logs/response
     const product = await Product.findById(productId);
     if (!product) {
-      return res.status(404).json({ success: false, message: "Product not found" });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: "Product not found" });
     }
 
     const productName = product.productName;
     console.log("Processing return for:", productName, "Size:", size);
 
-    // 2. Prepare the update object
     let updateFields={};
     if(value==rQuantity){
       updateFields={ 
@@ -619,7 +604,6 @@ const singleCancel = async (req, res) => {
         }
     }
 
-    // 3. Perform the update using arrayFilters
     const result = await Order.updateOne(
       { orderId: id }, 
       { $set: updateFields },
@@ -634,7 +618,7 @@ const singleCancel = async (req, res) => {
     );
 
     if (result.matchedCount === 0) {
-      return res.status(404).json({ success: false, message: "Order or Item matching size not found" });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: "Order or Item matching size not found" });
     }
 
     const responseMsg = value 
@@ -646,18 +630,17 @@ const singleCancel = async (req, res) => {
     order.status= totalStatus
     await order.save();
 
-    return res.status(200).json({ success: true, message: responseMsg });
+    return res.status(STATUS_CODES.OK).json({ success: true, message: responseMsg });
 
   } catch (error) {
     console.error("Error while returning a single product:", error.message);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
   }
 };
 
 function deriveTotalStatus(products) {
   
   const statuses = products.map(p => p.status);
-
 
   if (statuses.every(s => s === "Cancelled")) return "Cancelled";
   
