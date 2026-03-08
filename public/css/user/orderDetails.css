@@ -1,0 +1,33 @@
+body {
+            background-color: #f8f9fa;
+            margin-top: 70px;
+        }
+        .card {
+            border-radius: 8px;
+        }
+        .card-body {
+            padding: 1.25rem;
+        }
+        .order-item {
+            padding: 0.75rem 0;
+        }
+        .order-item:not(:last-child) {
+            border-bottom: 1px solid #e9ecef;
+        }
+        .summary-row {
+            padding: 0.4rem 0;
+        }
+        .return{
+          background-color: #f8f9fa;
+          font-size: x-small;
+          color:red;
+          border:solid red 1px;
+          border-radius: 0px;
+        }
+        .cancel{
+          background-color: #f8f9fa;
+          font-size: x-small;
+          color:red;
+          border:solid red 1px;
+          border-radius: 0px;
+        }

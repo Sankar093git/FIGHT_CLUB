@@ -1,0 +1,56 @@
+body{
+      margin-top:120px;
+    }
+    .top-banner {
+      background: #000;
+      color: #fff;
+      text-align: center;
+      padding: 6px;
+      font-size: 13px;
+    }
+    .navbar-custom {
+      background-color: #555;
+    }
+    .navbar-custom .navbar-brand,
+    .navbar-custom .nav-link {
+      color: #fff;
+    }
+    .form-section {
+      min-height: 75vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .form-container {
+      max-width: 600px;
+      width: 100%;
+      background: #f9f9f9;
+      padding: 30px;
+      border-radius: 8px;
+    }
+    .google-signin {
+      background-color: #db4437;
+    }
+    .btn:hover{
+      color: #db4437!important;
+    }
+    .error-message {
+      display: none;
+      font-size: 0.8rem;
+      color: red;
+      text-align: left;
+    }
+    .password-toggle {
+      position: relative;
+    }
+    .password-toggle i {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #888;
+    }
+    .text-section{
+      width:100%;
+    }

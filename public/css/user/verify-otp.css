@@ -1,0 +1,33 @@
+body {
+      background-color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .verify-box {
+      max-width: 400px;
+      margin: 80px auto;
+      text-align: center;
+    }
+    .verify-box input {
+      height: 45px;
+      font-size: 16px;
+    }
+    .verify-box button {
+      width: 100%;
+      height: 45px;
+      background-color: black;
+      color: white;
+      border: none;
+      margin-top: 15px;
+      letter-spacing: 1px;
+    }
+    .timer {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    .resend-btn {
+      margin-top: 10px;
+      background-color: black;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+    }

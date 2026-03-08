@@ -1,15 +1,5 @@
 <%- include("../../views/user/partials/header.ejs") %>
-
-<style>
-  .input-error {
-  border-color: #dc3545 !important;
-}
-
-.error-text {
-  color: #dc3545;
-  font-size: 0.8rem;
-}
-</style>
+<link rel="stylesheet" href="/public/css/user/checkout.css">
 
 <div class="container mt-5 mb-5 pt-5">
   <div class="row">
@@ -262,9 +252,8 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-  
   let couponCode="";
-document.getElementById('payBtn').addEventListener('click', async (e) => {
+  document.getElementById('payBtn').addEventListener('click', async (e) => {
   const btn = e.currentTarget;
   const selected = document.querySelector('input[name="selectedAddress"]:checked');
 

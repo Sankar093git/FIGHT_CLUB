@@ -1,0 +1,23 @@
+body {
+            background-color: #f8f9fa;
+            
+        }
+        .card {
+            border-radius: 8px;
+        }
+        .card-body {
+            padding: 1.25rem;
+        }
+        .order-item {
+            padding: 0.75rem 0;
+        }
+        .order-item:not(:last-child) {
+            border-bottom: 1px solid #e9ecef;
+        }
+        .summary-row {
+            padding: 0.4rem 0;
+        }
+        .btn-sm{
+          font-size: xx-small;
+          margin-left: 3px;
+        }

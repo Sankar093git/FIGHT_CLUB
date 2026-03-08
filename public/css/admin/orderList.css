@@ -1,0 +1,61 @@
+body {
+      background-color: #f8f9fa;
+      font-size: 0.9rem;
+    }
+    .card {
+      border-radius: 8px;
+      border: none;
+    }
+    .card-body {
+      padding: 1.25rem;
+    }
+    .table {
+      font-size: 0.875rem;
+      margin-bottom: 0;
+    }
+    .table thead th {
+      background-color: #f8f9fa;
+      border-bottom: 2px solid #dee2e6;
+      font-weight: 600;
+      padding: 0.75rem 0.5rem;
+    }
+    .table tbody td {
+      padding: 0.75rem 0.5rem;
+      vertical-align: middle;
+    }
+    .badge {
+      padding: 0.35em 0.65em;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .btn-sm {
+      padding: 0.25rem 0.75rem;
+      font-size: 0.8rem;
+    }
+    .form-control, .form-select {
+      font-size: 0.875rem;
+      padding: 0.5rem 0.75rem;
+    }
+    .search-filters {
+      background-color: white;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .status-pending { background-color: #ffc107; color: #000; }
+    .status-shipped { background-color: #17a2b8; }
+    .status-out-for-delivery { background-color: #fd7e14; }
+    .status-delivered { background-color: #28a745; }
+    .status-cancelled { background-color: #dc3545; }
+    .pagination {
+      margin-bottom: 0;
+    }
+    .order-id {
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: #495057;
+    }
+
+    .hideReturnHandlers{
+      display: none;
+    }

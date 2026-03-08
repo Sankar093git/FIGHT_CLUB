@@ -1,0 +1,39 @@
+body {
+      background-color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .navbar {
+      background-color: #6c757d;
+    }
+
+    .login-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 400px;
+      padding: 2rem;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .message-box {
+      font-size: 0.9rem;
+    }
+
+    .password-toggle {
+      position: absolute;
+      top: 38px;
+      right: 15px;
+      cursor: pointer;
+      color: #888;
+    }

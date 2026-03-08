@@ -1,0 +1,104 @@
+.hero-section {
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/placeholder.svg?height=600&width=1200');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            color: white;
+            position: relative;
+        }
+
+        .category-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            transition: transform 0.3s ease;
+        }
+
+        .category-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .category-icon i {
+            font-size: 2.5rem;
+            color: white;
+        }
+
+        .floating-content{
+            position: absolute;
+            z-index: 99;
+            padding: 10%;
+        }
+
+        .product-card {
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            height: 100%;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .product-image {
+            height: 200px;
+            object-fit: contain;
+        }
+
+        .price {
+            color: var(--primary-red);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .testimonial-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            height: 100%;
+        }
+
+        .btn-primary {
+            background-color: #c82333;
+            border-color:  #c82333;
+        }
+
+    
+        #most-wanted,#whats-new {
+         display: flex;
+         flex-wrap: nowrap;      /* Prevents cards from dropping to the next line */
+         overflow-x: auto;       /* Enables horizontal scrolling */
+         overflow-y: hidden;     /* Prevents accidental vertical jitter */
+         padding-bottom: 15px;   /* Space for the scrollbar so it doesn't touch the cards */
+         scroll-snap-type: x mandatory; /* Makes cards "snap" into place */
+         -webkit-overflow-scrolling: touch; /* Smooth scrolling for mobile */
+      }
+
+        #most-wanted .col-lg-3,#whats-new .col-lg-3 {
+        flex: 0 0 auto;         /* Prevents columns from shrinking */
+        width: 280px;           /* Set a fixed width for your cards in the carousel */
+        scroll-snap-align: start; /* The point where the card snaps */
+      }
+
+     /* Optional: Hide scrollbar for a cleaner "Netflix-style" look */
+       #most-wanted::-webkit-scrollbar,#whats-new::-webkit-scrollbar {
+           display: none;
+       }
+       #most-wanted,#whats-new {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;     /* Firefox */
+     }

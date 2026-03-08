@@ -1,66 +1,5 @@
 <%- include("../../views/user/partials/header.ejs") %>
-<style>
-  .product-card img {
-    margin-top:5px;
-     max-height: 200px; 
-     object-fit: contain; 
-    }
-  .filter-section { 
-    position: sticky; 
-    top: 1rem; 
-  }
-  .search-button { 
-    border-radius: 0px 0px 3px 0px; 
-  }
-  .searchInput { 
-    border: 1px solid darkgrey; 
-  }
-  .product-card {
-  border: none;
-  border-radius: 12px;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.product-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.15);
-}
-
-.product-card .card-img-top {
-  height: 220px;
-  object-fit: contain;
-  padding: 12px;
-  background: #f8f9fa;
-  transition: transform 0.3s ease;
-}
-
-.product-card:hover .card-img-top {
-  transform: scale(1.05);
-}
-
-.product-card .card-body {
-  padding: 12px 16px 16px;
-}
-
-.btn-add-cart {
-  background: linear-gradient(135deg, #28a745, #20c997);
-  color: white;
-  border: none;
-  padding: 8px 20px;
-  border-radius: 20px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.btn-add-cart:hover {
-  background: linear-gradient(135deg, #218838, #1aa179);
-  transform: scale(1.05);
-  color: white;
-}
-</style>
+<link rel="stylesheet" href="/css/user/shop.css" type="text/css">
 
 <div class="container" style="margin-top: 64px; padding-top: 40px;">
   <div class="row">
@@ -189,7 +128,7 @@
 </div>
 
 <script>
-  /* ---------------------------------------------------------
+/* ---------------------------------------------------------
      1. Inject backend data safely into JS
   --------------------------------------------------------- */
   const products = <%- JSON.stringify(product || []) %>;
@@ -324,9 +263,6 @@ function handleAddToCart(productId,size){
   function clearFilters(){
     window.location.href="/shop"
   }
-
-  
-
 </script>
 
 

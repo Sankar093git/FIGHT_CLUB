@@ -1,0 +1,33 @@
+body {
+    background-color: #ffffff;
+}
+.navbar {
+    background-color: #3C3C3C;
+}
+.navbar-aside {
+    background-color: #3C3C3C;
+}
+.menu-item a.menu-link {
+    color: #ffffff;
+}
+
+.menu-item a.menu-link:hover,
+.menu-item a.menu-link.active {
+    background-color: #6e7e6e; 
+    color: #ffffff;
+}
+.dropdown-menu {
+    background-color: #bb9aaf;
+}
+
+.dropdown-item:hover {
+    background-color: #33053d;
+    color: #ffffff;
+}
+.navlogo{
+    font-weight: bold;
+    font-size: 1.5rem;
+    color:#ffffff;
+    
+}
+

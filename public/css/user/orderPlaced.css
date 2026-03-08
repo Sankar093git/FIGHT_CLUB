@@ -1,0 +1,19 @@
+body {
+            background-color: #28a745;
+            min-height: 100vh;
+        }
+        .success-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .success-card {
+            background-color: transparent;
+            color: white;
+            text-align: center;
+        }
+        .success-icon {
+            font-size: 6rem;
+            margin-bottom: 1.5rem;
+        }
