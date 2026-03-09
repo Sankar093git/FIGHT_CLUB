@@ -40,7 +40,9 @@ export const loadShopPage = async (req, res) => {
 
     // Sorting logic
 
-    let sortOption = { createdOn: -1 };
+    let sortOption = {
+      _id: - 1
+    };
 
     if (sort === "price-asc") {
 
@@ -106,9 +108,6 @@ export const loadShopPage = async (req, res) => {
 
     }
 
-    const sata = await Product.find(filter);
-
-    console.log(sata.map((i) => i.productName))
 
     // Fetch products
 
@@ -120,13 +119,10 @@ export const loadShopPage = async (req, res) => {
 
       .limit(limit);
 
-    console.log(data.map((i) => i.productName));
-
-
 
     const brand = await Brand.find({});
 
-    const category = await Category.find({});
+    const category = await Category.find({ isDeleted: false });
 
 
 
