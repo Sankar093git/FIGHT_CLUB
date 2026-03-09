@@ -1,15 +1,18 @@
 
-const User=require("../models/userSchema");
+import User from "../models/userSchema.js";
 
 const navbarContext = async (req, res, next) => {
   try {
+    // Initialize default values for the templates
     res.locals.isLoggedIn = false;
     res.locals.userName = null;
     res.locals.profileImage = null;
     res.locals.cartCount = 0;
 
+    // If no user session, move to the next middleware/route
     if (!req.session.user) return next();
 
+    // Fetch user with selective fields and populate cart to check product status
     const user = await User.findById(req.session.user)
       .select("name userImage cart")
       .populate({
@@ -23,6 +26,7 @@ const navbarContext = async (req, res, next) => {
     res.locals.userName = user.name;
     res.locals.profileImage = user.userImage || "default-avatar.jpg";
 
+    // Calculate cart count excluding blocked products
     res.locals.cartCount = user.cart
       .filter(item => item.product && item.product.isBlocked === false)
       .reduce((total, item) => total + item.quantity, 0);
@@ -30,8 +34,9 @@ const navbarContext = async (req, res, next) => {
     next();
   } catch (err) {
     console.error("Navbar context middleware error:", err);
+    // Continue even if there's an error to avoid breaking the page load
     next();
   }
 };
 
-module.exports = navbarContext;
+export default navbarContext;

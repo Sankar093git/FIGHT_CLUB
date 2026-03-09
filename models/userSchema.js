@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
@@ -13,20 +13,20 @@ const userSchema = new mongoose.Schema(
     },
     userImage: {
       type: String,
-      default:null,
+      default: null,
     },
     phone: {
-    type: String,
-    required: function () {
-    return !this.googleId;
-  },
-},
+      type: String,
+      required: function () {
+        return !this.googleId;
+      },
+    },
     password: {
-    type: String,
-    required: function () {
-    return !this.googleId;
-  },
-},
+      type: String,
+      required: function () {
+        return !this.googleId;
+      },
+    },
     isBlocked: {
       type: Boolean,
       default: false,
@@ -43,8 +43,8 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    googleId: { 
-      type: String 
+    googleId: {
+      type: String
     },
     address: [
       {
@@ -78,17 +78,17 @@ const userSchema = new mongoose.Schema(
         },
         isDefault: {
           type: Boolean,
-          default: false, 
+          default: false,
         },
       },
     ],
-    referalCode:{
-      type:String
+    referalCode: {
+      type: String
     },
-    referedBy:{
-      type:String
+    referedBy: {
+      type: String
     },
-    redeemedCoupons:[String],
+    redeemedCoupons: [String],
     cart: [
       {
         product: {
@@ -96,9 +96,9 @@ const userSchema = new mongoose.Schema(
           ref: "Product",
           required: true,
         },
-        size:{
-          type:String,
-          required:true
+        size: {
+          type: String,
+          required: true
         },
         quantity: {
           type: Number,
@@ -107,21 +107,20 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
-
     wishlist: [
-  {
-    product: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Product",
-      required: true
-    }
-  }
-]
+      {
+        product: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+          required: true
+        }
+      }
+    ]
   },
   { timestamps: true }
 );
 
 const User = mongoose.model("User", userSchema);
 
-module.exports = User;
+export default User;
 

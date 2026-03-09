@@ -10,4 +10,4 @@ const STATUS_CODES = Object.freeze({
     INTERNAL_SERVER_ERROR: 500
 });
 
-module.exports = STATUS_CODES;
+export default STATUS_CODES;

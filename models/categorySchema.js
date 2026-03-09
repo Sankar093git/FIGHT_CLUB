@@ -1,28 +1,28 @@
-const mongoose=require("mongoose");
+import mongoose from "mongoose";
 
 const categorySchema = new mongoose.Schema({
-    name:{
-        type:String,
-        required:true
+    name: {
+        type: String,
+        required: true
     },
-    description:{
-        type:String,
-        required:true
+    description: {
+        type: String,
+        required: true
     },
-    isListed:{
-        type:Boolean,
-        default:true
+    isListed: {
+        type: Boolean,
+        default: true
     },
-    isDeleted:{
-        type:Boolean,
-        default:0
+    isDeleted: {
+        type: Boolean,
+        default: false // Updated from 0 to false for type consistency
     },
-    categoryOffer:{
-        type:Number,
-        default:0
+    categoryOffer: {
+        type: Number,
+        default: 0
     }
-},{timestamps:true})
+}, { timestamps: true });
 
-const Category= mongoose.model("Category",categorySchema);
+const Category = mongoose.model("Category", categorySchema);
 
-module.exports=Category;
+export default Category;

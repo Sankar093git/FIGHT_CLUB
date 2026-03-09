@@ -1,150 +1,113 @@
-const Brand=require("../../models/brandSchema");
-const STATUS_CODES=require("../../utils/statusCode");
+import Brand from "../../models/brandSchema.js";
+import STATUS_CODES from "../../utils/statusCode.js";
 
-
-const getBrandList=async(req,res)=>{
+export const getBrandList = async (req, res) => {
     try {
-        const page=parseInt(req.query.page)||1;
+        const page = parseInt(req.query.page) || 1;
+        const limit = 4;
+        const skip = (page - 1) * limit;
 
-        const limit=4;
-
-        const skip=(page-1)*limit;
-
-        const data= await Brand.find().skip(skip).limit(limit);
-
+        const data = await Brand.find().skip(skip).limit(limit);
         const totalDocuments = await Brand.countDocuments();
+        const totalpages = Math.ceil(totalDocuments / limit);
 
-        const totalpages=Math.ceil(totalDocuments/limit);
-
-        res.status(STATUS_CODES.OK).render("brand",{
-            count:totalDocuments,
-            data:data,
-            totalPages:totalpages,
-            currentPage:page
+        res.status(STATUS_CODES.OK).render("brand", {
+            count: totalDocuments,
+            data: data,
+            totalPages: totalpages,
+            currentPage: page
         });
-
     } catch (error) {
-
-        console.error("Error while loading brands",error);
-
+        console.error("Error while loading brands", error);
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
     }
-}
+};
 
-const addBrand=async (req,res)=>{
+export const addBrand = async (req, res) => {
     try {
-       const name =req.body.name;
-       const image=req.file.filename;
-       const findBrand=await Brand.findOne({brandName:name});
-       if(findBrand){
+        const name = req.body.name;
+        const image = req.file.filename;
+        const findBrand = await Brand.findOne({ brandName: name });
 
-         if(image){
-
-            await Brand.updateOne({brandName:name},{$set:{brandName:name,logo:image}});
-
-            return res.status(STATUS_CODES.OK).json({
-                success: true, 
-                message: "Brand edited successfully!" 
+        if (findBrand) {
+            if (image) {
+                await Brand.updateOne({ brandName: name }, { $set: { brandName: name, logo: image } });
+                return res.status(STATUS_CODES.OK).json({
+                    success: true,
+                    message: "Brand edited successfully!"
+                });
+            } else {
+                await Brand.updateOne({ brandName: name }, { $set: { brandName: name } });
+                return res.status(STATUS_CODES.OK).json({
+                    success: true,
+                    message: "Brand edited successfully!"
+                });
+            }
+        } else {
+            const newBrand = new Brand({
+                brandName: name,
+                logo: image
             });
 
-         }else{
+            await newBrand.save();
+            const brand = await Brand.findOne({ brandName: name });
 
-            await Brand.updateOne({brandName:name},{$set:{brandName:name}});
-
-            return res.status(STATUS_CODES.OK).json({
+            return res.status(STATUS_CODES.CREATED).json({
                 success: true,
-                message: "Brand edited successfully!" 
+                message: "Brand added successfully!",
+                brand: brand
             });
-         }
-
-       }else{
-
-       const newBrand= new Brand({
-        brandName:name,
-        logo:image
-       });
-
-       await newBrand.save();
-
-       const brand= await Brand.findOne({brandName:name});
-
-       return res.status(STATUS_CODES.CREATED).json({ 
-        success: true, 
-        message: "Brand added successfully!",
-        brand:brand
-    }); 
-
-    }  
+        }
     } catch (error) {
-        console.error("Error while adding brand",error);
-        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ 
-            success: false, 
-            message: "Error adding brand" 
+        console.error("Error while adding brand", error);
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: "Error adding brand"
         });
     }
-}
+};
 
-const deleteBrand=async (req,res)=>{
+export const deleteBrand = async (req, res) => {
     try {
-        const id=req.params.id;
-
-        await Brand.deleteOne({_id:id});
+        const id = req.params.id;
+        await Brand.deleteOne({ _id: id });
 
         res.status(STATUS_CODES.OK).json({
-            success:true,
-            message:"Brand deletion complete!"
+            success: true,
+            message: "Brand deletion complete!"
         });
-
     } catch (error) {
-
-        console.error("Error while deleting brand",error);
-
+        console.error("Error while deleting brand", error);
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-            success:false,
-            message:"Something went wrong, please try again"
+            success: false,
+            message: "Something went wrong, please try again"
         });
     }
-}
+};
 
-const blockORunblockBrand= async (req,res)=>{
+export const blockORunblockBrand = async (req, res) => {
     try {
-        const id=req.params.id;
+        const id = req.params.id;
+        const findBrand = await Brand.findOne({ _id: id });
 
-        const findBrand= await Brand.findOne({_id:id});
-
-        if(findBrand.isBlocked){
-
-            await Brand.updateOne({_id:id},{$set:{isBlocked:false}});
-
+        if (findBrand.isBlocked) {
+            await Brand.updateOne({ _id: id }, { $set: { isBlocked: false } });
             return res.status(STATUS_CODES.OK).json({
-                success:true,
-                message:"Unblocked"
-            }); 
-
-        }else{
-
-           await Brand.updateOne({_id:id},{$set:{isBlocked:true}}); 
-
-           return res.status(STATUS_CODES.OK).json({
-            success:true,
-            message:"Blocked"
-        }); 
+                success: true,
+                message: "Unblocked"
+            });
+        } else {
+            await Brand.updateOne({ _id: id }, { $set: { isBlocked: true } });
+            return res.status(STATUS_CODES.OK).json({
+                success: true,
+                message: "Blocked"
+            });
         }
-
     } catch (error) {
-
-        console.error("Error while blocking a brand",error);
-
+        console.error("Error while blocking a brand", error);
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-            success:false,
-            message:"Something went wrong!"
+            success: false,
+            message: "Something went wrong!"
         });
     }
-}
-
-module.exports={
-    getBrandList,
-    addBrand,
-    deleteBrand,
-    blockORunblockBrand
-}
+};

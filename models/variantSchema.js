@@ -1,4 +1,4 @@
-const mongoose=require("mongoose");
+import mongoose from "mongoose";
 
 const variantSchema = new mongoose.Schema(
   {
@@ -21,6 +21,6 @@ const variantSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Variant=mongoose.model("Variant",variantSchema);
+const Variant = mongoose.model("Variant", variantSchema);
 
-module.exposrts=Variant;
+export default Variant;

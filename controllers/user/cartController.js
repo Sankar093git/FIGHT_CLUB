@@ -1,36 +1,44 @@
-const User = require("../../models/userSchema");
-const STATUS_CODES = require("../../utils/statusCode");
+import User from "../../models/userSchema.js";
+import STATUS_CODES from "../../utils/statusCode.js";
 
-const loadCart = async (req, res) => {
+export const loadCart = async (req, res) => {
   try {
     const user = req.session.user;
     const userData = await User.findOne({ _id: user }).populate("cart.product");
+
     let hasStockIssue = false;
+
     userData.cart = userData.cart.map((item) => {
       const product = item.product;
       const variant = product.variants.find(v => v.size == item.size);
+
       if (!variant || item.quantity > variant.stock) {
         hasStockIssue = true;
         return {
           ...item.toObject(),
           stockError: true,
           availableStock: variant ? variant.stock : 0
-        }
+        };
       } else {
         return {
           ...item.toObject(),
           stockError: false,
           availableStock: variant ? variant.stock : 0
-        }
+        };
       }
-    })
+    });
+
+    // Filtering out blocked products to keep the cart clean
     const validCartItems = userData.cart.filter(item => item.product.isBlocked === false);
+
     const dbCartUpdate = validCartItems.map(item => ({
       product: item.product._id,
       size: item.size,
       quantity: item.quantity
     }));
-    await User.updateOne({ _id: user }, { $set: { cart: dbCartUpdate } })
+
+    await User.updateOne({ _id: user }, { $set: { cart: dbCartUpdate } });
+
     res.status(STATUS_CODES.OK).render("cart", {
       userData: userData,
       cart: validCartItems,
@@ -41,21 +49,24 @@ const loadCart = async (req, res) => {
     console.error("Error while loading cart-page", error);
     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
   }
-}
+};
 
-const changeQuantity = async (req, res) => {
+export const changeQuantity = async (req, res) => {
   try {
     const userData = await User.findOne({ _id: req.session.user }).populate("cart.product");
     const action = req.body.action;
     const pId = req.body.id;
 
     const cartItem = userData.cart.find(item => item.product._id.toString() === pId);
-    const size = cartItem.size;
-    const variant = cartItem.product.variants.find(v => v.size == size);
+
     if (!cartItem) {
       console.log("Product not found in cart");
-      return;
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: "Item not found" });
     }
+
+    const size = cartItem.size;
+    const variant = cartItem.product.variants.find(v => v.size == size);
+
     if (action === 'increment') {
       if (cartItem.quantity >= variant.stock) {
         return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Out of stock" });
@@ -82,11 +93,11 @@ const changeQuantity = async (req, res) => {
 
   } catch (error) {
     console.error("Error while changing quantity", error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server Error" });
   }
-}
+};
 
-const removeItem = async (req, res) => {
+export const removeItem = async (req, res) => {
   try {
     const pId = req.body.product;
     await User.updateOne(
@@ -96,13 +107,6 @@ const removeItem = async (req, res) => {
     res.status(STATUS_CODES.OK).json({ success: true });
   } catch (error) {
     console.error("Error while removing item", error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false });
   }
 };
-
-
-module.exports = {
-  loadCart,
-  changeQuantity,
-  removeItem
-}

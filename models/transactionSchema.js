@@ -1,4 +1,4 @@
-const mongoose=require("mongoose");
+import mongoose from "mongoose";
 
 const walletTransactionSchema = new mongoose.Schema(
   {
@@ -33,7 +33,7 @@ const walletTransactionSchema = new mongoose.Schema(
 
     relatedOrderId: {
       type: String,
-      required:true
+      required: true
     },
 
     description: {
@@ -49,4 +49,4 @@ const WalletTransaction = mongoose.model(
   walletTransactionSchema
 );
 
-module.exports = WalletTransaction;
+export default WalletTransaction;

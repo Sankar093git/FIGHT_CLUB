@@ -1,16 +1,16 @@
-const mongoose=require("mongoose");
+import mongoose from "mongoose";
 
-const constantSchema= new mongoose.Schema({
-    shipping:{
-        type:Number,
-        default:0
+const constantSchema = new mongoose.Schema({
+    shipping: {
+        type: Number,
+        default: 0
     },
-    taxes:{
-        type:Number,
-        default:0
+    taxes: {
+        type: Number,
+        default: 0
     }
-},{timestamps:true})
+}, { timestamps: true });
 
-const Constants= mongoose.model("Constants",constantSchema);
+const Constants = mongoose.model("Constants", constantSchema);
 
-module.exports=Constants
+export default Constants;

@@ -1,16 +1,16 @@
-const User = require("../../models/userSchema");
-const Order = require("../../models/orderSchema");
-const crypto = require("crypto");
-const Product = require("../../models/productSchema");
-const Coupon = require("../../models/couponSchema");
-const Wallet = require("../../models/walletShema");
-const mongoose = require("mongoose");
-const paymentController = require("../../controllers/user/paymentController");
-const Transactions = require("../../models/transactionSchema");
-const Constants = require("../../models/constantSchema");
-const STATUS_CODES = require("../../utils/statusCode");
+import User from "../../models/userSchema.js";
+import Order from "../../models/orderSchema.js";
+import crypto from "crypto";
+import Product from "../../models/productSchema.js";
+import Coupon from "../../models/couponSchema.js";
+import Wallet from "../../models/walletShema.js";
+import mongoose from "mongoose";
+import * as paymentController from "../../controllers/user/paymentController.js";
+import Transactions from "../../models/transactionSchema.js";
+import Constants from "../../models/constantSchema.js";
+import STATUS_CODES from "../../utils/statusCode.js";
 
-const placeOrder = async (req, res) => {
+export const placeOrder = async (req, res) => {
   try {
     const userId = req.session.user;
     const constants = await Constants.find({});
@@ -38,7 +38,6 @@ const placeOrder = async (req, res) => {
         return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: `Only ${variant.stock} units left for${x.product.productName}` })
       }
     }
-
 
     const validCartItems = userData.cart.filter(item => item.product.isBlocked === false);
 
@@ -145,8 +144,7 @@ const placeOrder = async (req, res) => {
   }
 };
 
-
-const orderSuccess = async (req, res) => {
+export const orderSuccess = async (req, res) => {
   try {
     await setDiscountvalue();
     await setproductDiscountPerOrder();
@@ -157,7 +155,7 @@ const orderSuccess = async (req, res) => {
   }
 }
 
-const paymentFailure = async (req, res) => {
+export const paymentFailure = async (req, res) => {
   try {
     const orderId = req.query.orderId;
     const userDetails = await User.findOne({ _id: req.session.user });
@@ -172,7 +170,7 @@ const paymentFailure = async (req, res) => {
   }
 }
 
-const updatePayment = async (req, res) => {
+export const updatePayment = async (req, res) => {
   try {
     console.log("Payment updation is triggering!");
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
@@ -249,7 +247,7 @@ const updatePayment = async (req, res) => {
   }
 }
 
-const cancelOrder = async (req, res) => {
+export const cancelOrder = async (req, res) => {
   try {
     const userId = req.session.user;
     const orderId = req.params.id;
@@ -340,7 +338,7 @@ const cancelOrder = async (req, res) => {
   }
 };
 
-const returnOrder = async (req, res) => {
+export const returnOrder = async (req, res) => {
   try {
     const userId = req.session.user;
     const orderId = req.params.id;
@@ -388,7 +386,7 @@ const returnOrder = async (req, res) => {
   }
 };
 
-const displayOrder = async (req, res) => {
+export const displayOrder = async (req, res) => {
   try {
     const userId = req.session.user;
     const orderId = req.query.id;
@@ -432,8 +430,7 @@ const displayOrder = async (req, res) => {
   }
 };
 
-
-const addAddress = async (req, res) => {
+export const addAddress = async (req, res) => {
   try {
     await User.updateOne({ _id: req.session.user }, { $addToSet: { address: req.body } });
     res.status(STATUS_CODES.OK).redirect("/checkout");
@@ -444,7 +441,7 @@ const addAddress = async (req, res) => {
   }
 }
 
-const editAddress = async (req, res) => {
+export const editAddress = async (req, res) => {
   try {
     const addressId = req.params.id;
     const { label, street, city, state, country, postalCode, phone, isDefault } = req.body;
@@ -468,7 +465,7 @@ const editAddress = async (req, res) => {
   }
 }
 
-const singleCancel = async (req, res) => {
+export const singleCancel = async (req, res) => {
   try {
     const productId = new mongoose.Types.ObjectId(req.params.productId);
     console.log(productId);
@@ -572,7 +569,7 @@ const singleCancel = async (req, res) => {
   }
 };
 
-const singleReturn = async (req, res) => {
+export const singleReturn = async (req, res) => {
   try {
     const productId = new mongoose.Types.ObjectId(req.params.productId);
     const { id, size, value } = req.body;
@@ -707,18 +704,4 @@ async function setproductDiscountPerOrder() {
   } catch (error) {
     console.error("setproductDiscountPerOrder : ", error);
   }
-}
-
-module.exports = {
-  displayOrder,
-  cancelOrder,
-  returnOrder,
-  placeOrder,
-  editAddress,
-  addAddress,
-  orderSuccess,
-  singleCancel,
-  singleReturn,
-  paymentFailure,
-  updatePayment,
 }

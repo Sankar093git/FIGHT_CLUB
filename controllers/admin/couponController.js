@@ -1,41 +1,30 @@
-const Coupon = require("../../models/couponSchema");
-const STATUS_CODES = require("../../utils/statusCode");
+import Coupon from "../../models/couponSchema.js";
+import STATUS_CODES from "../../utils/statusCode.js";
 
-const loadCouponManagement = async (req, res) => {
+export const loadCouponManagement = async (req, res) => {
   try {
     const filter = {};
     await deriveCouponStatus();
     const { search, status } = req.query;
 
     if (search && search.trim() !== "") {
-
       filter.code = { $regex: search, $options: "i" };
-
     }
 
-
     if (status && status !== "all") {
-
       filter.status = status;
-
     }
 
     const page = req.query.page || 1;
-
     const limit = 5;
-
     const skip = (page - 1) * limit;
 
     const couponDetails = await Coupon.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit);
-
     const totalCoupons = await Coupon.countDocuments(filter);
-
     const activeCoupons = await Coupon.countDocuments({ status: "Active" });
-
     const totalPages = Math.ceil(totalCoupons / limit);
 
     const coupons = await Coupon.find();
-
     const totalRedemptions = coupons.map((r) => r.redemptions).reduce((acc, num) => acc + num, 0);
 
     res.status(STATUS_CODES.OK).render("coupon", {
@@ -49,21 +38,16 @@ const loadCouponManagement = async (req, res) => {
       filter,
       search
     });
-
   } catch (error) {
-
     console.error("Coupon page load:", error);
-
     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
-
   }
+};
 
-}
-
-const addcoupon = async (req, res) => {
+export const addcoupon = async (req, res) => {
   try {
-
-    const { code,
+    const {
+      code,
       discountType,
       discountValue,
       minPurchase,
@@ -75,13 +59,10 @@ const addcoupon = async (req, res) => {
     } = req.body;
 
     const couponNames = await Coupon.find({}, { _id: 0, code: 1 });
-
     const couponChecklist = couponNames.map((item) => item.code.replace(/ /g, ""));
 
     if (couponChecklist.includes(code.replace(/ /g, ""))) {
-
       return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Coupon name already exists!" });
-
     }
 
     const newCoupon = new Coupon({
@@ -102,43 +83,33 @@ const addcoupon = async (req, res) => {
       success: true,
       message: "Coupon added successfully"
     });
-
   } catch (error) {
-
     console.error("Add Coupon:", error);
-
     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Something went wrong!"
     });
-
   }
+};
 
-}
-
-const editCoupon = async (req, res) => {
+export const editCoupon = async (req, res) => {
   try {
-
     const { couponId } = req.params;
 
     if (!couponId) {
-
       return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: "Coupon ID is required"
       });
-
     }
 
     const coupon = await Coupon.findById(couponId);
 
     if (!coupon) {
-
       return res.status(STATUS_CODES.NOT_FOUND).json({
         success: false,
         message: "Coupon not found"
       });
-
     }
 
     const {
@@ -153,59 +124,37 @@ const editCoupon = async (req, res) => {
       description
     } = req.body;
 
-    // Prevent duplicate coupon codes
     if (code && code !== coupon.code) {
-
       const existing = await Coupon.findOne({
         code: code.toUpperCase(),
         _id: { $ne: couponId }
       });
 
       if (existing) {
-
         return res.status(STATUS_CODES.BAD_REQUEST).json({
           success: false,
           message: "Coupon code already exists"
         });
-
       }
-
     }
 
-    // Update fields
     coupon.code = code?.toUpperCase() ?? coupon.code;
-
     coupon.discountType = discountType ?? coupon.discountType;
-
     coupon.discountValue = discountValue ?? coupon.discountValue;
-
     coupon.minPurchase = minPurchase ?? coupon.minPurchase;
-
     coupon.usageLimit = usageLimit ?? coupon.usageLimit;
-
     coupon.maxDiscount = maxDiscount ?? coupon.maxDiscount;
-
     coupon.startDate = startDate ?? coupon.startDate;
-
     coupon.expiryDate = endDate ?? coupon.expiryDate;
-
     coupon.description = description ?? coupon.description;
 
-    // Auto status calculation
     const now = new Date();
-
     if (coupon.expiryDate < now) {
-
       coupon.status = "Expired";
-
     } else if (coupon.startDate > now) {
-
       coupon.status = "Scheduled";
-
     } else {
-
       coupon.status = "Active";
-
     }
 
     await coupon.save();
@@ -215,62 +164,44 @@ const editCoupon = async (req, res) => {
       message: "Coupon updated successfully",
       coupon
     });
-
   } catch (error) {
-
     console.error("Edit coupon:", error);
-
     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Something went wrong!"
     });
-
   }
+};
 
-}
-
-const deleteCoupon = async (req, res) => {
+export const deleteCoupon = async (req, res) => {
   try {
-
     const couponId = req.params.couponId;
-
     const exists = await Coupon.findOne({ _id: couponId });
 
     if (!exists) {
-
       return res.status(STATUS_CODES.NOT_FOUND).json({
         success: false,
         message: "Coupon does not exist"
       });
-
     } else {
-
       await Coupon.deleteOne({ _id: couponId });
-
       return res.status(STATUS_CODES.OK).json({
         success: true,
         message: "Coupon deleted successfully!"
       });
-
     }
-
   } catch (error) {
-
     console.error("Delete coupon:", error);
-
     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Something went wrong!"
-    })
-
+    });
   }
-
-}
+};
 
 async function deriveCouponStatus() {
   try {
     const now = new Date();
-
     const result = await Coupon.updateMany(
       {
         status: "Active",
@@ -281,18 +212,10 @@ async function deriveCouponStatus() {
       },
       { $set: { status: "Expired" } }
     );
-
     console.log(`${result.modifiedCount} coupons updated to Expired.`);
     return true;
   } catch (error) {
     console.error("Coupon status management error: ", error);
     return false;
   }
-}
-
-module.exports = {
-  loadCouponManagement,
-  addcoupon,
-  editCoupon,
-  deleteCoupon
 }

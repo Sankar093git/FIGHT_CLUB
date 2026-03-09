@@ -1,15 +1,15 @@
-const User = require("../../models/userSchema");
-const { sendVerificationMail, generateOTP, securePassword } = require("../../controllers/user/userController1");
-const Orders = require("../../models/orderSchema");
-const Wallet = require("../../models/walletShema");
-const Transaction = require("../../models/transactionSchema");
-const STATUS_CODES = require("../../utils/statusCode");
+import User from "../../models/userSchema.js";
+import { sendVerificationMail, generateOTP, securePassword } from "../../controllers/user/userController1.js";
+import Orders from "../../models/orderSchema.js";
+import Wallet from "../../models/walletShema.js";
+import Transaction from "../../models/transactionSchema.js";
+import STATUS_CODES from "../../utils/statusCode.js";
 
-const loadProfile = async (req, res) => {
+export const loadProfile = async (req, res) => {
     try {
         const orderPage = parseInt(req.query.orderPage) || 1;
         const orderLimit = 5;
-        const skip = (orderPage - 1) * orderLimit
+        const skip = (orderPage - 1) * orderLimit;
         const id = req.session.user;
         const findUser = await User.findOne({ _id: id, isBlocked: false }).populate("wishlist.product");
         const addressDetails = findUser.address;
@@ -20,9 +20,9 @@ const loadProfile = async (req, res) => {
         const orderDetails = await Orders.find({ user: id }).sort({ createdAt: -1 }).skip(skip).limit(orderLimit);
         const totalOrders = await Orders.countDocuments({ user: id });
         const paidOrders = await Orders.countDocuments({ user: id, paymentStatus: "PAID" });
-        const refereby = await User.findOne({ _id: id })
-        let referee = refereby.referedBy || null
-        let newbee
+        const refereby = await User.findOne({ _id: id });
+        let referee = refereby.referedBy || null;
+        let newbee;
         if (paidOrders == 0 && referee == null) {
             newbee = true;
         }
@@ -51,25 +51,24 @@ const loadProfile = async (req, res) => {
             totalTpages: totalTpages,
             currentTpage: tpage,
             newbee
-        })
+        });
     } catch (error) {
         console.log("Error while loading profilepage", error);
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
-}
+};
 
-const addAddress = async (req, res) => {
+export const addAddress = async (req, res) => {
     try {
         await User.updateOne({ _id: req.session.user }, { $addToSet: { address: req.body } });
         res.status(STATUS_CODES.OK).redirect("/profile");
-
     } catch (error) {
         console.error("Error while adding address", error);
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
-}
+};
 
-const editAddress = async (req, res) => {
+export const editAddress = async (req, res) => {
     try {
         const addressId = req.params.id;
         const { label, street, city, state, country, postalCode, phone, isDefault } = req.body;
@@ -88,44 +87,42 @@ const editAddress = async (req, res) => {
         });
 
         res.status(STATUS_CODES.OK).redirect("/profile");
-
     } catch (error) {
         console.error("Addess edit error,", error);
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
-}
+};
 
-const deleteAddress = async (req, res) => {
+export const deleteAddress = async (req, res) => {
     try {
         const id = req.params.id;
-        await User.updateOne({ _id: req.session.user }, { $pull: { address: { _id: id } } })
-        res.status(STATUS_CODES.OK).redirect("/profile")
+        await User.updateOne({ _id: req.session.user }, { $pull: { address: { _id: id } } });
+        res.status(STATUS_CODES.OK).redirect("/profile");
     } catch (error) {
         console.error("Error while deleting address", error);
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
-}
+};
 
-const loadEditProfile = async (req, res) => {
+export const loadEditProfile = async (req, res) => {
     try {
-
         const userData = await User.findOne({ _id: req.session.user });
         res.status(STATUS_CODES.OK).render("edit-profile", {
             userData: userData
-        })
+        });
     } catch (error) {
         console.error("Error while loading edit profile page", error);
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
-}
+};
 
-const changeProfilePicture = async (req, res) => {
+export const changeProfilePicture = async (req, res) => {
     try {
         const id = req.params.id;
         const image = req.file.filename;
         const testText = image.split("").reverse().join("");
         console.log(testText);
-        let arr = testText.split(".")
+        let arr = testText.split(".");
         const ext = arr[0];
         if (!["gpj", "gnp"].includes(ext)) {
             return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Please enter a valid image" });
@@ -139,9 +136,9 @@ const changeProfilePicture = async (req, res) => {
         console.error("Error while changing the profile picture", error);
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: "Somthing went wrong" });
     }
-}
+};
 
-const editProfile = async (req, res) => {
+export const editProfile = async (req, res) => {
     try {
         const { email, phone, password } = req.body;
         req.session.email = email;
@@ -156,22 +153,21 @@ const editProfile = async (req, res) => {
         } else {
             res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ result: false });
         }
-
     } catch (error) {
         console.log("Error while editing the user profile", error);
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
-}
+};
 
-const loadVerifyOtp = async (req, res) => {
+export const loadVerifyOtp = async (req, res) => {
     try {
         res.status(STATUS_CODES.OK).render("verify-otp-editProfile");
     } catch (error) {
         console.error("Error while loading otp page", error);
     }
-}
+};
 
-const verifyOtp = async (req, res) => {
+export const verifyOtp = async (req, res) => {
     try {
         const { otp } = req.body;
         console.log(req.session.otp);
@@ -196,23 +192,10 @@ const verifyOtp = async (req, res) => {
                 return res.status(STATUS_CODES.OK).json({ success: true, message: "Email Id changed succesfully" });
             }
         } else {
-            res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Invalid OTP!" });  // ✅ changed from 403 to 400
+            res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Invalid OTP!" });
         }
     } catch (error) {
         console.error("Error occured while verifying otp", error);
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
     }
-}
-
-
-module.exports = {
-    loadProfile,
-    addAddress,
-    deleteAddress,
-    loadEditProfile,
-    changeProfilePicture,
-    editProfile,
-    loadVerifyOtp,
-    verifyOtp,
-    editAddress
-}
+};

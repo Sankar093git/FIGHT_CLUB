@@ -1,47 +1,47 @@
 
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema({
-  user: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "User", 
-    required: true 
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true
   },
-  orderId: { 
-    type: String, 
+  orderId: {
+    type: String,
     required: true,
-    unique: true 
+    unique: true
   },
   products: [
     {
-      product: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: "Product", 
-        required: true 
+      product: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+        required: true
       },
-      salePrice:{
-        type:Number
+      salePrice: {
+        type: Number
       },
-      size: { 
-        type: String, 
-        required: true 
+      size: {
+        type: String,
+        required: true
       },
-      quantity: { 
-        type: Number, 
-        required: true, 
-        min: 1 
+      quantity: {
+        type: Number,
+        required: true,
+        min: 1
       },
-      returnQuantity: { 
-        type: Number, 
-        default: 0 
+      returnQuantity: {
+        type: Number,
+        default: 0
       },
       status: {
         type: String,
         enum: [
           "Pending",
           "Shipped",
-          "Out for delivery", 
-          "Delivered", 
+          "Out for delivery",
+          "Delivered",
           "Cancelled",
           "Partially cancelled",
           "Returned",
@@ -52,9 +52,9 @@ const orderSchema = new mongoose.Schema({
         ],
         default: "Pending"
       },
-      discount:{
-        type:Number,
-        default:0
+      discount: {
+        type: Number,
+        default: 0
       }
     }
   ],
@@ -84,66 +84,68 @@ const orderSchema = new mongoose.Schema({
     ],
     default: "Pending"
   },
-  reasonForReturn: { 
-    type: String, 
-    default: "N/A" 
+  reasonForReturn: {
+    type: String,
+    default: "N/A"
   },
-  reasonForCancellation: { 
-    type: String, 
-    default: "N/A" 
+  reasonForCancellation: {
+    type: String,
+    default: "N/A"
   },
-   paymentMethod: {
-    type:String,
-    required:true
-   },
-   paymentStatus:{
-    type:String,
-    enum:[
+  paymentMethod: {
+    type: String,
+    required: true
+  },
+  paymentStatus: {
+    type: String,
+    enum: [
       "PAID",
       "PENDING"
     ],
-    default:"PENDING"
-   },
-   razorpay: {
-        orderId:{
-          type:String,
-        } ,
-        paymentId:{
-          type:String
-        }
-      },
-  subTotal: { 
-    type: Number,  
-  },    
-  totalAmount: { 
-    type: Number, 
-    required: true 
+    default: "PENDING"
   },
-  refundedAmount:{
-    type:Number,
-    default:0
+  razorpay: {
+    orderId: {
+      type: String,
+    },
+    paymentId: {
+      type: String
+    }
   },
-  netAmount:{
-    type:Number,
-    default:0
+  subTotal: {
+    type: Number,
   },
-  totalProductDiscount:{
-    type:Number,
-    default:0
+  totalAmount: {
+    type: Number,
+    required: true
   },
-  discountValue:{
-    type:Number,
-    default:0
+  refundedAmount: {
+    type: Number,
+    default: 0
   },
-  analyticsFieldsAdded:{
-    type:Boolean,
-    default:false,
+  netAmount: {
+    type: Number,
+    default: 0
   },
-  retryCount:{
-    type:Number,
-    default:0
+  totalProductDiscount: {
+    type: Number,
+    default: 0
+  },
+  discountValue: {
+    type: Number,
+    default: 0
+  },
+  analyticsFieldsAdded: {
+    type: Boolean,
+    default: false,
+  },
+  retryCount: {
+    type: Number,
+    default: 0
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model("Order", orderSchema);
+const Order = mongoose.model("Order", orderSchema);
+
+export default Order;
 

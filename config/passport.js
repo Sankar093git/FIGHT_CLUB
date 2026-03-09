@@ -1,9 +1,9 @@
-const passport = require("passport");
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const User = require("../models/userSchema");
-const {sendVerificationMail}=require("../controllers/user/userController1");
-require("dotenv").config();
-const crypto=require("crypto");
+import passport from "passport";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import User from "../models/userSchema.js";
+import { sendVerificationMail } from "../controllers/user/userController1.js";
+import "dotenv/config";
+import crypto from "crypto";
 
 passport.use(
   new GoogleStrategy(
@@ -11,12 +11,10 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: "http://localhost:3000/auth/google/callback",
-      passReqToCallback: false,  
+      passReqToCallback: false,
     },
-
     async (accessToken, refreshToken, profile, done) => {
       try {
-        
         let user = await User.findOne({ googleId: profile.id });
 
         if (user) {
@@ -25,20 +23,20 @@ passport.use(
 
         const referalCode = "REF-" + crypto.randomBytes(4).toString("hex");
 
-        await sendVerificationMail(null,referalCode,profile.emails?.[0]?.value);
+
+        await sendVerificationMail(null, referalCode, profile.emails?.[0]?.value);
 
         user = await User.create({
           name: profile.displayName,
           email: profile.emails?.[0]?.value || null,
           googleId: profile.id,
-          phone: null,          
+          phone: null,
           password: null,
-          referalCode:referalCode,      
+          referalCode: referalCode,
           userImage: profile.photos?.[0]?.value || null,
         });
 
         return done(null, user);
-
       } catch (error) {
         console.error("Google OAuth Error:", error);
         return done(error, null);
@@ -46,7 +44,6 @@ passport.use(
     }
   )
 );
-
 
 passport.serializeUser((user, done) => {
   done(null, user.id);
@@ -58,5 +55,5 @@ passport.deserializeUser((id, done) => {
     .catch((err) => done(err, null));
 });
 
-module.exports = passport;
+export default passport;
 
