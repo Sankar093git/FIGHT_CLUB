@@ -1,118 +1,118 @@
-const Coupon=require("../../models/couponSchema");
-const STATUS_CODES=require("../../utils/statusCode");
+const Coupon = require("../../models/couponSchema");
+const STATUS_CODES = require("../../utils/statusCode");
 
-const loadCouponManagement= async (req,res)=>{
-    try {
-         const filter = {};
-         await deriveCouponStatus();
-         const { search, status } = req.query;
-    
-        if (search && search.trim() !== "") {
+const loadCouponManagement = async (req, res) => {
+  try {
+    const filter = {};
+    await deriveCouponStatus();
+    const { search, status } = req.query;
 
-          filter.code = { $regex: search, $options: "i" };
+    if (search && search.trim() !== "") {
 
-        }
-
-    
-        if (status && status !== "all") {
-
-          filter.status = status;
-
-        }
-
-        const page=req.query.page||1;
-
-        const limit=5;
-
-        const skip=(page-1)*limit;
-
-        const couponDetails= await Coupon.find(filter).sort({createdAt:-1}).skip(skip).limit(limit);
-
-        const totalCoupons= await Coupon.countDocuments(filter);
-
-        const activeCoupons= await Coupon.countDocuments({status:"Active"});
-
-        const totalPages=Math.ceil(totalCoupons/limit);
-
-        const coupons= await Coupon.find();
-
-        const totalRedemptions= coupons.map((r)=>r.redemptions).reduce((acc,num)=>acc+num,0);
-
-        res.status(STATUS_CODES.OK).render("coupon",{
-            coupon:couponDetails,
-            totalPages:totalPages,
-            currentPage:page,
-            totalCoupons:totalCoupons,
-            activeCoupons:activeCoupons,
-            totalRedemptions:totalRedemptions,
-            limit:limit,
-            filter,
-            search
-        });
-
-    } catch (error) {
-
-        console.error("Coupon page load:",error);
-
-        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
+      filter.code = { $regex: search, $options: "i" };
 
     }
+
+
+    if (status && status !== "all") {
+
+      filter.status = status;
+
+    }
+
+    const page = req.query.page || 1;
+
+    const limit = 5;
+
+    const skip = (page - 1) * limit;
+
+    const couponDetails = await Coupon.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit);
+
+    const totalCoupons = await Coupon.countDocuments(filter);
+
+    const activeCoupons = await Coupon.countDocuments({ status: "Active" });
+
+    const totalPages = Math.ceil(totalCoupons / limit);
+
+    const coupons = await Coupon.find();
+
+    const totalRedemptions = coupons.map((r) => r.redemptions).reduce((acc, num) => acc + num, 0);
+
+    res.status(STATUS_CODES.OK).render("coupon", {
+      coupon: couponDetails,
+      totalPages: totalPages,
+      currentPage: page,
+      totalCoupons: totalCoupons,
+      activeCoupons: activeCoupons,
+      totalRedemptions: totalRedemptions,
+      limit: limit,
+      filter,
+      search
+    });
+
+  } catch (error) {
+
+    console.error("Coupon page load:", error);
+
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
+
+  }
 
 }
 
-const addcoupon= async(req,res)=>{
-    try {
+const addcoupon = async (req, res) => {
+  try {
 
-        const {code,
-            discountType,
-            discountValue,
-            minPurchase,
-            usageLimit,
-            maxDiscount,
-            startDate,
-            endDate,
-            description
-        }=req.body;
+    const { code,
+      discountType,
+      discountValue,
+      minPurchase,
+      usageLimit,
+      maxDiscount,
+      startDate,
+      endDate,
+      description
+    } = req.body;
 
-        const couponNames= await Coupon.find({},{_id:0,code:1});
+    const couponNames = await Coupon.find({}, { _id: 0, code: 1 });
 
-        const couponChecklist=couponNames.map((item)=>item.code.replace(/ /g, ""));
+    const couponChecklist = couponNames.map((item) => item.code.replace(/ /g, ""));
 
-        if(couponChecklist.includes(code.replace(/ /g, ""))){
+    if (couponChecklist.includes(code.replace(/ /g, ""))) {
 
-          return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Coupon name already exists!"});
-
-        }
-
-        const newCoupon= new Coupon({
-            code:code,
-            discountType:discountType,
-            discountValue:discountValue,
-            minPurchase:minPurchase,
-            maxDiscount:maxDiscount,
-            usageLimit:usageLimit,
-            startDate:startDate,
-            expiryDate:endDate,
-            description:description
-        });
-
-        await newCoupon.save();
-
-        res.status(STATUS_CODES.CREATED).json({
-          success:true,
-          message:"Coupon added successfully"
-        });
-
-    } catch (error) {
-
-        console.error("Add Coupon:",error);
-
-        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-          success:false,
-          message:"Something went wrong!"
-        });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Coupon name already exists!" });
 
     }
+
+    const newCoupon = new Coupon({
+      code: code,
+      discountType: discountType,
+      discountValue: discountValue,
+      minPurchase: minPurchase,
+      maxDiscount: maxDiscount,
+      usageLimit: usageLimit,
+      startDate: startDate,
+      expiryDate: endDate,
+      description: description
+    });
+
+    await newCoupon.save();
+
+    res.status(STATUS_CODES.CREATED).json({
+      success: true,
+      message: "Coupon added successfully"
+    });
+
+  } catch (error) {
+
+    console.error("Add Coupon:", error);
+
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: "Something went wrong!"
+    });
+
+  }
 
 }
 
@@ -189,7 +189,7 @@ const editCoupon = async (req, res) => {
 
     coupon.expiryDate = endDate ?? coupon.expiryDate;
 
-    coupon.description=description??coupon.description;
+    coupon.description = description ?? coupon.description;
 
     // Auto status calculation
     const now = new Date();
@@ -198,11 +198,11 @@ const editCoupon = async (req, res) => {
 
       coupon.status = "Expired";
 
-    } else if(coupon.startDate>now) {
+    } else if (coupon.startDate > now) {
 
       coupon.status = "Scheduled";
 
-    }else{
+    } else {
 
       coupon.status = "Active";
 
@@ -229,45 +229,45 @@ const editCoupon = async (req, res) => {
 
 }
 
-const deleteCoupon=async(req,res)=>{
-    try {
+const deleteCoupon = async (req, res) => {
+  try {
 
-        const couponId=req.params.couponId;
+    const couponId = req.params.couponId;
 
-        const exists= await Coupon.findOne({_id:couponId});
+    const exists = await Coupon.findOne({ _id: couponId });
 
-        if(!exists){
+    if (!exists) {
 
-            return res.status(STATUS_CODES.NOT_FOUND).json({
-              success:false,
-              message:"Coupon does not exist"
-            });
+      return res.status(STATUS_CODES.NOT_FOUND).json({
+        success: false,
+        message: "Coupon does not exist"
+      });
 
-        }else{
+    } else {
 
-            await Coupon.deleteOne({_id:couponId});
+      await Coupon.deleteOne({ _id: couponId });
 
-            return res.status(STATUS_CODES.OK).json({
-              success:true,
-              message:"Coupon deleted successfully!"
-            });
-
-        }
-
-    } catch (error) {
-
-        console.error("Delete coupon:",error);
-
-        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-            success:false,
-            message:"Something went wrong!"
-        })
+      return res.status(STATUS_CODES.OK).json({
+        success: true,
+        message: "Coupon deleted successfully!"
+      });
 
     }
-    
+
+  } catch (error) {
+
+    console.error("Delete coupon:", error);
+
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: "Something went wrong!"
+    })
+
+  }
+
 }
 
-async function deriveCouponStatus(req, res) {
+async function deriveCouponStatus() {
   try {
     const now = new Date();
 
@@ -275,8 +275,8 @@ async function deriveCouponStatus(req, res) {
       {
         status: "Active",
         $or: [
-          { $expr: { $gte: ["$redemptions", "$usageLimit"] } }, 
-          { expiryDate: { $lte: now } }                         
+          { $expr: { $gte: ["$redemptions", "$usageLimit"] } },
+          { expiryDate: { $lte: now } }
         ]
       },
       { $set: { status: "Expired" } }
@@ -290,9 +290,9 @@ async function deriveCouponStatus(req, res) {
   }
 }
 
-module.exports={
-    loadCouponManagement,
-    addcoupon,
-    editCoupon,
-    deleteCoupon
+module.exports = {
+  loadCouponManagement,
+  addcoupon,
+  editCoupon,
+  deleteCoupon
 }

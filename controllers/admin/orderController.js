@@ -1,12 +1,12 @@
-const Product=require("../../models/productSchema");
-const Order=require("../../models/orderSchema");
-const mongoose=require("mongoose");
-const Wallet=require("../../models/walletShema");
-const Transaction=require("../../models/transactionSchema");
-const Constants=require("../../models/constantSchema");
-const User=require("../../models/userSchema");
-const crypto=require("crypto");
-const STATUS_CODES=require("../../utils/statusCode");
+const Product = require("../../models/productSchema");
+const Order = require("../../models/orderSchema");
+const mongoose = require("mongoose");
+const Wallet = require("../../models/walletShema");
+const Transaction = require("../../models/transactionSchema");
+const Constants = require("../../models/constantSchema");
+const User = require("../../models/userSchema");
+const crypto = require("crypto");
+const STATUS_CODES = require("../../utils/statusCode");
 
 
 const getOrderList = async (req, res) => {
@@ -19,7 +19,7 @@ const getOrderList = async (req, res) => {
 
     const { search, status, sort, date } = req.query;
 
-    
+
     let filter = {};
 
     // Search filter
@@ -139,7 +139,7 @@ const changeOrderStatus = async (req, res) => {
 
     }
 
-    if(order.status==="Cancelled"||order.status==="Returned"){
+    if (order.status === "Cancelled" || order.status === "Returned") {
 
       return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
@@ -148,7 +148,7 @@ const changeOrderStatus = async (req, res) => {
 
     }
 
-    if(status==="Processing return"||status==="Returned"||status==="Return rejected"){
+    if (status === "Processing return" || status === "Returned" || status === "Return rejected") {
 
       return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
@@ -165,69 +165,70 @@ const changeOrderStatus = async (req, res) => {
 
         await Product.updateOne(
           { _id: prod.product, "variants.size": prod.size },
-          { $inc: { "variants.$.stock": prod.quantity } 
-        });
+          {
+            $inc: { "variants.$.stock": prod.quantity }
+          });
 
       }
 
     }
 
-    if(status==="Delivered"&&order.paymentMethod==="COD"){
+    if (status === "Delivered" && order.paymentMethod === "COD") {
 
-      order.paymentStatus="PAID";
+      order.paymentStatus = "PAID";
 
     }
 
     order.status = status;
 
-    for(let item of order.products){
+    for (let item of order.products) {
 
-      item.status=status;
+      item.status = status;
 
     }
 
     await order.save();
 
-    if( order.paymentMethod==="COD" && status=="Delivered"){  
-      const transactionDetails= await Transaction.findOne({relatedOrderId:orderId, amount:200, method:"promo"});
-      if(!transactionDetails){    
-    const orderCount= await Order.countDocuments({user:order.user,paymentStatus:"PAID"});
-    const userData=await User.findOne({_id:order.user},{_id:0,referedBy:1});
-    if(orderCount===1 && userData.referedBy){
-      const refereeDetails= await User.findOne({email:userData.referedBy});
-      const refWallet=await Wallet.findOne({userId:refereeDetails._id});
+    if (order.paymentMethod === "COD" && status == "Delivered") {
+      const transactionDetails = await Transaction.findOne({ relatedOrderId: orderId, amount: 200, method: "promo" });
+      if (!transactionDetails) {
+        const orderCount = await Order.countDocuments({ user: order.user, paymentStatus: "PAID" });
+        const userData = await User.findOne({ _id: order.user }, { _id: 0, referedBy: 1 });
+        if (orderCount === 1 && userData.referedBy) {
+          const refereeDetails = await User.findOne({ email: userData.referedBy });
+          const refWallet = await Wallet.findOne({ userId: refereeDetails._id });
 
-       if(!refWallet){
-        let newWallet= new Wallet({
-          userId:refereeDetails._id,
-          balance:200
-        })
-        await newWallet.save();
-       }else{
-        await Wallet.updateOne({userId:refereeDetails._id},{$inc:{balance:200}});
-       }
+          if (!refWallet) {
+            let newWallet = new Wallet({
+              userId: refereeDetails._id,
+              balance: 200
+            })
+            await newWallet.save();
+          } else {
+            await Wallet.updateOne({ userId: refereeDetails._id }, { $inc: { balance: 200 } });
+          }
 
-      const refTraId = "TRA-" + crypto.randomBytes(4).toString("hex");
-      const newRefTransaction= new Transaction({
-        userId:refereeDetails._id,
-        transactionId:refTraId,
-        type:"credit",
-        method:"promo",
-        amount:200,
-        relatedOrderId:orderId,
-        description:"Referal reward"
-      })
-      await newRefTransaction.save()
+          const refTraId = "TRA-" + crypto.randomBytes(4).toString("hex");
+          const newRefTransaction = new Transaction({
+            userId: refereeDetails._id,
+            transactionId: refTraId,
+            type: "credit",
+            method: "promo",
+            amount: 200,
+            relatedOrderId: orderId,
+            description: "Referal reward"
+          })
+          await newRefTransaction.save()
+        }
+
+      }
+
     }
-
-   }
-
-  }
 
 
     res.status(STATUS_CODES.OK).json({
-       success: true 
-      });
+      success: true
+    });
 
   } catch (error) {
 
@@ -273,7 +274,7 @@ const handlingReturn = async (req, res) => {
     if (currentReturnApproval) {
 
       const validProducts = order.products.filter((item) => item.status === "Return processing");
-      
+
       if (validProducts.length === 0) {
 
         return res.status(STATUS_CODES.BAD_REQUEST).json({
@@ -303,7 +304,7 @@ const handlingReturn = async (req, res) => {
       const transactionId = "TRA-" + crypto.randomBytes(4).toString("hex");
 
       const refundAmount = validProducts.reduce(
-        (sum, item) => sum + (item.salePrice * item.quantity), 
+        (sum, item) => sum + (item.salePrice * item.quantity),
         0
       );
 
@@ -322,7 +323,7 @@ const handlingReturn = async (req, res) => {
       } else {
 
         await Wallet.updateOne(
-          { userId: order.user }, 
+          { userId: order.user },
           { $inc: { balance: refundAmount } }
         );
 
@@ -348,12 +349,12 @@ const handlingReturn = async (req, res) => {
       // Determine final order status
       const allReturned = order.products.every(item => item.status === "Returned");
 
-      const someDelivered=order.products.some(item=>item.status==="Delivered");
+      //const someDelivered=order.products.some(item=>item.status==="Delivered");
 
-     // order.status=someDelivered?"Partially delivered":"Partially returned";
+      // order.status=someDelivered?"Partially delivered":"Partially returned";
 
       order.status = allReturned ? "Returned" : "Partially returned";
-      
+
       await order.save();
 
       return res.status(STATUS_CODES.OK).json({
@@ -395,9 +396,9 @@ const handlingReturn = async (req, res) => {
 
 }
 
- 
 
- const displayOrder = async (req, res) => {
+
+const displayOrder = async (req, res) => {
   try {
 
     const orderId = req.query.orderId;
@@ -416,13 +417,13 @@ const handlingReturn = async (req, res) => {
       return acc + (item.salePrice * item.quantity);
     }, 0);
 
-    const constants= await Constants.find({});
+    const constants = await Constants.find({});
 
-    let shipping=constants[0].shipping;
+    let shipping = constants[0].shipping;
 
-    let taxes=constants[0].taxes;
+    let taxes = constants[0].taxes;
 
-    const discount=order.discountValue;
+    const discount = order.discountValue;
 
     const total = subTotal + shipping + taxes - discount;
 
@@ -512,7 +513,7 @@ const handlesingleReturn = async (req, res) => {
     }
 
     // Check if order has discount/coupon applied
-    if (orderDetails.discountValue&&orderDetails.products.length>1) {
+    if (orderDetails.discountValue && orderDetails.products.length > 1) {
 
       return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
@@ -600,39 +601,41 @@ const handlesingleReturn = async (req, res) => {
     }
 
     // Update product stock
-    await Product.updateOne({ 
-      _id: productId, "variants.size": size },
-      { $inc: { "variants.$.stock": returnQuantity } 
-    });
+    await Product.updateOne({
+      _id: productId, "variants.size": size
+    },
+      {
+        $inc: { "variants.$.stock": returnQuantity }
+      });
 
-    const constants= await Constants.find({});
+    const constants = await Constants.find({});
 
-    let shipping=constants[0].shipping;
+    let shipping = constants[0].shipping;
 
-    let taxes=constants[0].taxes;
+    let taxes = constants[0].taxes;
 
-    let constant= shipping+taxes;
+    let constant = shipping + taxes;
 
     // Calculate refund amount
 
-    let refundAmount=0;
+    let refundAmount = 0;
 
-    if(orderDetails.products.length==1){
+    if (orderDetails.products.length == 1) {
 
-      refundAmount=orderDetails.totalAmount-constant;
+      refundAmount = orderDetails.totalAmount - constant;
 
-    }else{
+    } else {
 
-     refundAmount = salePrice * returnQuantity;
+      refundAmount = salePrice * returnQuantity;
 
-     orderDetails.totalAmount -= refundAmount;
+      orderDetails.totalAmount -= refundAmount;
 
     }
 
     matchedProduct.status = returnStatus;
 
-    orderDetails.status =  deriveTotalStatus(orderDetails.products);
-    
+    orderDetails.status = deriveTotalStatus(orderDetails.products);
+
     await orderDetails.save();
 
 
@@ -647,8 +650,8 @@ const handlesingleReturn = async (req, res) => {
 
     return res.status(STATUS_CODES.OK).json({
       success: true,
-      message: isFullReturn 
-        ? "Product returned successfully" 
+      message: isFullReturn
+        ? "Product returned successfully"
         : "Partial return processed successfully"
     });
 
@@ -668,11 +671,11 @@ const handlesingleReturn = async (req, res) => {
 
 const processWalletRefund = async (userId, refundAmount, transactionId, orderId) => {
 
-  
+
   const walletDetails = await Wallet.findOne({ userId });
 
   if (!walletDetails) {
-   
+
     const newWallet = new Wallet({
       userId,
       balance: refundAmount
@@ -689,7 +692,7 @@ const processWalletRefund = async (userId, refundAmount, transactionId, orderId)
 
   }
 
-  
+
   const newTransaction = new Transaction({
     userId,
     transactionId,
@@ -699,7 +702,7 @@ const processWalletRefund = async (userId, refundAmount, transactionId, orderId)
     relatedOrderId: orderId,
     description: "Refund for returned product"
   });
-  
+
   await newTransaction.save();
 
 };
@@ -708,10 +711,10 @@ const handleProductStatus = async (req, res) => {
   try {
 
     const {
-       orderId, 
-       productId, 
-       size, 
-       status } = req.body;
+      orderId,
+      productId,
+      size,
+      status } = req.body;
 
     const order = await Order.findOne({ orderId });
 
@@ -727,45 +730,45 @@ const handleProductStatus = async (req, res) => {
 
     if (!productItem) {
       return res.status(STATUS_CODES.NOT_FOUND).json({
-         success: false, 
-         message: "Product not found in order" 
-        });
+        success: false,
+        message: "Product not found in order"
+      });
 
     }
 
-    const lockedStatuses = ["Cancelled", "Returned", "Return processing","Partially returned","Delivered"];
+    const lockedStatuses = ["Cancelled", "Returned", "Return processing", "Partially returned", "Delivered"];
     if (lockedStatuses.includes(productItem.status)) {
 
-      return res.status(STATUS_CODES.FORBIDDEN).json({ 
-        success: false, 
-        message: "Cannot update a cancelled or returned item" 
+      return res.status(STATUS_CODES.FORBIDDEN).json({
+        success: false,
+        message: "Cannot update a cancelled or returned item"
       });
 
     }
 
     if (status === "Cancelled") {
 
-      productItem.status = "Cancelled"; 
+      productItem.status = "Cancelled";
 
       await Product.updateOne(
         { _id: productId, "variants.size": size },
         { $inc: { "variants.$.stock": productItem.quantity } }
       );
 
-    }else if (["Returned", "Return processing", "Return rejected"].includes(status)) {
+    } else if (["Returned", "Return processing", "Return rejected"].includes(status)) {
 
-      return res.status(STATUS_CODES.FORBIDDEN).json({ 
-        success: false, 
-        message: "Return updates must go through the return portal" 
+      return res.status(STATUS_CODES.FORBIDDEN).json({
+        success: false,
+        message: "Return updates must go through the return portal"
       });
 
-    }else{
+    } else {
 
       productItem.status = status;
 
     }
 
-    order.status =  deriveTotalStatus(order.products);
+    order.status = deriveTotalStatus(order.products);
 
     await order.save();
 
@@ -778,25 +781,25 @@ const handleProductStatus = async (req, res) => {
   } catch (error) {
     console.error("Update Error:", error);
 
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ 
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Internal server error" 
+      message: "Internal server error"
     });
 
   }
 
 }
 
- function deriveTotalStatus(products) {
+function deriveTotalStatus(products) {
   const statuses = products.map(p => p.status);
 
   if (statuses.every(s => s === "Cancelled")) return "Cancelled";
-  if (statuses.every(s => s === "Returned")) return "Returned"; 
-  if (statuses.every(s => s === "Cancelled" || s === "Returned")) return "Returned"; 
+  if (statuses.every(s => s === "Returned")) return "Returned";
+  if (statuses.every(s => s === "Cancelled" || s === "Returned")) return "Returned";
 
   const activeItems = statuses.filter(s => s !== "Cancelled" && s !== "Returned");
 
-  if (activeItems.length === 0) return "Returned"; 
+  if (activeItems.length === 0) return "Returned";
   if (activeItems.some(s => s === "Pending")) return "Processing";
   if (activeItems.every(s => s === "Shipped")) return "Shipped";
   if (activeItems.every(s => s === "Delivered")) return "Delivered";
@@ -805,11 +808,11 @@ const handleProductStatus = async (req, res) => {
 }
 
 
-module.exports={
-    getOrderList,
-    changeOrderStatus,
-    handlingReturn,
-    displayOrder,
-    handlesingleReturn,
-    handleProductStatus
+module.exports = {
+  getOrderList,
+  changeOrderStatus,
+  handlingReturn,
+  displayOrder,
+  handlesingleReturn,
+  handleProductStatus
 }

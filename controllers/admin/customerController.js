@@ -1,45 +1,48 @@
-const User=require("../../models/userSchema");
-const bcrypt=require("bcrypt");
-const STATUS_CODES=require("../../utils/statusCode");
+const User = require("../../models/userSchema");
+const STATUS_CODES = require("../../utils/statusCode");
 
 
-const loadCustomer= async(req,res)=>{
+const loadCustomer = async (req, res) => {
     try {
 
-        const search=req.query.search||" ";
+        const search = req.query.search || " ";
 
-        const page=req.query.page||1;
+        const page = req.query.page || 1;
 
-        const limit=4;
+        const limit = 4;
 
-        const skip=(page-1)*limit;
+        const skip = (page - 1) * limit;
 
-        const totalData=await User.find();
+        const totalData = await User.find();
 
-        const userData= await User.find({isDeleted:0,isAdmin:0,$or:[
-                {name:{$regex:".*"+search+".*",$options:"i"}},
-                {email:{$regex:".*"+search+".*",$options:"i"}}
-            ]}).skip(skip).limit(limit);
+        const userData = await User.find({
+            isDeleted: 0, isAdmin: 0, $or: [
+                { name: { $regex: ".*" + search + ".*", $options: "i" } },
+                { email: { $regex: ".*" + search + ".*", $options: "i" } }
+            ]
+        }).skip(skip).limit(limit);
 
-        const count=await User.find({isDeleted:0,isAdmin:0,$or:[
-                {name:{$regex:".*"+search+".*",$options:"i"}},
-                {email:{$regex:".*"+search+".*",$options:"i"}}
-            ]}).countDocuments();
+        const count = await User.find({
+            isDeleted: 0, isAdmin: 0, $or: [
+                { name: { $regex: ".*" + search + ".*", $options: "i" } },
+                { email: { $regex: ".*" + search + ".*", $options: "i" } }
+            ]
+        }).countDocuments();
 
-        const totalPages=Math.ceil(count/limit);
+        const totalPages = Math.ceil(count / limit);
 
-        res.status(STATUS_CODES.OK).render("customer",{
-            queryVal:req.query,
-            totalData:totalData,
-            data:userData||null,
-            totalPages:totalPages,
-            totalCount:count,
-            currentPage:page
+        res.status(STATUS_CODES.OK).render("customer", {
+            queryVal: req.query,
+            totalData: totalData,
+            data: userData || null,
+            totalPages: totalPages,
+            totalCount: count,
+            currentPage: page
         });
 
     } catch (error) {
 
-        console.error("Error while loading customerlist",error);
+        console.error("Error while loading customerlist", error);
 
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
 
@@ -47,65 +50,65 @@ const loadCustomer= async(req,res)=>{
 
 }
 
-const blockOrUnblockCustomer=async(req,res)=>{
+const blockOrUnblockCustomer = async (req, res) => {
     try {
 
-        const id=req.query.id;
+        const id = req.query.id;
 
-        const userData=await User.findById(id);
+        const userData = await User.findById(id);
 
         let blockedUsers;
         let activeUsers;
 
-        if(userData.isBlocked){
+        if (userData.isBlocked) {
 
-            await User.updateOne({_id:id},{$set:{isBlocked:false}});
+            await User.updateOne({ _id: id }, { $set: { isBlocked: false } });
 
-            blockedUsers=await User.countDocuments({isBlocked:true});
+            blockedUsers = await User.countDocuments({ isBlocked: true });
 
-            activeUsers= await User.countDocuments({isBlocked:false});
+            activeUsers = await User.countDocuments({ isBlocked: false });
 
             res.status(STATUS_CODES.OK).json({
-                success:true,
-                status:"unblocked",
+                success: true,
+                status: "unblocked",
                 blockedUsers,
                 activeUsers,
-                message:`${userData.name} has been unblocked`
+                message: `${userData.name} has been unblocked`
             });
 
-        }else{
+        } else {
 
-            await User.updateOne({_id:id},{$set:{isBlocked:true}});
+            await User.updateOne({ _id: id }, { $set: { isBlocked: true } });
 
-            blockedUsers=await User.countDocuments({isBlocked:true});
+            blockedUsers = await User.countDocuments({ isBlocked: true });
 
-            activeUsers= await User.countDocuments({isBlocked:false});
+            activeUsers = await User.countDocuments({ isBlocked: false });
 
             res.status(STATUS_CODES.OK).json({
-                success:true,
-                status:"blocked",
+                success: true,
+                status: "blocked",
                 blockedUsers,
                 activeUsers,
-                message:`${userData.name} has been blocked`
+                message: `${userData.name} has been blocked`
             });
 
         }
-         
+
     } catch (error) {
 
-        console.error("Error while blocking customer",error);
+        console.error("Error while blocking customer", error);
 
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-            success:false,
-            message:"Something went wrong, please try again."
+            success: false,
+            message: "Something went wrong, please try again."
         });
 
     }
-    
+
 }
 
 
-module.exports={
+module.exports = {
     loadCustomer,
     blockOrUnblockCustomer,
 }
