@@ -217,8 +217,8 @@
 <div class="card dashboard-card p-4 mb-4">
   <h4>My Wishlist</h4>
   <div class="row" id="wishlist-container">
-    <% if (userData.wishlist && userData.wishlist.length > 0) { %>
-      <% userData.wishlist.forEach(item => { %>
+    <% if (wishlist && wishlist.length > 0) { %>
+      <% wishlist.forEach(item => { %>
         <div class="col-lg-4 col-md-6 mb-3 wishlist-item"id="wishlist-<%=item.product._id%>">
           <div class="card h-100 p-2">
             <img src="/uploads/re-image/<%= item.product.productImage[0] %>" 
@@ -250,6 +250,23 @@
       </div>
     <% } %>
   </div>
+  <% if (totalWpages > 1) { %>
+  <nav aria-label="Orders pagination">
+    <ul class="pagination pagination-sm justify-content-center mb-0">
+      <li class="page-item <%= currentWpage == 1 ? 'disabled' : '' %>">
+        <a class="page-link" href="?wpage=<%= currentWpage - 1 %>">Previous</a>
+      </li>
+      <% for (let i = 1; i <= totalWpages; i++) { %>
+        <li class="page-item <%= currentWpage === i ? 'active' : '' %>">
+          <a class="page-link" href="?wpage=<%= i %>"><%= i %></a>
+        </li>
+      <% } %>
+      <li class="page-item <%= currentWpage == totalWpages ? 'disabled' : '' %>">
+        <a class="page-link" href="?wpage=<%= currentWpage + 1 %>">Next</a>
+      </li>
+    </ul>
+  </nav>
+  <% } %>
 </div>
     </div>  
   </div>

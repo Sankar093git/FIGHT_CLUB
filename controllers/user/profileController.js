@@ -26,6 +26,12 @@ export const loadProfile = async (req, res) => {
         if (paidOrders == 0 && referee == null) {
             newbee = true;
         }
+        const wishPage = parseInt(req.query.wpage) || 1;
+        const wishlistDetails = findUser.wishlist;
+        const wishLimit = 3;
+        const wishSkip = (wishPage - 1) * wishLimit;
+        const wishlist = wishlistDetails.slice(wishSkip, wishSkip + wishLimit);
+
         const totalOrderPages = Math.ceil(totalOrders / orderLimit);
         const image = findUser.userImage;
         const username = findUser.name;
@@ -36,8 +42,12 @@ export const loadProfile = async (req, res) => {
         const transactions = await Transaction.find({ userId: req.session.user }).sort({ createdAt: -1 }).skip(transSkip).limit(transactionLimit);
         const totalTrancastions = await Transaction.countDocuments({ userId: req.session.user });
         const totalTpages = Math.ceil(totalTrancastions / transactionLimit);
+
         res.status(STATUS_CODES.OK).render('profile', {
             userData: findUser,
+            wishlist,
+            totalWpages: Math.ceil(wishlistDetails.length / wishLimit),
+            currentWpage: wishPage,
             address: address,
             user: req.session.userName || username,
             image: image,

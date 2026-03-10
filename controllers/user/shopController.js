@@ -7,36 +7,21 @@ import STATUS_CODES from "../../utils/statusCode.js";
 export const loadShopPage = async (req, res) => {
 
   try {
-
     let userName = null;
-
     if (req.session.google === true) {
-
       const userDetails = await User.findOne({ _id: req.session.user });
-
       userName = userDetails.name;
-
     }
 
     const minPrice = req.query.minPrice;
-
     const maxPrice = req.query.maxPrice;
-
     const sort = req.query.sort;
-
     const bran = req.query.bran;
-
     const cate = req.query.cate;
-
     const search = req.query.search || "";
-
     const page = parseInt(req.query.page) || 1;
-
     const limit = 9;
-
     const skip = (page - 1) * limit;
-
-
 
     // Sorting logic
 
@@ -45,129 +30,76 @@ export const loadShopPage = async (req, res) => {
     };
 
     if (sort === "price-asc") {
-
       sortOption = { salesPrice: 1 };
-
     } else if (sort === "price-desc") {
-
       sortOption = { salesPrice: -1 };
-
     } else if (sort === "asc") {
-
       sortOption = { productName: 1 };
-
     } else if (sort === "desc") {
-
       sortOption = { productName: -1 };
-
     }
 
-
-
     const regex = new RegExp(search, "i");
-
-
 
     // Base filter
 
     let filter = { productName: regex, available: true, isBlocked: false };
 
-
-
     // Category filter
 
     if (cate) {
-
       const requiredCate = await Category.findOne({ name: cate });
-
       if (requiredCate) {
-
         filter.category = requiredCate._id;
-
       }
-
     }
-
-
 
     // Brand filter
 
     if (bran) {
-
       filter.brand = bran;
-
     }
-
-
 
     // Price filter
 
     if (minPrice && maxPrice) {
-
       filter.salesPrice = { $gte: minPrice, $lte: maxPrice };
-
     }
-
 
     // Fetch products
 
     const data = await Product.find(filter)
-
       .sort(sortOption)
-
       .skip(skip)
-
       .limit(limit);
-
 
     const brand = await Brand.find({ isBlocked: false });
 
     const category = await Category.find({ isDeleted: false });
 
-
-
     const count = await Product.countDocuments(filter);
 
     const totalPages = Math.ceil(count / limit);
 
-
-
     res.status(STATUS_CODES.OK).render("shop", {
-
       user: req.session.userName || userName,
-
       image: req.session.image,
-
       product: data,
-
       brand,
-
       category,
-
       totalPages,
-
       currentPage: page,
-
       search,
-
       bran,
-
       cate,
-
       sort,
-
       minPrice,
-
       maxPrice,
-
     });
 
   } catch (error) {
-
-    console.error(error);
-
+    console.error("Shop error :", error);
     res.redirect("/error");
-
   }
 
 };
