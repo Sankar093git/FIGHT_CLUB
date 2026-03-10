@@ -1,42 +1,66 @@
 document.getElementById("addressForm").addEventListener("submit", function (e) {
-    e.preventDefault();
+  e.preventDefault();
 
-    const label = document.getElementById("label").value.trim();
-    const street = document.getElementById("street").value.trim();
-    const city = document.getElementById("city").value.trim();
-    const state = document.getElementById("state").value.trim();
-    const country = document.getElementById("country").value.trim();
-    const postalCode = document.getElementById("postalCode").value.trim();
-    const phone = document.getElementById("phone").value.trim();
+  const label = document.getElementById("label").value.trim();
+  const street = document.getElementById("street").value.trim();
+  const city = document.getElementById("city").value.trim();
+  const state = document.getElementById("state").value.trim();
+  const country = document.getElementById("country").value.trim();
+  const postalCode = document.getElementById("postalCode").value.trim();
+  const phone = document.getElementById("phone").value.trim();
 
-    
-    const postalRegex = /^[0-9]{5,6}$/; 
-    const phoneRegex = /^[0-9]{10}$/;   
+  const obj = {
+    label: label,
+    street: street,
+    city: city,
+    state: state,
+    country: country,
+    postal: postalCode,
+    phone: phone
+  }
 
-    if (!label || !street || !city || !state || !country || !postalCode || !phone) {
-      alert("All fields are required!");
-      return;
+
+  const postalRegex = /^[0-9]{5,6}$/;
+  const phoneRegex = /^[0-9]{10}$/;
+  let isvalid = true;
+
+  for (let [key, value] of Object.entries(obj)) {
+    if (!value) {
+      let msg = document.getElementById(`add-${key}`)
+      msg.innerText = "All fields are required";
+      msg.classList.remove("d-none");
+      isvalid = false;
     }
+  }
 
-    if (!postalRegex.test(postalCode)) {
-      alert("Enter a valid postal code (5–6 digits).");
-      return;
-    }
 
-    if (!phoneRegex.test(phone)) {
-      alert("Enter a valid 10-digit phone number.");
-      return;
-    }
+  if (!isvalid) {
+    return
+  }
 
-    Swal.fire({
+  if (!postalRegex.test(postalCode)) {
+    let msg = document.getElementById(`add-postal`)
+    msg.innerText = "Postal code must be 6 digits";
+    msg.classList.remove("d-none");
+    return;
+  }
+
+  if (!phoneRegex.test(phone)) {
+    let msg = document.getElementById(`add-phone`)
+    msg.innerText = "Phone number must be 10 digits";
+    msg.classList.remove("d-none");
+    return;
+  }
+
+  Swal.fire({
     icon: "success",
     title: "Success!",
     text: "Address saved successfully!",
     confirmButtonColor: "#3085d6"
-   }).then(()=>this.submit())
-  });
+  }).then(() => this.submit())
+});
 
-  function changeProfilePic(userId) {
+function changeProfilePic(userId) {
   const input = document.getElementById("profileImageInput");
   const file = input.files[0];
   console.log(file);
@@ -47,7 +71,7 @@ document.getElementById("addressForm").addEventListener("submit", function (e) {
   }
 
   const formData = new FormData();
-  formData.append("profileImageInput", file); 
+  formData.append("profileImageInput", file);
 
   fetch(`/change-profile-pic/${userId}`, {
     method: "PATCH",
@@ -58,14 +82,14 @@ document.getElementById("addressForm").addEventListener("submit", function (e) {
       console.log(data);
       if (data.success) {
         window.location.reload();
-       // if (data.image) {
-          //document.getElementById("profilePic").src = data.image + "?t=" + new Date().getTime();
-       // }
+        // if (data.image) {
+        //document.getElementById("profilePic").src = data.image + "?t=" + new Date().getTime();
+        // }
       } else {
         Swal.fire({
-          title:"Error",
-          text:data.message,
-          icon:"error"
+          title: "Error",
+          text: data.message,
+          icon: "error"
         })
       }
     })
@@ -73,43 +97,43 @@ document.getElementById("addressForm").addEventListener("submit", function (e) {
 }
 
 
-function populateAddressForm(id,label, street, city, state, country, postalCode, phone, isDefault){
-  
-    document.getElementById("addressFormedit").action="/edit-address/"+id;
+function populateAddressForm(id, label, street, city, state, country, postalCode, phone, isDefault) {
 
-    document.getElementById("labeledit").value=label;
-    document.getElementById("streetedit").value=street;
-    document.getElementById("cityedit").value=city;
-    document.getElementById("stateedit").value=state;
-    document.getElementById("countryedit").value=country;
-    document.getElementById("postalCodeedit").value=postalCode;
-    document.getElementById("phoneedit").value=phone;
-    document.getElementById("isDefaultedit").checked=isDefault?true:false;   
+  document.getElementById("addressFormedit").action = "/edit-address/" + id;
+
+  document.getElementById("labeledit").value = label;
+  document.getElementById("streetedit").value = street;
+  document.getElementById("cityedit").value = city;
+  document.getElementById("stateedit").value = state;
+  document.getElementById("countryedit").value = country;
+  document.getElementById("postalCodeedit").value = postalCode;
+  document.getElementById("phoneedit").value = phone;
+  document.getElementById("isDefaultedit").checked = isDefault ? true : false;
 }
 
 function cancelOrder(orderId) {
   Swal.fire({
-     title: 'Tell us why?',
-     html: `<textarea id="swal-textarea" class="swal2-textarea" 
+    title: 'Tell us why?',
+    html: `<textarea id="swal-textarea" class="swal2-textarea" 
         style="width: 80%; max-width: 500px;" rows="5"></textarea>`,
-  showCancelButton: true,
-  confirmButtonText: 'Submit',
-  preConfirm: () => {
-    const val = document.getElementById('swal-textarea').value;
-    if (!val.trim()) {
-      Swal.showValidationMessage('Message cannot be empty!');
+    showCancelButton: true,
+    confirmButtonText: 'Submit',
+    preConfirm: () => {
+      const val = document.getElementById('swal-textarea').value;
+      if (!val.trim()) {
+        Swal.showValidationMessage('Message cannot be empty!');
+      }
+      return val;
     }
-    return val;
-  }
-}).then((result) => {
+  }).then((result) => {
     if (result.isConfirmed) {
-      
+
       fetch(`/cancel-order/${orderId}`, {
         method: "POST",
         headers: {
-          "Content-Type" : "application/json",
+          "Content-Type": "application/json",
         },
-        body:JSON.stringify({message:result.value})
+        body: JSON.stringify({ message: result.value })
       })
         .then((res) => res.json())
         .then((data) => {
@@ -143,30 +167,30 @@ function cancelOrder(orderId) {
   });
 }
 
-function returnOrder(orderId){
-     Swal.fire({
-     title: 'Tell us why?',
-     html: `<textarea id="swal-textarea" class="swal2-textarea" 
+function returnOrder(orderId) {
+  Swal.fire({
+    title: 'Tell us why?',
+    html: `<textarea id="swal-textarea" class="swal2-textarea" 
         style="width: 80%; max-width: 500px;" rows="5"></textarea>`,
-  showCancelButton: true,
-  confirmButtonText: 'Submit',
-  preConfirm: () => {
-    const val = document.getElementById('swal-textarea').value;
-    if (!val.trim()) {
-      Swal.showValidationMessage('Message cannot be empty!');
+    showCancelButton: true,
+    confirmButtonText: 'Submit',
+    preConfirm: () => {
+      const val = document.getElementById('swal-textarea').value;
+      if (!val.trim()) {
+        Swal.showValidationMessage('Message cannot be empty!');
+      }
+      return val;
     }
-    return val;
-  }
-}).then((result) => {
-  if (result.isConfirmed) {
-    fetch(`/return-order/${orderId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: result.value })
-    }).then(res => res.json())
-      .then((data)=>{
-        if(data.success){
-          Swal.fire({
+  }).then((result) => {
+    if (result.isConfirmed) {
+      fetch(`/return-order/${orderId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: result.value })
+      }).then(res => res.json())
+        .then((data) => {
+          if (data.success) {
+            Swal.fire({
               title: "Returned!",
               text: "Your return request has been submitted.",
               icon: "success",
@@ -174,10 +198,10 @@ function returnOrder(orderId){
             }).then(() => {
               window.location.reload();
             });
-        }
-      })
-  }
-});
+          }
+        })
+    }
+  });
 }
 
 function removeFromWishlist(productId) {
@@ -217,42 +241,42 @@ function removeFromWishlist(productId) {
             Swal.fire("Error", data.message || "Failed to remove item.", "error");
           }
         })
-        .catch((error) =>Swal.fire("Error", `${error.message}`, "error"));
+        .catch((error) => Swal.fire("Error", `${error.message}`, "error"));
     }
   });
 }
 
 
-function applyReferalCode(){
+function applyReferalCode() {
   try {
-    let code=document.getElementById("ref").value;
-    fetch("/referal",{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
+    let code = document.getElementById("ref").value;
+    fetch("/referal", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-      body:JSON.stringify({code:code})
-    }).then((res)=>res.json())
-    .then((data)=>{
-      if(data.success){
-        Swal.fire({
-          title:"Success",
-          text:"On your first online payment reward will be credited to the referee!",
-          icon:"success"
-        }).then(()=>{
-        const modalElement = document.getElementById('referralModal');
-        const modalInstance = bootstrap.Modal.getInstance(modalElement); 
-        
-        modalInstance.hide();
-        })
-      }
-    })
+      body: JSON.stringify({ code: code })
+    }).then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          Swal.fire({
+            title: "Success",
+            text: "On your first online payment reward will be credited to the referee!",
+            icon: "success"
+          }).then(() => {
+            const modalElement = document.getElementById('referralModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalElement);
+
+            modalInstance.hide();
+          })
+        }
+      })
   } catch (error) {
-    console.error("Referal code : ",error);
+    console.error("Referal code : ", error);
     Swal.fire({
-      title:"Error",
-      text:"Something went wrong!",
-      icon:"error"
+      title: "Error",
+      text: "Something went wrong!",
+      icon: "error"
     })
   }
 }
