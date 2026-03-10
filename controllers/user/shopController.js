@@ -120,7 +120,7 @@ export const loadShopPage = async (req, res) => {
       .limit(limit);
 
 
-    const brand = await Brand.find({});
+    const brand = await Brand.find({ isBlocked: false });
 
     const category = await Category.find({ isDeleted: false });
 
