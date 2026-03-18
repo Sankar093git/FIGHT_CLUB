@@ -1,17 +1,17 @@
-import Category from "../../models/categorySchema.js";
-import Product from "../../models/productSchema.js";
-import STATUS_CODES from "../../utils/statusCode.js";
+import Category from '../../models/categorySchema.js';
+import Product from '../../models/productSchema.js';
+import STATUS_CODES from '../../utils/statusCode.js';
 
 export const loadCategory = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = 4;
     const skip = (page - 1) * limit;
-    const search = req.query.search || "";
+    const search = req.query.search || '';
 
     const categoryData = await Category.find({
       name: { $regex: new RegExp(search, 'i') },
-      isDeleted: false
+      isDeleted: false,
     })
       .sort({ _id: -1 })
       .skip(skip)
@@ -19,21 +19,21 @@ export const loadCategory = async (req, res) => {
 
     const totalCategories = await Category.countDocuments({
       name: { $regex: new RegExp(search, 'i') },
-      isDeleted: false
+      isDeleted: false,
     });
 
     const totalPages = Math.ceil(totalCategories / limit);
 
-    res.status(STATUS_CODES.OK).render("category", {
+    res.status(STATUS_CODES.OK).render('category', {
       cat: categoryData,
       currentPage: page,
       totalPages,
       totalCategories,
-      search: search
+      search: search,
     });
   } catch (error) {
-    console.error("Error loading categories:", error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
+    console.error('Error loading categories:', error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect('/admin/error');
   }
 };
 
@@ -43,12 +43,12 @@ export const addCategory = async (req, res) => {
 
     const isExists = await Category.findOne({
       name: { $regex: new RegExp(`^${name}$`, 'i') },
-      isDeleted: false
+      isDeleted: false,
     });
 
     if (isExists) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({
-        error: "Category already exists"
+        error: 'Category already exists',
       });
     }
 
@@ -56,7 +56,7 @@ export const addCategory = async (req, res) => {
 
     const newCategory = new Category({
       name: formattedName,
-      description
+      description,
     });
 
     await newCategory.save();
@@ -64,12 +64,12 @@ export const addCategory = async (req, res) => {
 
     return res.status(STATUS_CODES.CREATED).json({
       category: categoryDetails,
-      message: "Category added successfully"
+      message: 'Category added successfully',
     });
   } catch (error) {
     console.log(error);
     return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-      error: "Something went wrong, please try again"
+      error: 'Something went wrong, please try again',
     });
   }
 };
@@ -82,7 +82,7 @@ export const addOffer = async (req, res) => {
     if (percentage > 99 || percentage < 0 || isNaN(percentage)) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({
         status: false,
-        message: "Forbidden input"
+        message: 'Forbidden input',
       });
     }
 
@@ -90,11 +90,14 @@ export const addOffer = async (req, res) => {
     if (!category) {
       return res.status(STATUS_CODES.NOT_FOUND).json({
         status: false,
-        message: "Category not found"
+        message: 'Category not found',
       });
     }
 
-    await Category.updateOne({ _id: categoryId }, { $set: { categoryOffer: percentage } });
+    await Category.updateOne(
+      { _id: categoryId },
+      { $set: { categoryOffer: percentage } }
+    );
 
     const products = await Product.find({ category: categoryId });
 
@@ -109,13 +112,13 @@ export const addOffer = async (req, res) => {
 
     res.status(STATUS_CODES.OK).json({
       status: true,
-      message: "Offer has been added!"
+      message: 'Offer has been added!',
     });
   } catch (error) {
-    console.log("Category offer : ", error);
+    console.log('Category offer : ', error);
     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       status: false,
-      message: "Internal Server Error"
+      message: 'Internal Server Error',
     });
   }
 };
@@ -128,11 +131,14 @@ export const removeOffer = async (req, res) => {
     if (!category) {
       return res.status(STATUS_CODES.NOT_FOUND).json({
         status: false,
-        message: "Category not found"
+        message: 'Category not found',
       });
     }
 
-    await Category.updateOne({ _id: categoryId }, { $set: { categoryOffer: 0 } });
+    await Category.updateOne(
+      { _id: categoryId },
+      { $set: { categoryOffer: 0 } }
+    );
 
     const products = await Product.find({ category: categoryId });
 
@@ -150,13 +156,13 @@ export const removeOffer = async (req, res) => {
 
     res.status(STATUS_CODES.OK).json({
       success: true,
-      message: "Offer has been removed"
+      message: 'Offer has been removed',
     });
   } catch (error) {
-    console.error("Backend error while removing offer:", error);
+    console.error('Backend error while removing offer:', error);
     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Internal Server Error"
+      message: 'Internal Server Error',
     });
   }
 };
@@ -171,21 +177,21 @@ export const listOrUnlist = async (req, res) => {
       return res.status(STATUS_CODES.OK).json({
         success: true,
         unlisted: true,
-        message: "Category unlisted"
+        message: 'Category unlisted',
       });
     } else {
       await Category.updateOne({ _id: id }, { $set: { isListed: true } });
       return res.status(STATUS_CODES.OK).json({
         success: true,
         unlisted: false,
-        message: "Category listed"
+        message: 'Category listed',
       });
     }
   } catch (error) {
-    console.error("Error while handling category listing", error);
+    console.error('Error while handling category listing', error);
     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Something went wrong!"
+      message: 'Something went wrong!',
     });
   }
 };
@@ -194,31 +200,43 @@ export const loadEditCategory = async (req, res) => {
   try {
     const id = req.query.id;
     const category = await Category.findOne({ _id: id });
-    res.status(STATUS_CODES.OK).render("edit-category", { category: category });
+    res.status(STATUS_CODES.OK).render('edit-category', { category: category });
   } catch (error) {
-    console.log("edit category error", error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/pageerror");
+    console.log('edit category error', error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect('/pageerror');
   }
 };
 
 export const editCategory = async (req, res) => {
   try {
     const id = req.params.id;
-    const { categoryName, description } = req.body;
-    const existingCategory = await Category.findOne({ name: `/${categoryName}/i` });
 
-    if (existingCategory) {
+    const { name, description } = req.body;
+    const isExists = await Category.findOne({
+      name: { $regex: new RegExp(`^${name}$`, 'i') },
+      isDeleted: false,
+    });
+
+    if (isExists) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({
-        error: "Category exits please choose another name"
+        success: false,
+        message: 'Category exits please choose another name',
       });
     }
 
-    await Category.findByIdAndUpdate(id, { name: categoryName, description: description });
-    res.redirect("/admin/category");
+    await Category.findByIdAndUpdate(id, {
+      name: name,
+      description: description,
+    });
+    res.status(STATUS_CODES.OK).json({
+      success: true,
+      message: 'Category edited successfully',
+    });
   } catch (error) {
     console.log(error);
     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-      error: "Internal server error"
+      success: false,
+      message: 'Internal server error',
     });
   }
 };
@@ -228,12 +246,12 @@ export const deleteCategory = async (req, res) => {
     const id = req.params.id;
     await Category.findByIdAndUpdate(id, { isDeleted: true });
     res.status(STATUS_CODES.OK).json({
-      success: true
+      success: true,
     });
   } catch (error) {
-    console.error("Error while deleting category", error);
+    console.error('Error while deleting category', error);
     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-      success: false
+      success: false,
     });
   }
 };
