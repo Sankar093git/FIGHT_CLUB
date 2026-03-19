@@ -1,71 +1,85 @@
-let timerDuration = 60; 
-    let currentTime = timerDuration;
-    let timerElement = document.getElementById("timer");
-    let resendBtn = document.getElementById("resendBtn");
-    let timerInterval;
+let timerDuration = 60;
+let currentTime = timerDuration;
+let timerElement = document.getElementById('timer');
+let resendBtn = document.getElementById('resendBtn');
+let otpInput = document.getElementById('otpInput');
+let confirmBtn = document.getElementById('confirmBtn');
+let timerInterval;
 
-    function startTimer() {
-      currentTime = timerDuration;
-      updateTimerDisplay();
-      resendBtn.disabled = true;
+function startTimer() {
+  currentTime = timerDuration;
+  updateTimerDisplay();
+  resendBtn.disabled = true;
 
-      timerInterval = setInterval(() => {
-        currentTime--;
-        updateTimerDisplay();
+  // Re-enable input and confirm button when a new timer starts
+  otpInput.disabled = false;
+  confirmBtn.disabled = false;
 
-        if (currentTime <= 0) {
-          clearInterval(timerInterval);
-          timerElement.textContent = "00:00";
-          resendBtn.disabled = false;
-        }
-      }, 1000);
+  timerInterval = setInterval(() => {
+    currentTime--;
+    updateTimerDisplay();
+
+    if (currentTime <= 0) {
+      clearInterval(timerInterval);
+      timerElement.textContent = '00:00';
+      resendBtn.disabled = false;
+
+      // Disable input and confirm button when timer expires
+      otpInput.disabled = true;
+      confirmBtn.disabled = true;
     }
+  }, 1000);
+}
 
-    function updateTimerDisplay() {
-      let minutes = String(Math.floor(currentTime / 60)).padStart(2, '0');
-      let seconds = String(currentTime % 60).padStart(2, '0');
-      timerElement.textContent = `${minutes}:${seconds}`;
-    }
+function updateTimerDisplay() {
+  let minutes = String(Math.floor(currentTime / 60)).padStart(2, '0');
+  let seconds = String(currentTime % 60).padStart(2, '0');
+  timerElement.textContent = `${minutes}:${seconds}`;
+}
 
-    function resendOTP() {
-  startTimer();
+function resendOTP() {
+  startTimer(); // This will re-enable input and confirm, and restart the countdown
 
   $.ajax({
-    method: "GET",
-    url: "/resend-otp",
+    method: 'GET',
+    url: '/resend-otp',
     success: (response) => {
       if (response.success) {
         Swal.fire({
           title: 'OTP Resent!',
           text: 'Please check your email.',
           icon: 'success',
-          confirmButtonText: 'OK'
+          confirmButtonText: 'OK',
         });
       } else {
-        Swal.fire("Error!", response.message || "Failed to resend OTP", "error");
+        Swal.fire(
+          'Error!',
+          response.message || 'Failed to resend OTP',
+          'error'
+        );
       }
     },
     error: () => {
-      Swal.fire("Error!", "Something went wrong.", "error");
-    }
+      Swal.fire('Error!', 'Something went wrong.', 'error');
+    },
   });
 }
 
-    function confirmOTP() {
-  let OTP = document.getElementById("otpInput").value;
-  if (OTP === "") {
+function confirmOTP() {
+  let OTP = otpInput.value;
+  if (OTP === '') {
     Swal.fire({
       icon: 'warning',
       title: 'Missing OTP',
       text: 'Please enter the OTP.',
-      confirmButtonColor: '#3085d6'
+      confirmButtonColor: '#3085d6',
     });
     return;
   }
 
   $.ajax({
-    method: "POST",
-    url: "/verify-pass-otp",
+    method: 'POST',
+    url: '/verify-pass-otp',
     data: { otp: OTP },
     success: (response) => {
       if (response.success) {
@@ -73,20 +87,23 @@ let timerDuration = 60;
           title: 'OTP Verified!',
           text: response.message,
           icon: 'success',
-          confirmButtonText: 'OK'
+          confirmButtonText: 'OK',
         }).then(() => {
-          window.location.href = "/reset-password"; 
+          window.location.href = '/reset-password';
         });
       } else {
-        Swal.fire("Invalid OTP", response.message || "Verification failed", "error");
+        Swal.fire(
+          'Invalid OTP',
+          response.message || 'Verification failed',
+          'error'
+        );
       }
     },
     error: (err) => {
-      Swal.fire("Error", "Server error or invalid request", "error");
-      console.error("AJAX Error:", err);
-    }
+      Swal.fire('Error', 'Server error or invalid request', 'error');
+      console.error('AJAX Error:', err);
+    },
   });
 }
 
-
-    window.onload = startTimer;
+window.onload = startTimer;

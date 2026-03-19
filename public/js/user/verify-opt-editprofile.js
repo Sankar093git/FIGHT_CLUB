@@ -2,11 +2,13 @@ let timerDuration = 60;
     let currentTime = timerDuration;
     let timerElement = document.getElementById("timer");
     let resendBtn = document.getElementById("resendBtn");
+    let confirmBtn=document.getElementById("cfmBtn");
     let timerInterval;
 
     function startTimer() {
       currentTime = timerDuration;
       updateTimerDisplay();
+      confirmBtn.disabled=false;
       resendBtn.disabled = true;
 
       timerInterval = setInterval(() => {
@@ -17,6 +19,7 @@ let timerDuration = 60;
           clearInterval(timerInterval);
           timerElement.textContent = "00:00";
           resendBtn.disabled = false;
+          confirmBtn.disabled=true;
         }
       }, 1000);
     }
