@@ -4,3 +4,8 @@ body {
   .mainDiv {
     margin-bottom: 50px;
   }
+  .error-text {
+    display: none;
+    color: red;
+    font-size: 0.8rem;
+}

@@ -189,7 +189,9 @@ export const changeProfilePicture = async (req, res) => {
 
 export const editProfile = async (req, res) => {
   try {
-    const { email, phone, password } = req.body;
+    const { username, email, phone, password } = req.body;
+    console.log(req.body)
+    req.session.pname = username;
     req.session.email = email;
     req.session.phone = phone;
     req.session.password = password;
@@ -231,15 +233,16 @@ export const verifyOtp = async (req, res) => {
     if (Date.now() > req.session.otpExpiresAt) {
       delete req.session.otp;
       delete req.session.otpExpiresAt;
-      return res
-        .status(STATUS_CODES.BAD_REQUEST)
-        .json({
-          success: false,
-          message: 'DO NOT REFRESH!. OTP has expired. Please wait and request a new one.',
-        });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message:
+          'DO NOT REFRESH!. OTP has expired. Please wait and request a new one.',
+      });
     }
 
     if (otp == req.session.otp) {
+      const newName = req.session.pname;
+      delete req.session.pname;
       const newEmail = req.session.email;
       delete req.session.email;
       const newPhone = req.session.phone;
@@ -252,19 +255,19 @@ export const verifyOtp = async (req, res) => {
         const newPassword = await securePassword(newPass);
         await User.updateOne(
           { _id: req.session.user },
-          { $set: { phone: newPhone, password: newPassword } }
+          { $set: { name:newName,phone: newPhone, password: newPassword } }
         );
         return res
           .status(STATUS_CODES.OK)
-          .json({ success: true, message: 'OTP verified successfully' });
+          .json({ success: true, message: 'Password changed successfully' });
       } else {
         await User.updateOne(
           { _id: req.session.user },
-          { $set: { email: newEmail, phone: newPhone } }
+          { $set: { name:newName,email: newEmail, phone: newPhone } }
         );
         return res
           .status(STATUS_CODES.OK)
-          .json({ success: true, message: 'Email Id changed succesfully' });
+          .json({ success: true, message: 'Changes added succesfully' });
       }
     } else {
       res
