@@ -19,45 +19,81 @@ document.getElementById("addressForm").addEventListener("submit", function (e) {
     phone: phone
   }
 
+  let isValid = true;
 
-  const postalRegex = /^[0-9]{5,6}$/;
-  const phoneRegex = /^[0-9]{10}$/;
-  let isvalid = true;
-
+  // Empty check
   for (let [key, value] of Object.entries(obj)) {
     if (!value) {
-      let msg = document.getElementById(`add-${key}`)
+      let msg = document.getElementById(`add-${key}`);
       msg.innerText = "All fields are required";
       msg.classList.remove("d-none");
-      isvalid = false;
+      isValid = false;
     }
   }
 
+  if (!isValid) return;
 
-  if (!isvalid) {
-    return
-  }
-
-  if (!postalRegex.test(postalCode)) {
-    let msg = document.getElementById(`add-postal`)
-    msg.innerText = "Postal code must be 6 digits";
+  // City, State, Country — only alphabets and spaces
+  if (!/^[a-zA-Z\s]+$/.test(city)) {
+    let msg = document.getElementById("add-city");
+    msg.innerText = "City must contain only letters.";
     msg.classList.remove("d-none");
-    return;
+    isValid = false;
   }
 
-  if (!phoneRegex.test(phone)) {
-    let msg = document.getElementById(`add-phone`)
-    msg.innerText = "Phone number must be 10 digits";
+  if (!/^[a-zA-Z\s]+$/.test(state)) {
+    let msg = document.getElementById("add-state");
+    msg.innerText = "State must contain only letters.";
     msg.classList.remove("d-none");
-    return;
+    isValid = false;
   }
+
+  if (!/^[a-zA-Z\s]+$/.test(country)) {
+    let msg = document.getElementById("add-country");
+    msg.innerText = "Country must contain only letters.";
+    msg.classList.remove("d-none");
+    isValid = false;
+  }
+
+  // Postal code — 5 or 6 digits, not all same digits
+  if (!/^[0-9]{5,6}$/.test(postalCode)) {
+    let msg = document.getElementById("add-postal");
+    msg.innerText = "Postal code must be 5 or 6 digits.";
+    msg.classList.remove("d-none");
+    isValid = false;
+  } else if (/^(\d)\1+$/.test(postalCode)) {
+    let msg = document.getElementById("add-postal");
+    msg.innerText = "Please enter a valid postal code.";
+    msg.classList.remove("d-none");
+    isValid = false;
+  }
+
+  // Phone — 10 digits, starts with 6-9, not all same digits
+  if (!/^\d{10}$/.test(phone)) {
+    let msg = document.getElementById("add-phone");
+    msg.innerText = "Phone number must be exactly 10 digits.";
+    msg.classList.remove("d-none");
+    isValid = false;
+  } else if (!/^[6-9]/.test(phone)) {
+    let msg = document.getElementById("add-phone");
+    msg.innerText = "Please enter a valid phone number.";
+    msg.classList.remove("d-none");
+    isValid = false;
+  } else if (/^(\d)\1{9}$/.test(phone)) {
+    let msg = document.getElementById("add-phone");
+    msg.innerText = "Please enter a valid phone number.";
+    msg.classList.remove("d-none");
+    isValid = false;
+  }
+
+  if (!isValid) return;
 
   Swal.fire({
     icon: "success",
     title: "Success!",
     text: "Address saved successfully!",
     confirmButtonColor: "#3085d6"
-  }).then(() => this.submit())
+  }).then(() => this.submit());
 });
 
 function changeProfilePic(userId) {
@@ -99,16 +135,16 @@ function changeProfilePic(userId) {
 
 function populateAddressForm(id, label, street, city, state, country, postalCode, phone, isDefault) {
 
-  document.getElementById("addressFormedit").action = "/edit-address/" + id;
+  document.getElementById("addressForm").action = "/edit-address/" + id;
 
-  document.getElementById("labeledit").value = label;
-  document.getElementById("streetedit").value = street;
-  document.getElementById("cityedit").value = city;
-  document.getElementById("stateedit").value = state;
-  document.getElementById("countryedit").value = country;
-  document.getElementById("postalCodeedit").value = postalCode;
-  document.getElementById("phoneedit").value = phone;
-  document.getElementById("isDefaultedit").checked = isDefault ? true : false;
+  document.getElementById("label").value = label;
+  document.getElementById("street").value = street;
+  document.getElementById("city").value = city;
+  document.getElementById("state").value = state;
+  document.getElementById("country").value = country;
+  document.getElementById("postalCode").value = postalCode;
+  document.getElementById("phone").value = phone;
+  document.getElementById("isDefault").checked = isDefault ? true : false;
 }
 
 function cancelOrder(orderId) {
