@@ -108,16 +108,19 @@ export const loadProductDetails = async (req, res) => {
   try {
     const userId = req.session.user;
     const userData = await User.findOne({ _id: userId });
+    const wishlist=userData.wishlist;
     const user = userData.name;
     const id = req.query.id;
     const data = await Product.findOne({ _id: id, isBlocked: false }).populate("category");
+    const inWishlist=wishlist.find((item)=>item.product.equals(id));
     const catId = data.category._id;
     const relatedProducts = await Product.find({ category: catId });
     res.status(STATUS_CODES.OK).render("productDetails", {
       product: data,
       relatedProducts: relatedProducts,
       user: user,
-      image: req.session.image
+      image: req.session.image,
+      inWishlist
     });
   } catch (error) {
     console.log(error);

@@ -45,6 +45,9 @@ let size=document.querySelector(".size-btn").innerText;
             text:`${data.message}`,
             icon:"success",
             confirmButtonText: 'OK'
+          }).then(()=>{
+            let btn=document.getElementById("wishBtn");
+            btn.innerHTML=`<i class="bi bi-heart"></i> Remove from wishlist`
           })
         }
       })
@@ -59,6 +62,37 @@ let size=document.querySelector(".size-btn").innerText;
       })
     }
   }
+
+  function removeFromWishlist(productId){
+    try {
+      fetch(`/remove-from-wishlist/${productId}`,{
+        method:"DELETE",
+        headers:{
+          "Content-Type":"application/json"
+        },
+      }).then((res)=>res.json())
+      .then((data)=>{
+        if(data.success){
+          Swal.fire({
+            title:"Success",
+            text:`Removed from wishlist`,
+            icon:"success",
+            confirmButtonText: 'OK'
+          }).then(()=>{
+            let btn=document.getElementById("wishBtn");
+            btn.innerHTML=`<i class="bi bi-heart"></i> Add to Wishlist`
+          })
+        }
+      })
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        title:"Error",
+        text:"Something went wrong",
+        icon:"error"
+      })
+  }
+}
 
   // Image switching function
   function changeImage(imageSrc, thumbnail) {

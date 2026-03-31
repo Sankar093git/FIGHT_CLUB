@@ -1,19 +1,21 @@
-import Product from "../../models/productSchema.js";
-import Category from "../../models/categorySchema.js";
-import Brand from "../../models/brandSchema.js";
-import fs from "fs";
-import path from "path";
-import sharp from "sharp";
-import STATUS_CODES from "../../utils/statusCode.js";
+import Product from '../../models/productSchema.js';
+import Category from '../../models/categorySchema.js';
+import Brand from '../../models/brandSchema.js';
+import fs from 'fs';
+import path from 'path';
+import sharp from 'sharp';
+import STATUS_CODES from '../../utils/statusCode.js';
 
 export const loadProducts = async (req, res) => {
   try {
-    const prod = req.query.prod || "";
-    const cate = req.query.cate || "";
-    const brand = req.query.brand || "";
+    const prod = req.query.prod || '';
+    const cate = req.query.cate || '';
+    const brand = req.query.brand || '';
     const page = req.query.page || 1;
 
-    const category = await Category.find({ name: { $regex: new RegExp(cate, 'i') } });
+    const category = await Category.find({
+      name: { $regex: new RegExp(cate, 'i') },
+    });
     const catIds = category.map((item) => item._id);
     const limit = 4;
     const skip = (page - 1) * limit;
@@ -21,29 +23,29 @@ export const loadProducts = async (req, res) => {
     const data = await Product.find({
       productName: { $regex: new RegExp(prod, 'i') },
       category: { $in: catIds },
-      brand: { $regex: new RegExp(brand, 'i') }
+      brand: { $regex: new RegExp(brand, 'i') },
     })
       .limit(limit)
       .skip(skip)
-      .populate("category");
+      .populate('category');
 
     const count = await Product.find({
       productName: { $regex: new RegExp(prod, 'i') },
       category: { $in: catIds },
-      brand: { $regex: new RegExp(brand, 'i') }
+      brand: { $regex: new RegExp(brand, 'i') },
     }).countDocuments();
 
     const totalPages = Math.ceil(count / limit);
 
-    res.status(STATUS_CODES.OK).render("products", {
+    res.status(STATUS_CODES.OK).render('products', {
       queryVal: req.query,
       data: data,
       totalPages: totalPages,
-      currentPage: page
+      currentPage: page,
     });
   } catch (error) {
-    console.error("Error while loading the product list", error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
+    console.error('Error while loading the product list', error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect('/admin/error');
   }
 };
 
@@ -52,13 +54,13 @@ export const getAddProduct = async (req, res) => {
     const brand = await Brand.find({ isUnlisted: false });
     const category = await Category.find({ isListed: true });
 
-    res.status(STATUS_CODES.OK).render("product-add", {
+    res.status(STATUS_CODES.OK).render('product-add', {
       brand: brand,
-      cat: category
+      cat: category,
     });
   } catch (error) {
-    console.log("Error while loading edit product page", error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
+    console.log('Error while loading edit product page', error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect('/admin/error');
   }
 };
 
@@ -66,14 +68,18 @@ export const addProducts = async (req, res) => {
   try {
     const { productName } = req.body;
     const v = JSON.parse(req.body.variants);
-    const quantity = v.map((v) => parseInt(v.stock)).reduce((acc, num) => acc + num, 0);
+    const quantity = v
+      .map((v) => parseInt(v.stock))
+      .reduce((acc, num) => acc + num, 0);
 
     const productExists = await Product.findOne({ productName });
     if (productExists) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json("Product already exists");
+      return res
+        .status(STATUS_CODES.BAD_REQUEST)
+        .json('Product already exists');
     }
 
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "re-image");
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 're-image');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -82,19 +88,19 @@ export const addProducts = async (req, res) => {
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
         const originalImagePath = file.path;
-        const resizedImagePath = path.join(uploadDir, "R" + file.filename);
+        const resizedImagePath = path.join(uploadDir, 'R' + file.filename);
 
         await sharp(originalImagePath)
           .resize({ width: 400, height: 440 })
           .toFile(resizedImagePath);
 
-        images.push("R" + file.filename);
+        images.push('R' + file.filename);
       }
     }
 
     const category = await Category.findOne({ name: req.body.category });
     if (!category) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json("Invalid category name");
+      return res.status(STATUS_CODES.BAD_REQUEST).json('Invalid category name');
     }
 
     const newProduct = new Product({
@@ -111,16 +117,16 @@ export const addProducts = async (req, res) => {
       size: req.body.size,
       color: req.body.color,
       productImage: images,
-      status: "Available",
+      status: 'Available',
     });
 
     await newProduct.save();
     return res.status(STATUS_CODES.CREATED).json({ success: true });
   } catch (error) {
-    console.error("Error while adding product:", error);
+    console.error('Error while adding product:', error);
     return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Internal Server Error"
+      message: 'Internal Server Error',
     });
   }
 };
@@ -130,17 +136,17 @@ export const loadEditProduct = async (req, res) => {
     const id = req.query.id;
     const brand = await Brand.find({ isUnlisted: false });
     const category = await Category.find({ isListed: true });
-    const product = await Product.find({ _id: id }).populate("category");
+    const product = await Product.find({ _id: id }).populate('category');
 
-    res.status(STATUS_CODES.OK).render("edit-product", {
+    res.status(STATUS_CODES.OK).render('edit-product', {
       product: product[0],
       variants: product[0].variants,
       cat: category,
-      brand: brand
+      brand: brand,
     });
   } catch (error) {
-    console.error("Error while loading edit products", error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
+    console.error('Error while loading edit products', error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect('/admin/error');
   }
 };
 
@@ -148,26 +154,43 @@ export const editproduct = async (req, res) => {
   try {
     const images = [];
     const id = req.params.id;
-    const { productName, brand, description, regularPrice, salePrice, category, variants } = req.body;
+    const {
+      productName,
+      brand,
+      description,
+      regularPrice,
+      salePrice,
+      category,
+      variants,
+    } = req.body;
 
     let variant = JSON.parse(variants);
     let quantity = variant.map((n) => n.stock).reduce((acc, n) => acc + n, 0);
 
     const cat = await Category.findOne({ name: category });
-    const productExists = await Product.findOne({ _id: { $ne: id }, productName });
+    const productExists = await Product.findOne({
+      _id: { $ne: id },
+      productName,
+    });
+    const currentProduct = await Product.findOne({ _id: id });
 
     if (productExists) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
-        message: "Product already exists"
+        message: 'Product already exists',
       });
     }
 
     if (req.files && req.files.length > 0) {
-      const uploadDir = path.join(process.cwd(), "public", "uploads", "re-image");
+      const uploadDir = path.join(
+        process.cwd(),
+        'public',
+        'uploads',
+        're-image'
+      );
       for (let i = 0; i < req.files.length; i++) {
         const originalImagePath = req.files[i].path;
-        const newFileName = "re-" + Date.now() + "-" + req.files[i].filename;
+        const newFileName = 're-' + Date.now() + '-' + req.files[i].filename;
         const resizedImagePath = path.join(uploadDir, newFileName);
 
         await sharp(originalImagePath)
@@ -176,6 +199,13 @@ export const editproduct = async (req, res) => {
 
         images.push(newFileName);
       }
+    }
+
+    if (currentProduct.productImage.length + images.length < 3) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        succes: false,
+        message: 'Please add atleast 3 images',
+      });
     }
 
     await Product.updateOne(
@@ -189,22 +219,23 @@ export const editproduct = async (req, res) => {
           salesPrice: salePrice,
           variants: JSON.parse(variants),
           category: cat._id,
-          quantity
+          quantity,
         },
         $push: {
-          productImage: { $each: images }
-        }
-      });
+          productImage: { $each: images },
+        },
+      }
+    );
 
     res.status(STATUS_CODES.OK).json({
       success: true,
-      message: "Product edited successfully"
+      message: 'Product edited successfully',
     });
   } catch (error) {
-    console.error("Error while editing product", error);
+    console.error('Error while editing product', error);
     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Something went wrong!"
+      message: 'Something went wrong!',
     });
   }
 };
@@ -214,9 +245,17 @@ export const deleteImages = async (req, res) => {
     const imageId = req.params.id;
     const { productId } = req.body;
 
-    await Product.findByIdAndUpdate(productId, { $pull: { productImage: imageId } });
+    await Product.findByIdAndUpdate(productId, {
+      $pull: { productImage: imageId },
+    });
 
-    const imagePath = path.join(process.cwd(), "public", "uploads", "re-image", `${imageId}`);
+    const imagePath = path.join(
+      process.cwd(),
+      'public',
+      'uploads',
+      're-image',
+      `${imageId}`
+    );
 
     if (fs.existsSync(imagePath)) {
       await fs.promises.unlink(imagePath);
@@ -227,8 +266,8 @@ export const deleteImages = async (req, res) => {
 
     res.status(STATUS_CODES.OK).json({ success: true });
   } catch (error) {
-    console.log("Error while deleting image", error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/admin/error");
+    console.log('Error while deleting image', error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect('/admin/error');
   }
 };
 
@@ -238,15 +277,18 @@ export const blockOrUnblockproduct = async (req, res) => {
     const prodDetails = await Product.findOne({ _id: productId });
 
     const newStatus = !prodDetails.isBlocked;
-    await Product.updateOne({ _id: productId }, { $set: { isBlocked: newStatus } });
+    await Product.updateOne(
+      { _id: productId },
+      { $set: { isBlocked: newStatus } }
+    );
 
     return res.status(STATUS_CODES.OK).json({
       success: true,
       isBlocked: newStatus,
-      message: `Product has been ${newStatus ? 'blocked' : 'unblocked'}!`
+      message: `Product has been ${newStatus ? 'blocked' : 'unblocked'}!`,
     });
   } catch (error) {
-    console.error("Error while blocking product", error);
+    console.error('Error while blocking product', error);
     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false });
   }
 };
@@ -254,10 +296,15 @@ export const blockOrUnblockproduct = async (req, res) => {
 export const addOffer = async (req, res) => {
   try {
     const { percentage, productId } = req.body;
-    const productDetails = await Product.findOne({ _id: productId }).populate("category");
+    const productDetails = await Product.findOne({ _id: productId }).populate(
+      'category'
+    );
     const discount = productDetails.ogSalesPrice * (parseInt(percentage) / 100);
 
-    if (productDetails.category.categoryOffer === 0 || productDetails.category.categoryOffer < percentage) {
+    if (
+      productDetails.category.categoryOffer === 0 ||
+      productDetails.category.categoryOffer < percentage
+    ) {
       productDetails.salesPrice = productDetails.ogSalesPrice - discount;
       productDetails.productDiscount = discount;
       productDetails.offer = parseInt(percentage);
@@ -266,19 +313,19 @@ export const addOffer = async (req, res) => {
       return res.status(STATUS_CODES.OK).json({
         success: true,
         price: productDetails.ogSalesPrice - discount,
-        message: "Offer has been added!"
+        message: 'Offer has been added!',
       });
     }
 
     res.status(STATUS_CODES.BAD_REQUEST).json({
       success: false,
-      message: "Please add an offer greater than category offer!"
+      message: 'Please add an offer greater than category offer!',
     });
   } catch (error) {
-    console.log("Product offer: ", error);
+    console.log('Product offer: ', error);
     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Something went wrong"
+      message: 'Something went wrong',
     });
   }
 };
@@ -286,12 +333,14 @@ export const addOffer = async (req, res) => {
 export const removeOffer = async (req, res) => {
   try {
     const { productId } = req.body;
-    const productDetails = await Product.findOne({ _id: productId }).populate("category");
+    const productDetails = await Product.findOne({ _id: productId }).populate(
+      'category'
+    );
 
     if (productDetails.offer === 0) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
-        message: "Offer does not exist"
+        message: 'Offer does not exist',
       });
     }
 
@@ -300,7 +349,9 @@ export const removeOffer = async (req, res) => {
     productDetails.productDiscount = 0;
 
     if (productDetails.category.categoryOffer > 0) {
-      let discount = productDetails.ogSalesPrice * (productDetails.category.categoryOffer / 100);
+      let discount =
+        productDetails.ogSalesPrice *
+        (productDetails.category.categoryOffer / 100);
       productDetails.salesPrice = productDetails.ogSalesPrice - discount;
       productDetails.categoryDiscount = discount;
     }
@@ -310,13 +361,13 @@ export const removeOffer = async (req, res) => {
     res.status(STATUS_CODES.OK).json({
       success: true,
       price: productDetails.salesPrice,
-      message: "Offer has been removed"
+      message: 'Offer has been removed',
     });
   } catch (error) {
-    console.log("Remove offer error: ", error);
+    console.log('Remove offer error: ', error);
     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Something went wrong"
+      message: 'Something went wrong',
     });
   }
 };
