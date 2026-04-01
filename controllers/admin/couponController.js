@@ -176,7 +176,7 @@ export const editCoupon = async (req, res) => {
 export const deleteCoupon = async (req, res) => {
   try {
     const couponId = req.params.couponId;
-    const exists = await Coupon.findOne({ _id: couponId });
+    const exists = await Coupon.findOne({ code: couponId });
 
     if (!exists) {
       return res.status(STATUS_CODES.NOT_FOUND).json({
@@ -184,7 +184,7 @@ export const deleteCoupon = async (req, res) => {
         message: "Coupon does not exist"
       });
     } else {
-      await Coupon.deleteOne({ _id: couponId });
+      await Coupon.deleteOne({ code: couponId });
       return res.status(STATUS_CODES.OK).json({
         success: true,
         message: "Coupon deleted successfully!"

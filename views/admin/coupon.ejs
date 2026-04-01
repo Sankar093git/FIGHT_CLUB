@@ -80,7 +80,7 @@
           </thead>
           <tbody id="body">
             <% coupon.forEach((item)=>{%>
-            <tr id="couponRow<%=item._id%>">
+            <tr id="couponRow<%=item.code%>">
               <td><span class="coupon-code"><%=item.code%></span></td>
               <td><span class="discount-value"><%=item.discountValue%></span></td>
               <td><%=item.discountType%></td>
@@ -101,10 +101,10 @@
                 <% } %>
               <td>
                 <div class="d-flex gap-2">
-                  <button class="btn btn-action btn-edit" onclick="openEditModal('<%=item.code%>', '<%=item.discountValue%>', '<%=item.discountType%>','<%=item.minPurchase%>', '<%=item.maxDiscount%>', '<%=item.usageLimit%>','<%=item.startDate%>' ,'<%=item.expiryDate%>','<%=item._id%>')">
+                  <button class="btn btn-action btn-edit" onclick="openEditModal('<%=item.code%>', '<%=item.discountValue%>', '<%=item.discountType%>','<%=item.minPurchase%>', '<%=item.maxDiscount%>', '<%=item.usageLimit%>','<%=item.startDate%>' ,'<%=item.expiryDate%>')">
                     <i class="bi bi-pencil"></i>
                   </button>
-                  <button class="btn btn-action btn-delete" onclick="deleteCoupon('<%=item.code%>','<%=item._id%>')">
+                  <button class="btn btn-action btn-delete" onclick="deleteCoupon('<%=item.code%>')">
                     <i class="bi bi-trash"></i>
                   </button>
                 </div>
