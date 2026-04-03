@@ -423,7 +423,10 @@ export const displayOrder = async (req, res) => {
     let taxes = constants[0].taxes;
     const discount = order.discountValue;
     const total = subTotal + shipping + taxes - discount;
-
+    let paymentFailed=false;
+    if(order.paymentMethod=="ONLINE"&&order.paymentStatus=="PENDING"){
+      paymentFailed=true;
+    }
     res.status(STATUS_CODES.OK).render("orderDetails", {
       Product: order.products,
       addr: order.address,
@@ -433,6 +436,7 @@ export const displayOrder = async (req, res) => {
       taxes,
       total,
       status: order.status,
+      paymentFailed,
       orderId: order.orderId,
       createdAt: order.createdAt
     });
