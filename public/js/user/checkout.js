@@ -302,24 +302,32 @@ document.getElementById('clearCouponBtn').addEventListener("click", async functi
     }).then((res)=>res.json())
     .then((data)=>{
       if(data.success){
-        couponCode="";
+
+         couponCode="";
+         
          document.getElementById('couponSelect').selectedIndex = 0;
          messageDiv.innerHTML = '<span class="text-success"></span>';
          document.getElementById("applyCouponBtn").classList.remove("d-none");
+
          e.target.classList.add("d-none");
+
          document.getElementById('totalAmount').textContent= '₹' + data.newTotal
          document.getElementById('discountValue').textContent= '-₹' + data.discount;
+
          Swal.fire({
           title:"Removed",
           text:data.message,
           icon:"success"
          })
+
       }else{
+
         Swal.fire({
           title:"Oops",
           text:data.message,
           icon:"error"
         })
+
       }
     }) 
   } catch (error) {

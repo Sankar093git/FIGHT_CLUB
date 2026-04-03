@@ -18,7 +18,7 @@ export const placeOrder = async (req, res) => {
     let taxes = constants[0].taxes;
 
     const paymentMethod = req.body.paymentMethod;
-    const couponCode = req.body.couponCode || req.session.coupon;
+    const couponCode = req.body.couponCode
 
     console.log(couponCode);
 
@@ -55,7 +55,15 @@ export const placeOrder = async (req, res) => {
     }
     let discountValue = 0;
     if (couponCode) {
+
       const couponDetails = await Coupon.findOne({ code: couponCode });
+
+      if (!couponDetails || totalAmount < couponDetails.minPurchase) {
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ 
+            success: false, 
+            message: "Coupon is no longer valid for this order amount." 
+        });
+    }
       if (couponDetails.discountType == "fixed") {
         discountValue = couponDetails.discountValue;
         totalAmount = totalAmount - discountValue;
@@ -95,12 +103,13 @@ export const placeOrder = async (req, res) => {
       }
     }
 
+
     if (paymentMethod === "WALLET") {
       const walletDetails = await Wallet.findOne({ userId: req.session.user });
       if (!walletDetails) {
-        res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Your wallet has not been initialised" });
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Your wallet has not been initialised" });
       } else if (walletDetails.balance === 0 || walletDetails.balance < totalAmount) {
-        res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Insufficient balance!" });
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: "Insufficient balance!" });
       } else {
         const transactionId = "TRA-" + crypto.randomBytes(4).toString("hex");
         await Wallet.updateOne({ userId: req.session.user }, { $inc: { balance: -totalAmount } });
@@ -116,6 +125,7 @@ export const placeOrder = async (req, res) => {
         await newTransaction.save()
       }
     }
+
     const newOrder = new Order({
       user: userId,
       orderId: orderId,
@@ -130,11 +140,14 @@ export const placeOrder = async (req, res) => {
 
     await newOrder.save();
 
-    await User.updateOne({ _id: userId }, { $set: { cart: [] } });
+    if(couponCode){
+    await User.updateOne({ _id: userId }, { $push: { redeemedCoupons: couponCode } });
+    await Coupon.updateOne({ code: couponCode }, { $inc: { redemptions: 1 } });
+    }
+    
 
-    req.session.coupon = null;
-    req.session.discount = null;
-    req.session.newTotal = null;
+    await User.updateOne({ _id: userId }, { $set: { cart: [], cartDetails:{} } });
+
 
     res.status(STATUS_CODES.CREATED).json({ success: true, orderId: orderId });
 

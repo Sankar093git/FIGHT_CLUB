@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema(
   {
@@ -44,7 +44,7 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
     googleId: {
-      type: String
+      type: String,
     },
     address: [
       {
@@ -83,22 +83,22 @@ const userSchema = new mongoose.Schema(
       },
     ],
     referalCode: {
-      type: String
+      type: String,
     },
     referedBy: {
-      type: String
+      type: String,
     },
     redeemedCoupons: [String],
     cart: [
       {
         product: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "Product",
+          ref: 'Product',
           required: true,
         },
         size: {
           type: String,
-          required: true
+          required: true,
         },
         quantity: {
           type: Number,
@@ -107,20 +107,25 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
+    cartDetails: {
+      subtotal: { type: Number, default: 0 },
+      couponCode: { type: String, default: null },
+      discountAmount: { type: Number, default: 0 },
+      total: { type: Number, default: 0 },
+    },
     wishlist: [
       {
         product: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "Product",
-          required: true
-        }
-      }
-    ]
+          ref: 'Product',
+          required: true,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );
 
-const User = mongoose.model("User", userSchema);
+const User = mongoose.model('User', userSchema);
 
 export default User;
-

@@ -68,11 +68,29 @@ export const loadCheckout = async (req, res) => {
             wallet = new Wallet({ userId: req.session.user, balance: 0 });
             await wallet.save();
         }
+        let subtotal=priceList.reduce((acc, num) => acc + num, 0);
+        if(userData.cartDetails.couponCode){
+            const couponCode=userData.cartDetails.couponCode;
+            const couponDetails= await Coupon.findOne({code:couponCode});
+            if(subtotal>couponDetails.minPurchase){
+                userData.cartDetails.subtotal=subtotal
+                userData.cartDetails.total=(subtotal+taxes+shipping)-(userData.cartDetails.discountAmount?userData.cartDetails.discountAmount:0);
+            }else{
+                userData.cartDetails.subtotal=subtotal;
+                userData.cartDetails.couponCode=null;
+                userData.cartDetails.discountAmount=0;
+                userData.cartDetails.total=subtotal+taxes+shipping;
+            }
+        }else{
+            userData.cartDetails.total=subtotal+taxes+shipping;
+        }
 
-        summary.subtotal = priceList.reduce((acc, num) => acc + num, 0);
+        await userData.save()
+
+        summary.subtotal = subtotal
         summary.taxes = taxes;
         summary.shipping = shipping;
-        summary.total = req.session.newTotal ? req.session.newTotal : (summary.subtotal + summary.taxes + summary.shipping);
+        summary.total = userData.cartDetails.total;
 
         const validCoupons = coupons
             .filter((coupon) => coupon.minPurchase <= summary.total)
@@ -87,9 +105,8 @@ export const loadCheckout = async (req, res) => {
             stockError: stockError,
             coupons: validCoupons,
             balance: wallet.balance,
-            currentCoupon: req.session.coupon || null,
-            newTotal: req.session.newTotal || null,
-            currentDiscount: req.session.discount || null
+            currentCoupon: userData.cartDetails.couponCode || null,
+            currentDiscount: userData.cartDetails.discountAmount || null
         });
     } catch (error) {
         console.error("Error while loading checkout page", error);
@@ -130,14 +147,12 @@ export const applyCoupon = async (req, res) => {
 
         totalAmount -= discountValue;
 
-        // Save status to session
-        req.session.coupon = couponCode;
-        req.session.newTotal = totalAmount;
-        req.session.discount = discountValue;
+        userDetails.cartDetails.total=totalAmount;
+        userDetails.cartDetails.couponCode=couponCode;
+        userDetails.cartDetails.discountAmount=discountValue;
+        
+        await userDetails.save();
 
-        // Update DB
-        await User.updateOne({ _id: userId }, { $push: { redeemedCoupons: couponCode } });
-        await Coupon.updateOne({ code: couponCode }, { $inc: { redemptions: 1 } });
 
         return res.status(STATUS_CODES.OK).json({ success: true, newTotal: totalAmount, discount: discountValue });
     } catch (error) {
@@ -150,23 +165,22 @@ export const removeCoupon = async (req, res) => {
     try {
         let { code, totalAmount, discount } = req.body;
 
-        req.session.coupon = null;
-        req.session.newTotal = null;
-        req.session.discount = null;
+        console.log(code,totalAmount,discount);
 
-        const parsedTotal = Number(totalAmount.replace(/[^\d.]/g, ''));
-        const parsedDiscount = Number(discount.replace(/[^\d.]/g, ''));
-        const newTotal = parsedTotal + parsedDiscount;
+        const userDetails= await User.findOne({_id:req.session.user});
+        userDetails.cartDetails.total+=userDetails.cartDetails.discountAmount;
+        userDetails.cartDetails.discountAmount=0;
+        userDetails.cartDetails.couponCode=null;
+        await userDetails.save();
 
-        await User.updateOne({ _id: req.session.user }, { $pull: { redeemedCoupons: code } });
-        await Coupon.updateOne({ code: code }, { $inc: { redemptions: -1 } });
 
         res.status(STATUS_CODES.OK).json({
             success: true,
             message: "Coupon removed successfully",
-            newTotal,
+            newTotal:  userDetails.cartDetails.total,
             discount: 0
         });
+
     } catch (error) {
         console.error("Remove coupon error: ", error);
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: "Something went wrong!" });
