@@ -38,10 +38,31 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+
+  function validateInputs(name){
+    const categoryRegex = /^[A-Za-z]+$/;
+
+    if(categoryRegex.test(name)){
+      return true
+    }
+
+    return false
+  }
+
   function editCategory(id) {
     event.preventDefault();
     let name = document.getElementById('name').value;
     let description = document.getElementById('description').value;
+
+    if(!validateInputs()){
+      Swal.fire({
+        title:"Error",
+        text:"Enter a valid category name",
+        icon:"error"
+      })
+      return;
+    }
+    
     fetch(`/admin/edit-category/${id}`, {
       method: 'POST',
       headers: {
@@ -57,7 +78,7 @@
             text: data.message,
             icon: 'success',
           }).then(() => {
-            window.location.href = `/admin/categories`;
+            window.location.href = `/admin/category`;
           });
         } else {
           Swal.fire({

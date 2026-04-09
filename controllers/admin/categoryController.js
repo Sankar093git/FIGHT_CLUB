@@ -212,10 +212,20 @@ export const editCategory = async (req, res) => {
     const id = req.params.id;
 
     const { name, description } = req.body;
+
+    const nameRegex=/^[A-Za-z]+$/;
+
+    if(!nameRegex.test(name)){
+      return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Please enter a valid name"});
+    }
+
     const isExists = await Category.findOne({
       name: { $regex: new RegExp(`^${name}$`, 'i') },
-      isDeleted: false,
+      isListed: true,
+      _id:{$ne:id}
     });
+
+
 
     if (isExists) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({
