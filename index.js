@@ -44,18 +44,21 @@ app.set("views", [
 app.use(express.static(path.join(__dirname, "public")));
 
 // Session Configuration
+app.set('trust proxy', 1); 
+
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: false, // Set to false to save storage and prevent "empty" sessions
     store: MongoStore.create({
         mongoUrl: process.env.MONGODB_URI,
         collectionName: 'sessions',
     }),
     cookie: {
-        secure: false, // Set to true if using HTTPS
-        httpOnly: true,
-        maxAge: 72 * 60 * 60 * 1000 // 72 hours
+        secure: true,   // Correct for your HTTPS setup
+        httpOnly: true, // Prevents JS from stealing the cookie
+        maxAge: 72 * 60 * 60 * 1000,
+        sameSite: 'lax' // Highly recommended to prevent CSRF issues
     }
 }));
 
