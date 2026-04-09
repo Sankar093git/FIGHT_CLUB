@@ -2,12 +2,14 @@ let timerDuration = 60;
     let currentTime = timerDuration;
     let timerElement = document.getElementById("timer");
     let resendBtn = document.getElementById("resendBtn");
+    let confirmBtn = document.getElementById("confirmBtn");
     let timerInterval;
 
     function startTimer() {
       currentTime = timerDuration;
       updateTimerDisplay();
       resendBtn.disabled = true;
+      confirmBtn.disabled =false;
 
       timerInterval = setInterval(() => {
         currentTime--;
@@ -17,6 +19,7 @@ let timerDuration = 60;
           clearInterval(timerInterval);
           timerElement.textContent = "00:00";
           resendBtn.disabled = false;
+          confirmBtn.disabled =true;
         }
       }, 1000);
     }
