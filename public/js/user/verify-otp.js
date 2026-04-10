@@ -80,12 +80,12 @@ let timerDuration = 60;
         }).then(() => {
           window.location.href = "/login"; 
         });
-      } else {
+      } else {  
         Swal.fire("Invalid OTP", response.message || "Verification failed", "error");
       }
     },
     error: (err) => {
-      Swal.fire("Error", "Server error or invalid request", "error");
+      Swal.fire("Error", err.message||"Server error or invalid request", "error");
       console.error("AJAX Error:", err);
     }
   });
