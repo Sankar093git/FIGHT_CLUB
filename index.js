@@ -55,7 +55,7 @@ app.use(session({
         collectionName: 'sessions',
     }),
     cookie: {
-        secure: false,   // Correct for your HTTPS setup
+        secure: true,   // Correct for your HTTPS setup
         httpOnly: true, // Prevents JS from stealing the cookie
         maxAge: 72 * 60 * 60 * 1000,
         sameSite: 'lax' // Highly recommended to prevent CSRF issues
