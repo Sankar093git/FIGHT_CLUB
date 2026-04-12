@@ -213,7 +213,7 @@ export const editCategory = async (req, res) => {
 
     const { name, description } = req.body;
 
-    const nameRegex=/^[A-Za-z]+$/;
+    const nameRegex=/^[A-Za-z\s]+$/;
 
     if(!nameRegex.test(name)){
       return res.status(STATUS_CODES.BAD_REQUEST).json({success:false,message:"Please enter a valid name"});

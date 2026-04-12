@@ -1,4 +1,10 @@
 <%- include("../../views/admin/partials/header") %>
+<style>
+  .error{
+    font-size: x-small;
+    color: red;
+  }
+</style>
 <div class="container">
   <div class="row justify-content-center">
     <div class="col-md-6 mt-60">
@@ -20,6 +26,7 @@
             value="<%= category.name %>"
             class="form-control border"
           />
+          <span class="error" id="errorMsg"></span>
         </div>
 
         <div class="mb-4">
@@ -38,9 +45,9 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-
+  const error=document.getElementById("errorMsg");
   function validateInputs(name){
-    const categoryRegex = /^[A-Za-z]+$/;
+    const categoryRegex = /^[A-Za-z\s]+$/;
 
     if(categoryRegex.test(name)){
       return true
@@ -81,13 +88,13 @@
             window.location.href = `/admin/category`;
           });
         } else {
-          Swal.fire({
-            title: 'Error',
-            text: data.message,
-            icon: 'error',
-          });
+          error.innerHTML=data.message;
         }
       });
   }
+
+  document.getElementById("name").addEventListener("input",()=>{
+    error.innerHTML="";
+  })
 </script>
 <%- include("../../views/admin/partials/footer") %>
