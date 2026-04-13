@@ -145,7 +145,7 @@
                             <div class="existing-image-card" id="imageCard<%=i%>">
                                 <input type="hidden" value="<%= product.productImage[i] %>" id="imageDatas<%=i%>">
                                 <img src="/uploads/re-image/<%= product.productImage[i] %>" alt="Product image">
-                                <button type="button" class="delete-btn" onclick="deleteSingleImage('<%= product.productImage[i] %>','<%=product._id%>','<%=i%>')">
+                                <button type="button" class="delete-btn" onclick="deleteImage('<%= product.productImage[i] %>','<%=i%>')">
                                     <i class="fa fa-times"></i>
                                 </button>
                             </div>
@@ -638,6 +638,9 @@ function validateAndSubmit(id) {
 
     const form = document.querySelector("form");
     const formData = new FormData(form);
+
+    // Appending flagged images
+    formData.append("delImage", JSON.stringify(imageArr));
 
     // Append variants array as JSON
     formData.append("variants", JSON.stringify(variants));

@@ -6,8 +6,6 @@ import path from 'path';
 import sharp from 'sharp';
 import STATUS_CODES from '../../utils/statusCode.js';
 
-let imageArr=[];
-
 export const loadProducts = async (req, res) => {
   try {
     const prod = req.query.prod || '';
@@ -135,7 +133,6 @@ export const addProducts = async (req, res) => {
 
 export const loadEditProduct = async (req, res) => {
   try {
-    imageArr=[];
     const id = req.query.id;
     const brand = await Brand.find({ isUnlisted: false });
     const category = await Category.find({ isListed: true });
@@ -165,10 +162,13 @@ export const editproduct = async (req, res) => {
       salePrice,
       category,
       variants,
+      delImage,
     } = req.body;
 
     let variant = JSON.parse(variants);
     let quantity = variant.map((n) => n.stock).reduce((acc, n) => acc + n, 0);
+
+    let flaggedImages = delImage ? JSON.parse(delImage) : [];
 
     const cat = await Category.findOne({ name: category });
     const productExists = await Product.findOne({
@@ -181,6 +181,15 @@ export const editproduct = async (req, res) => {
       return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: 'Product already exists',
+      });
+    }
+
+    let realCount = currentProduct.productImage.length - flaggedImages.length;
+
+    if (realCount + images.length < 3) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        succes: false,
+        message: 'Please add atleast 3 images',
       });
     }
 
@@ -204,19 +213,6 @@ export const editproduct = async (req, res) => {
       }
     }
 
-    let realCount=currentProduct.productImage.length-imageArr.length;
-
-    if (realCount + images.length < 3) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({
-        succes: false,
-        message: 'Please add atleast 3 images',
-      });
-    }
-
-    if(imageArr.length>0){
-      await deleteFlaggedImages(imageArr,id);
-    }
-
     await Product.updateOne(
       { _id: id },
       {
@@ -232,9 +228,21 @@ export const editproduct = async (req, res) => {
         },
         $push: {
           productImage: { $each: images },
-        },
+        }
       }
     );
+
+    if (flaggedImages.length > 0) {
+      await Product.updateOne(
+        { _id: id },
+        {
+          $pull: {
+            productImage: { $in: flaggedImages },
+          },
+        }
+      );
+      await deleteFlaggedImages(flaggedImages);
+    }
 
     res.status(STATUS_CODES.OK).json({
       success: true,
@@ -247,35 +255,17 @@ export const editproduct = async (req, res) => {
       message: 'Something went wrong!',
     });
   }
-}; 
+};
 
-export const deleteImages = async (req,res)=>{
+export const deleteFlaggedImages = async (arr) => {
   try {
-    const imageId = req.params.id;
-    if(!imageArr.includes(imageId)){
-    imageArr.push(imageId);
-    }
-    res.status(STATUS_CODES.OK).json({success:true});
-  } catch (error) {
-    console.log("Error while storing images",error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({success:false})
-  }
-}
-
-export const deleteFlaggedImages = async (arr, pId) => {
-  try {
-
-    await Product.findByIdAndUpdate(pId, {
-      $pull: { productImage: { $in: arr } },
-    });
-
     const deletePromises = arr.map(async (item) => {
       const imagePath = path.join(
         process.cwd(),
         'public',
         'uploads',
         're-image',
-        item 
+        item
       );
 
       try {
@@ -292,11 +282,10 @@ export const deleteFlaggedImages = async (arr, pId) => {
 
     await Promise.all(deletePromises);
 
-    return
-
+    return;
   } catch (error) {
     console.error('Critical error in deleteImages function:', error);
-    throw error; 
+    throw error;
   }
 };
 
