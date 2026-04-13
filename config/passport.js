@@ -10,7 +10,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://figh8club.duckdns.org/auth/google/callback",
+      callbackURL: "https://figh8club.duckdns.org/auth/google/callback",
       passReqToCallback: false,
     },
     async (accessToken, refreshToken, profile, done) => {
