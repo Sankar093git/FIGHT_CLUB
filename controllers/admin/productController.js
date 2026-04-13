@@ -184,15 +184,6 @@ export const editproduct = async (req, res) => {
       });
     }
 
-    let realCount = currentProduct.productImage.length - flaggedImages.length;
-
-    if (realCount + images.length < 3) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({
-        succes: false,
-        message: 'Please add atleast 3 images',
-      });
-    }
-
     if (req.files && req.files.length > 0) {
       const uploadDir = path.join(
         process.cwd(),
@@ -213,6 +204,15 @@ export const editproduct = async (req, res) => {
       }
     }
 
+    let realCount = currentProduct.productImage.length - flaggedImages.length;
+
+    if (realCount + images.length < 3) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        succes: false,
+        message: 'Please add atleast 3 images',
+      });
+    }
+
     await Product.updateOne(
       { _id: id },
       {
@@ -228,7 +228,7 @@ export const editproduct = async (req, res) => {
         },
         $push: {
           productImage: { $each: images },
-        }
+        },
       }
     );
 
