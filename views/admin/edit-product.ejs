@@ -142,10 +142,10 @@
                     <% if(product.productImage && product.productImage.length > 0) { %>
                     <div class="existing-images">
                         <% for(let i = 0; i < product.productImage.length; i++) { %>
-                            <div class="existing-image-card">
+                            <div class="existing-image-card" id="imageCard<%=i%>">
                                 <input type="hidden" value="<%= product.productImage[i] %>" id="imageDatas<%=i%>">
                                 <img src="/uploads/re-image/<%= product.productImage[i] %>" alt="Product image">
-                                <button type="button" class="delete-btn" onclick="deleteSingleImage('<%= product.productImage[i] %>','<%= product._id %>')">
+                                <button type="button" class="delete-btn" onclick="deleteSingleImage('<%= product.productImage[i] %>','<%=product._id%>','<%=i%>')">
                                     <i class="fa fa-times"></i>
                                 </button>
                             </div>
@@ -258,6 +258,7 @@
     const croppers = {};
     const croppedBlobs = {};
     const croppedFiles = {};
+    let imageArr=[];
 
     function handleImageSelect(index) {
         const input = document.getElementById(`input${index}`);
@@ -486,7 +487,24 @@
         });
     }
 
-    function deleteSingleImage(image, productId) {
+    function deleteImage(image,i){
+        const imageCard=document.getElementById(`imageCard${i}`)
+        Swal.fire({
+            title:"Delete this image.",
+            text:"Are you sure?",
+            icon:"warning",
+            showCancelButton:true,
+            confirmButtonColor:"#ef4444",
+            confirmButtonText:"Yes",
+            cancelButtonText:"No"
+        }).then(()=>{
+            imageArr.push(image);
+            imageCard.remove();
+        })
+    }
+
+    function deleteSingleImage(image, productId,i) {
+        const imageCard=document.getElementById(`imageCard${i}`)
         Swal.fire({
             title: "Delete Image?",
             text: "This action cannot be undone.",
@@ -505,9 +523,7 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        Swal.fire("Deleted!", "Image removed successfully.", "success").then(() => {
-                            location.reload();
-                        });
+                        imageCard.remove();
                     } else {
                         Swal.fire("Error", "Failed to delete image.", "error");
                     }

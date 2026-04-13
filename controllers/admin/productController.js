@@ -6,6 +6,8 @@ import path from 'path';
 import sharp from 'sharp';
 import STATUS_CODES from '../../utils/statusCode.js';
 
+let imageArr=[];
+
 export const loadProducts = async (req, res) => {
   try {
     const prod = req.query.prod || '';
@@ -133,6 +135,7 @@ export const addProducts = async (req, res) => {
 
 export const loadEditProduct = async (req, res) => {
   try {
+    imageArr=[];
     const id = req.query.id;
     const brand = await Brand.find({ isUnlisted: false });
     const category = await Category.find({ isListed: true });
@@ -201,11 +204,17 @@ export const editproduct = async (req, res) => {
       }
     }
 
-    if (currentProduct.productImage.length + images.length < 3) {
+    let realCount=currentProduct.productImage.length-imageArr.length;
+
+    if (realCount + images.length < 3) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({
         succes: false,
         message: 'Please add atleast 3 images',
       });
+    }
+
+    if(imageArr.length>0){
+      await deleteFlaggedImages(imageArr,id);
     }
 
     await Product.updateOne(
@@ -238,36 +247,56 @@ export const editproduct = async (req, res) => {
       message: 'Something went wrong!',
     });
   }
-};
+}; 
 
-export const deleteImages = async (req, res) => {
+export const deleteImages = async (req,res)=>{
   try {
     const imageId = req.params.id;
-    const { productId } = req.body;
+    if(!imageArr.includes(imageId)){
+    imageArr.push(imageId);
+    }
+    res.status(STATUS_CODES.OK).json({success:true});
+  } catch (error) {
+    console.log("Error while storing images",error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({success:false})
+  }
+}
 
-    await Product.findByIdAndUpdate(productId, {
-      $pull: { productImage: imageId },
+export const deleteFlaggedImages = async (arr, pId) => {
+  try {
+
+    await Product.findByIdAndUpdate(pId, {
+      $pull: { productImage: { $in: arr } },
     });
 
-    const imagePath = path.join(
-      process.cwd(),
-      'public',
-      'uploads',
-      're-image',
-      `${imageId}`
-    );
+    const deletePromises = arr.map(async (item) => {
+      const imagePath = path.join(
+        process.cwd(),
+        'public',
+        'uploads',
+        're-image',
+        item 
+      );
 
-    if (fs.existsSync(imagePath)) {
-      await fs.promises.unlink(imagePath);
-      console.log(`${imageId} deleted successfully`);
-    } else {
-      console.log(`${imageId} deletion failed: Path not found`);
-    }
+      try {
+        if (fs.existsSync(imagePath)) {
+          await fs.promises.unlink(imagePath);
+          console.log(`${item} deleted from server`);
+        } else {
+          console.warn(`File not found on server: ${item}`);
+        }
+      } catch (fileErr) {
+        console.error(`Error deleting file ${item}:`, fileErr);
+      }
+    });
 
-    res.status(STATUS_CODES.OK).json({ success: true });
+    await Promise.all(deletePromises);
+
+    return
+
   } catch (error) {
-    console.log('Error while deleting image', error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect('/admin/error');
+    console.error('Critical error in deleteImages function:', error);
+    throw error; 
   }
 };
 
