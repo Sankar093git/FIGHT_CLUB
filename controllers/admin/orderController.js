@@ -16,16 +16,26 @@ export const getOrderList = async (req, res) => {
     const { search, status, sort, date } = req.query;
 
     let filter = {};
+if (search) {
+  
+  const isPossiblyOrderId = /^ORD-/i.test(search) || /^[A-Fa-f0-9]+$/.test(search);
 
-    if (search) {
-      if (/^ORD-[A-Fa-f0-9]{8}$/.test(search)) {
-        filter.orderId = search;
-      } else if (/^[A-Za-z][A-Za-z ]{1,50}$/.test(search)) {
-        filter.customerName = { $regex: search, $options: "i" };
-      } else if (/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(search)) {
-        filter.customerEmail = search;
-      }
-    }
+  if (isPossiblyOrderId) {
+    filter.orderId = { $regex: search, $options: "i" };
+  } else {
+    // Search for users
+    const matchingUsers = await User.find({
+      $or: [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } }
+      ]
+    }).select("_id");
+
+    const userIds = matchingUsers.map(u => u._id);
+    
+    filter.user = { $in: userIds };
+  }
+}
 
     if (status && status !== "") {
       filter.status = status;
@@ -90,8 +100,15 @@ export const changeOrderStatus = async (req, res) => {
       });
     }
 
-    if (order.status === "Cancelled" || order.status === "Returned") {
+    if(order.status==="Delivered"){
       return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: "Status cannot be updated"
+      });
+    }
+
+    if (order.status === "Cancelled" || order.status === "Returned") {
+    return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: "Status cannot be updated"
       });
