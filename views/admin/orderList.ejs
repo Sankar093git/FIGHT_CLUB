@@ -70,8 +70,8 @@
                 <td><span class="order-id"><%= order.orderId %></span></td>
                 <td><%= order.createdAt.toDateString() %></td>
                 <td>
-                  <div class="fw-semibold"><%= order.user.name %></div>
-                  <small class="text-muted"><%= order.user.email %></small>
+                  <div class="fw-semibold"><%= order.user?.name %></div>
+                  <small class="text-muted"><%= order.user?.email %></small>
                 </td>
                 <td><%= order.products.length%> items</td>
                 <td class="fw-semibold">₹<%= order.totalAmount%></td>
@@ -98,15 +98,15 @@
                       <% }else{%>
                   <span class="badge bg-warning text-dark returnRequestStat" id="returnRequestStat<%= order.orderId %>" ><%= order.status==="Processing return"? "Requested" : "Not requested" %></span>
                   <% } %>
-                  <button class="btn btn-sm btn-outline-success mt-1 returHandleButton" id="approve<%= order.orderId %>"  onclick="handleReturnVerification('<%=order.orderId%>','<%=order.user.email%>', true)">
+                  <button class="btn btn-sm btn-outline-success mt-1 returHandleButton" id="approve<%= order.orderId %>"  onclick="handleReturnVerification('<%=order.orderId%>','<%=order.user?.email%>', true)">
                     <i class="bi bi-check-circle"></i> Approve
                   </button>
-                  <button class="btn btn-sm btn-outline-danger mt-1 returHandleButton" id="reject<%= order.orderId %>"  onclick="handleReturnVerification('<%=order.orderId%>','<%=order.user.email%>', false)">
+                  <button class="btn btn-sm btn-outline-danger mt-1 returHandleButton" id="reject<%= order.orderId %>"  onclick="handleReturnVerification('<%=order.orderId%>','<%=order.user?.email%>', false)">
                     <i class="bi bi-x-circle"></i> Reject
                   </button>
                 </td>
                 <td>
-                  <button class="btn btn-sm btn-outline-primary" onclick="viewOrderDetails('<%=order.orderId%>','<%=order.user.email%>')">
+                  <button class="btn btn-sm btn-outline-primary" onclick="viewOrderDetails('<%=order.orderId%>','<%=order.user?.email%>')">
                     <i class="bi bi-eye"></i> View
                   </button>
                 </td>
