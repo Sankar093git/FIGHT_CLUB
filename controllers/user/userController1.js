@@ -282,6 +282,7 @@ export const resendOtp = async (req, res) => {
   try {
     const OTP = await generateOTP();
     req.session.otp = OTP;
+    req.session.expire = Date.now()+60000;
     const sentMail = await sendVerificationMail(OTP, null, req.session.email);
 
     if (sentMail) {
@@ -306,7 +307,7 @@ export const verifyOtp = async (req, res) => {
     const { otp } = req.body;
     if(sessionExpire<Date.now()){
         return res
-        .status(STATUS_CODES.BAD_REQUEST)
+        .status(STATUS_CODES.OK)
         .json({ success: false, message: 'OTP Expired' });
     }
     if (sessionOTP === otp) {
@@ -333,7 +334,7 @@ export const verifyOtp = async (req, res) => {
       }
     } else {
       res
-        .status(STATUS_CODES.BAD_REQUEST)
+        .status(STATUS_CODES.OK)
         .json({ success: false, message: 'Invalid OTP' });
     }
   } catch (error) {

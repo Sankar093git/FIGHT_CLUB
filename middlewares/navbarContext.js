@@ -14,7 +14,7 @@ const navbarContext = async (req, res, next) => {
 
     // Fetch user with selective fields and populate cart to check product status
     const user = await User.findById(req.session.user)
-      .select("name userImage cart")
+      .select("name userImage cart wishlist")
       .populate({
         path: "cart.product",
         select: "isBlocked"
@@ -30,6 +30,9 @@ const navbarContext = async (req, res, next) => {
     res.locals.cartCount = user.cart
       .filter(item => item.product && item.product.isBlocked === false)
       .reduce((total, item) => total + item.quantity, 0);
+
+    res.locals.wishCount=user.wishlist
+      .length||0   
 
     next();
   } catch (err) {
