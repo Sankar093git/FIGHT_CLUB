@@ -1,143 +1,164 @@
-let size=document.querySelector(".size-btn").innerText;
-  function handleAddToCart(productId) {
-    console.log(size);
-    fetch(`/add-to-cart/${productId}`, { 
-      method: "POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({size})
-    })
-      .then(res => {
-        if (res.status === 403) {
-          alert("This product is blocked/unavailable.");
-          window.location.href = "/shop";
-        } else {
-          Swal.fire({
-            title: 'Success!',
-            text: 'Item added to cart',
-            icon: 'success',
-            confirmButtonText: 'OK'
-          }).then(() => {
-            let cText = document.querySelector(".cartCount").innerText; 
-          let match = cText.match(/\d+/); 
-          let count = match ? parseInt(match[0]) : 0; 
+let size = document.querySelector('.size-btn').innerText;
+function handleAddToCart(productId) {
+  console.log(size);
+  fetch(`/add-to-cart/${productId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ size }),
+  })
+    .then((res) => {
+      if (res.status === 403) {
+        alert('This product is blocked/unavailable.');
+        window.location.href = '/shop';
+      } else {
+        Swal.fire({
+          title: 'Success!',
+          text: 'Item added to cart',
+          icon: 'success',
+          confirmButtonText: 'OK',
+        }).then(() => {
+          let cText = document.querySelector('.cartCount').innerText;
+          let match = cText.match(/\d+/);
+          let count = match ? parseInt(match[0]) : 0;
           count++;
-          document.querySelector(".cartCount").innerText = `CART(${count})`;
+          document.querySelector('.cartCount').innerText = `CART(${count})`;
+        });
+      }
+    })
+    .catch(() => alert('Error adding to cart.'));
+}
+
+function handleAddToWishlist(productId) {
+  try {
+    fetch(`/add-to-wishlist/${productId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          Swal.fire({
+            title: 'Success',
+            text: `${data.message}`,
+            icon: 'success',
+            confirmButtonText: 'OK',
+          }).then(() => {
+            let wishIcon = document.getElementById('wishIcon');
+
+            // Safely get current count: if text is empty or not a number, default to 0
+            let currentCount = parseInt(wishIcon.innerText.trim()) || 0;
+            wishIcon.innerText = currentCount + 1;
+
+            let btn = document.getElementById('wishBtn');
+            btn.innerHTML = `<i class="bi bi-heart"></i> Remove from wishlist`;
+            btn.setAttribute("onclick", `removeFromWishlist('${productId}')`);
           });
         }
-      })
-      .catch(() => alert("Error adding to cart."));
-  }
-
-  function handleAddToWishlist(productId){
-    try {
-      fetch(`/add-to-wishlist/${productId}`,{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-      }).then((res)=>res.json())
-      .then((data)=>{
-        if(data.success){
-          Swal.fire({
-            title:"Success",
-            text:`${data.message}`,
-            icon:"success",
-            confirmButtonText: 'OK'
-          }).then(()=>{
-            let btn=document.getElementById("wishBtn");
-            btn.innerHTML=`<i class="bi bi-heart"></i> Remove from wishlist`
-          })
-        }
-      })
-      
-    } catch (error) {
-      console.error(error);
-      Swal.fire({
-        title:"Error!",
-        text:"Something went wrong!",
-        icon:"error",
-        confirmButtonTex: "OK"
-      })
-    }
-  }
-
-  function removeFromWishlist(productId){
-    try {
-      fetch(`/remove-from-wishlist/${productId}`,{
-        method:"DELETE",
-        headers:{
-          "Content-Type":"application/json"
-        },
-      }).then((res)=>res.json())
-      .then((data)=>{
-        if(data.success){
-          Swal.fire({
-            title:"Success",
-            text:`Removed from wishlist`,
-            icon:"success",
-            confirmButtonText: 'OK'
-          }).then(()=>{
-            let btn=document.getElementById("wishBtn");
-            btn.innerHTML=`<i class="bi bi-heart"></i> Add to Wishlist`
-          })
-        }
-      })
-    } catch (error) {
-      console.error(error);
-      Swal.fire({
-        title:"Error",
-        text:"Something went wrong",
-        icon:"error"
-      })
+      });
+  } catch (error) {
+    console.error(error);
+    Swal.fire({
+      title: 'Error!',
+      text: 'Something went wrong!',
+      icon: 'error',
+      confirmButtonTex: 'OK',
+    });
   }
 }
 
-  // Image switching function
-  function changeImage(imageSrc, thumbnail) {
-    // Update main image
-    document.getElementById('mainImage').src = imageSrc;
-    
-    // Update active thumbnail
-    document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
-    thumbnail.classList.add('active');
+function removeFromWishlist(productId) {
+  try {
+    fetch(`/remove-from-wishlist/${productId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          Swal.fire({
+            title: 'Success',
+            text: `Removed from wishlist`,
+            icon: 'success',
+            confirmButtonText: 'OK',
+          }).then(() => {
+            let wishIcon = document.getElementById('wishIcon');
+
+            // 1. Get the current number (default to 0 if text is empty or NaN)
+            let currentCount = parseInt(wishIcon.innerText.trim()) || 0;
+
+            // 2. Subtract 1, but use Math.max to ensure it never goes below 0
+            wishIcon.innerText = Math.max(0, currentCount - 1);
+
+            let btn = document.getElementById('wishBtn');
+            btn.innerHTML = `<i class="bi bi-heart"></i> Add to Wishlist`;
+            btn.setAttribute("onclick", `handleAddToWishlist('${productId}')`);
+          });
+        }
+      });
+  } catch (error) {
+    console.error(error);
+    Swal.fire({
+      title: 'Error',
+      text: 'Something went wrong',
+      icon: 'error',
+    });
   }
+}
 
-  // Enhanced zoom with mouse tracking
-  const zoomContainer = document.getElementById('zoomContainer');
-  const mainImage = document.getElementById('mainImage');
+// Image switching function
+function changeImage(imageSrc, thumbnail) {
+  // Update main image
+  document.getElementById('mainImage').src = imageSrc;
 
-  zoomContainer.addEventListener('mousemove', (e) => {
-    const rect = zoomContainer.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    mainImage.style.transformOrigin = `${x}% ${y}%`;
-  });
+  // Update active thumbnail
+  document
+    .querySelectorAll('.thumbnail')
+    .forEach((t) => t.classList.remove('active'));
+  thumbnail.classList.add('active');
+}
 
-  zoomContainer.addEventListener('mouseleave', () => {
-    mainImage.style.transformOrigin = 'center center';
-  });
+// Enhanced zoom with mouse tracking
+const zoomContainer = document.getElementById('zoomContainer');
+const mainImage = document.getElementById('mainImage');
 
-  function selectSize(btn) {
+zoomContainer.addEventListener('mousemove', (e) => {
+  const rect = zoomContainer.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width) * 100;
+  const y = ((e.clientY - rect.top) / rect.height) * 100;
+  mainImage.style.transformOrigin = `${x}% ${y}%`;
+});
+
+zoomContainer.addEventListener('mouseleave', () => {
+  mainImage.style.transformOrigin = 'center center';
+});
+
+function selectSize(btn) {
   if (btn.classList.contains('out-of-stock')) return;
-  
-  document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+
+  document
+    .querySelectorAll('.size-btn')
+    .forEach((b) => b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('selectedSize').value = btn.dataset.size;
 }
 
-function handleStockPerSize(){
+function handleStockPerSize() {
   try {
-    let stock=document.getElementById("stock");
-    let btn=document.querySelectorAll(".size-btn").forEach((btn)=>{
-          btn.addEventListener("click",()=>{
-                stock.innerText=`✅ In Stock: ${btn.getAttribute("data-stock")} items`;
-                size=btn.innerText;
-          });
-    })
+    let stock = document.getElementById('stock');
+    let btn = document.querySelectorAll('.size-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        stock.innerText = `✅ In Stock: ${btn.getAttribute('data-stock')} items`;
+        size = btn.innerText;
+      });
+    });
   } catch (error) {
-    console.error("Error while switching variants");
+    console.error('Error while switching variants');
   }
 }
-handleStockPerSize()
+handleStockPerSize();
