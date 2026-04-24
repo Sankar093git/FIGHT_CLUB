@@ -46,7 +46,7 @@ app.use(express.static(path.join(__dirname, "public")));
 // Session Configuration
 app.set('trust proxy', 1); 
 
-app.use(session({
+/*app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false, // Set to false to save storage and prevent "empty" sessions
@@ -60,7 +60,44 @@ app.use(session({
         maxAge: 72 * 60 * 60 * 1000,
         sameSite: 'lax' // Highly recommended to prevent CSRF issues
     }
-}));
+}));*/
+
+const userSession = session({
+    secret: process.env.USER_SESSION_SECRET,
+    name: 'user_sid',           // <-- unique cookie name
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI,
+        collectionName: 'user_sessions',
+    }),
+    cookie: {
+        secure: true,
+        httpOnly: true,
+        maxAge: 72 * 60 * 60 * 1000,
+        sameSite: 'lax',
+    }
+});
+
+const adminSession = session({
+    secret: process.env.ADMIN_SESSION_SECRET, // ideally a different secret
+    name: 'admin_sid',          // <-- unique cookie name
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI,
+        collectionName: 'admin_sessions',
+    }),
+    cookie: {
+        secure: true,
+        httpOnly: true,
+        maxAge: 4 * 60 * 60 * 1000,  // shorter lifetime for admin
+        sameSite: 'lax',
+    }
+});
+
+app.use('/admin', adminSession);
+app.use('/', userSession);
 
 // Passport Middleware
 app.use(passport.initialize());
@@ -80,6 +117,7 @@ const accessLogStream = fs.createWriteStream(
     path.join(__dirname, 'access.log'),
     { flags: 'a' }
 );
+
 app.use(morgan("dev"));
 app.use(morgan('combined', { stream: accessLogStream }));
 
