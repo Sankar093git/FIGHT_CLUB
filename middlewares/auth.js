@@ -1,5 +1,5 @@
-import User from "../models/userSchema.js";
-import STATUS_CODES from "../utils/statusCode.js";
+import User from '../models/userSchema.js';
+import STATUS_CODES from '../utils/statusCode.js';
 
 // Middleware to protect routes that require a logged-in (and unblocked) user
 export const userAuth = async (req, res, next) => {
@@ -8,18 +8,24 @@ export const userAuth = async (req, res, next) => {
       const userData = await User.findOne({ _id: req.session.user });
 
       if (userData && !userData.isBlocked) {
+        console.log(userData.isVerified);
+        if (!userData.isVerified) {
+          req.session.user = null;
+          return res.status(STATUS_CODES.REDIRECT).redirect('/');
+        }
+
         return next();
       } else {
         // If user is blocked or doesn't exist, clear session and redirect
         req.session.user = null;
-        return res.status(STATUS_CODES.REDIRECT).redirect("/");
+        return res.status(STATUS_CODES.REDIRECT).redirect('/');
       }
     } else {
-      return res.status(STATUS_CODES.REDIRECT).redirect("/");
+      return res.status(STATUS_CODES.REDIRECT).redirect('/');
     }
   } catch (error) {
-    console.error("Authentication error:", error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
+    console.error('Authentication error:', error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect('/error');
   }
 };
 
@@ -27,12 +33,12 @@ export const userAuth = async (req, res, next) => {
 export const userAuth1 = async (req, res, next) => {
   try {
     if (req.session.user) {
-      return res.status(STATUS_CODES.REDIRECT).redirect("/");
+      return res.status(STATUS_CODES.REDIRECT).redirect('/');
     }
     next();
   } catch (error) {
-    console.error("Redirect middleware error:", error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/error");
+    console.error('Redirect middleware error:', error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect('/error');
   }
 };
 
@@ -42,11 +48,11 @@ export const adminAuth = async (req, res, next) => {
     if (req.session.admin) {
       next();
     } else {
-      res.status(STATUS_CODES.REDIRECT).redirect("/admin/login");
+      res.status(STATUS_CODES.REDIRECT).redirect('/admin/login');
     }
   } catch (error) {
-    console.error("Admin Auth error:", error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/adminerror");
+    console.error('Admin Auth error:', error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect('/adminerror');
   }
 };
 
@@ -54,12 +60,12 @@ export const adminAuth = async (req, res, next) => {
 export const adminAuth1 = async (req, res, next) => {
   try {
     if (req.session.admin) {
-      res.status(STATUS_CODES.REDIRECT).redirect("/admin");
+      res.status(STATUS_CODES.REDIRECT).redirect('/admin');
     } else {
       next();
     }
   } catch (error) {
-    console.error("Admin Redirect error:", error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect("/adminerror");
+    console.error('Admin Redirect error:', error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).redirect('/adminerror');
   }
 };

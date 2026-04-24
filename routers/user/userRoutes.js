@@ -25,7 +25,7 @@ router.get("/login", userAuth1, userController.loadLogin);
 router.get("/logout", userController.logout);
 router.get("/resend-otp", userController.resendOtp);
 router.post("/login", userController.login);
-router.post("/verify-otp", userAuth, userController.verifyOtp);
+router.post("/verify-otp", userController.verifyOtp);
 
 // Google OAuth
 router.get("/auth/google", passport.authenticate('google', { scope: ["profile", "email"] }));

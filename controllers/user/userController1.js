@@ -133,7 +133,7 @@ export const sendVerificationMail = async (OTP, referalCode, email) => {
   }
 };
 
-const signUpValidation =  (name, email, phone, rCode, password) => {
+const signUpValidation = (name, email, phone, rCode, password) => {
   const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const namePattern = /^[A-Za-z]+(?:\s[A-Za-z]+)+$/;
   const phonePattern = /^[6-9]\d{9}$/;
@@ -170,7 +170,7 @@ export const signUp = async (req, res) => {
 
     const rCode = referedCode;
 
-    const isValid =  signUpValidation(name, email, phone, rCode, password);
+    const isValid = signUpValidation(name, email, phone, rCode, password);
 
     if (!isValid) {
       return res
@@ -211,7 +211,7 @@ export const signUp = async (req, res) => {
       }
 
       req.session.otp = OTP;
-      req.session.expire = Date.now()+60000;
+      req.session.expire = Date.now() + 60000;
       const mailSent = await sendVerificationMail(OTP, null, email);
 
       if (mailSent) {
@@ -253,6 +253,17 @@ export const login = async (req, res) => {
     const isPasswordMatch = await bcrypt.compare(password, findUser.password);
 
     if (isPasswordMatch) {
+      if (!findUser.isVerified) {
+        const OTP = await generateOTP();
+        req.session.user = findUser._id;
+        req.session.email = findUser.email;
+        req.session.image = findUser.userImage;
+        req.session.referalCode = findUser.referalCode;
+        req.session.otp = OTP;
+        req.session.expire = Date.now() + 60000;
+        await sendVerificationMail(OTP, null, findUser.email);
+        return res.status(STATUS_CODES.OK).redirect('/verify-otp');
+      }
       req.session.user = findUser._id;
       req.session.userName = findUser.name;
       req.session.image = findUser.userImage;
@@ -282,7 +293,7 @@ export const resendOtp = async (req, res) => {
   try {
     const OTP = await generateOTP();
     req.session.otp = OTP;
-    req.session.expire = Date.now()+60000;
+    req.session.expire = Date.now() + 60000;
     const sentMail = await sendVerificationMail(OTP, null, req.session.email);
 
     if (sentMail) {
@@ -303,10 +314,15 @@ export const resendOtp = async (req, res) => {
 export const verifyOtp = async (req, res) => {
   try {
     const sessionOTP = req.session.otp;
-    const sessionExpire= req.session.expire;
+    const sessionExpire = req.session.expire;
     const { otp } = req.body;
-    if(sessionExpire<Date.now()){
-        return res
+
+    console.log("session OTP:", req.session.otp);
+    console.log("submitted OTP:", req.body.otp);
+    console.log("session email:", req.session.email);
+
+    if (sessionExpire < Date.now()) {
+      return res
         .status(STATUS_CODES.OK)
         .json({ success: false, message: 'OTP Expired' });
     }
@@ -315,12 +331,12 @@ export const verifyOtp = async (req, res) => {
         { email: req.session.email },
         { $set: { isVerified: 1 } }
       );
+
+      const verifiedUser = await User.findOne({ email: req.session.email });
+      req.session.userName = verifiedUser.name;
+      
       const referalCode = req.session.referalCode;
-      const sentMail = await sendVerificationMail(
-        null,
-        referalCode,
-        req.session.email
-      );
+      const sentMail = await sendVerificationMail( null,referalCode,req.session.email);
       if (sentMail) {
         res.status(STATUS_CODES.OK).json({
           success: true,
