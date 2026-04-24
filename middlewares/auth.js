@@ -8,7 +8,6 @@ export const userAuth = async (req, res, next) => {
       const userData = await User.findOne({ _id: req.session.user });
 
       if (userData && !userData.isBlocked) {
-        console.log(userData.isVerified);
         if (!userData.isVerified) {
           req.session.user = null;
           return res.status(STATUS_CODES.REDIRECT).redirect('/');

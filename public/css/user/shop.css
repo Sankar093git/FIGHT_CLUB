@@ -58,3 +58,8 @@
   transform: scale(1.05);
   color: white;
 }
+
+.wishBtn{
+  cursor: pointer;
+  z-index: 10
+}

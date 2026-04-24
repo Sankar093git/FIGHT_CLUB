@@ -73,6 +73,10 @@ export const loadShopPage = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
+    const userData= await User.findOne({_id:req.session.user});
+    
+    const wishList= userData.wishlist.map((item)=>item.product);
+
     const brand = await Brand.find({ isBlocked: false });
 
     const category = await Category.find({ isDeleted: false });
@@ -85,6 +89,7 @@ export const loadShopPage = async (req, res) => {
       user: req.session.userName || userName,
       image: req.session.image,
       product: data,
+      wishList,
       brand,
       category,
       totalPages,

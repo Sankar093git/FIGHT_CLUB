@@ -48,8 +48,6 @@ function handleAddToWishlist(productId) {
             confirmButtonText: 'OK',
           }).then(() => {
             let wishIcon = document.getElementById('wishIcon');
-
-            // Safely get current count: if text is empty or not a number, default to 0
             let currentCount = parseInt(wishIcon.innerText.trim()) || 0;
             wishIcon.innerText = currentCount + 1;
 

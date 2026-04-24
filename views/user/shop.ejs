@@ -132,6 +132,7 @@
      1. Inject backend data safely into JS
   --------------------------------------------------------- */
   const products = <%- JSON.stringify(product || []) %>;
+  const wishList = <%- JSON.stringify(wishList || []) %>;
   const productList = document.getElementById("product-list");
 
   /* ---------------------------------------------------------
@@ -171,10 +172,13 @@
   /* ---------------------------------------------------------
      4. Render Product Cards
   --------------------------------------------------------- */
-  function renderProducts(container, data) {
+  function renderProducts(container, data, wishList) {
     container.innerHTML = "";
 
     data.forEach(p => {
+
+      const inWishlist=wishList.includes(p._id);
+
       const discount =
         p.regularPrice > p.salesPrice? Math.round(((p.regularPrice - p.salesPrice) / p.regularPrice) * 100): 0;
 
@@ -187,30 +191,35 @@
       card.innerHTML = `
   <div class="card product-card h-100">
     
+  <div class="position-relative d-flex justify-content-center">
     <a href="/product-details?id=${p._id}">
       <img src="${mainImage}" class="card-img-top" alt="${p.productName}">
     </a>
-
-    <div class="card-body d-flex flex-column align-items-center">
-      <h6 class="card-title text-center mb-2">${p.productName}</h6>
-      <span class="original-price me-2">
-        Size: ${p.variants[0].size}
-      </span>
-
-      <div class="price-section mb-3">
-        ${p.regularPrice !== p.salesPrice ? `
-          <span class="original-price text-muted text-decoration-line-through me-2">
-            ₹${p.regularPrice}
-          </span>
-        ` : ''}
-        <span class="sale-price fw-bold text-danger">₹${p.salesPrice}</span>
-      </div>
-
-      <button onclick="handleAddToCart('${p._id}','${p.variants[0].size}')" class="btn btn-add-cart">
-        <i class="bi bi-cart-plus me-1"></i> Add to Cart
-      </button>
-    </div>
+    <div class="position-absolute top-0 end-0 p-2">
+      <i class="${inWishlist ? 'fa-solid' : 'fa-regular'} fa-heart text-danger wishBtn" data-id='${p._id}'' data-wish='${inWishlist}' onclick='toggleWishbtn(this)'></i>
+    </div>  
   </div>
+
+  <div class="card-body d-flex flex-column align-items-center">
+    <h6 class="card-title text-center mb-2">${p.productName}</h6>
+    <span class="original-price me-2">
+      Size: ${p.variants[0].size}
+    </span>
+
+    <div class="price-section mb-3">
+      ${p.regularPrice !== p.salesPrice ? `
+        <span class="original-price text-muted text-decoration-line-through me-2">
+          ₹${p.regularPrice}
+        </span>
+      ` : ''}
+      <span class="sale-price fw-bold text-danger">₹${p.salesPrice}</span>
+    </div>
+
+    <button onclick="handleAddToCart('${p._id}','${p.variants[0].size}')" class="btn btn-add-cart">
+      <i class="bi bi-cart-plus me-1"></i> Add to Cart
+    </button>
+  </div>
+</div>
 `;
 
       container.appendChild(card);
@@ -220,7 +229,7 @@
   /* ---------------------------------------------------------
      5. Execute Render
   --------------------------------------------------------- */
-  renderProducts(productList, products);
+  renderProducts(productList, products, wishList);
 
 function handleAddToCart(productId,size){
   fetch(`/add-to-cart/${productId}`,{
@@ -265,6 +274,67 @@ function handleAddToCart(productId,size){
   function clearFilters(){
     window.location.href="/shop"
   }
+
+  function toggleWishbtn(el) {
+  const productId = el.dataset.id;
+  const inWishlist = el.dataset.wish;
+
+  if (inWishlist=='true') {
+    removeFromWishlist(productId, el);
+  } else {
+    addToWishlist(productId, el);
+  }
+}
+
+function addToWishlist(productId,el){
+
+  fetch(`/add-to-wishlist/${productId}`,{
+    method:"POST",
+  }).then(res=>res.json())
+  .then((data)=>{
+    console.log(data)
+    if(data.success){
+      el.dataset.wish=true;
+      el.classList.replace("fa-regular","fa-solid");
+
+      let wishIcon = document.getElementById('wishIcon');
+      let currentCount = parseInt(wishIcon.innerText.trim()) || 0;
+      wishIcon.innerText = currentCount + 1;
+    }else{
+      Swal.fire({
+        title:"Oops",
+        text:"Please try again!",
+        icon:"error"
+      })
+    }
+  })
+}
+
+function removeFromWishlist(productId,el){
+
+  fetch(`/remove-from-wishlist/${productId}`,{
+    method:"DELETE",
+  }).then(res=>res.json())
+  .then((data)=>{
+    if(data.success){
+      el.dataset.wish=false;
+      el.classList.replace("fa-solid","fa-regular");
+
+      let wishIcon = document.getElementById('wishIcon');      
+      let currentCount = parseInt(wishIcon.innerText.trim()) || 0;      
+      wishIcon.innerText = Math.max(0, currentCount - 1);
+
+    }else{
+      Swal.fire({
+        title:"Oops",
+        text:"Please try again!",
+        icon:"error"
+      })
+    }
+  })
+}
+
+
 </script>
 
 
